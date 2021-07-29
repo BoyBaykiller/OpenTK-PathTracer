@@ -122,10 +122,6 @@ namespace OpenTK_PathTracer
                     Ray rayWorld = Ray.GetWorldSpaceRay(inverseProjection, camera.View.Inverted(), camera.Position, normalizedDeviceCoords);
 
                     RayTrace(rayWorld, out GameObjectPropertyRenderer.RayObject);
-<<<<<<< HEAD
-=======
-                    //RayTrace(grid, rayWorld, out GameObjectPropertyRenderer.RayObject);
->>>>>>> c2ab0745f649490b72bf883734a9abd73ad15473
                 }
             }
 
