@@ -16,7 +16,7 @@ Due to the realistic nature of Path Tracers - tracing a ray over many bounces - 
 * Esc => Close
 
 ### **Mouse:**
-* LeftKlick = Select Object
+* LButton => Select Object
 
 
 ## **Render Samples**
