@@ -1,0 +1,462 @@
+#version 450 core
+#define FLOAT_MAX 3.4028235e+38
+#define FLOAT_MIN -3.4028235e+38
+#define EPSILON 0.0001
+#define PI 3.14159265358979323846264338327950288419
+
+#define WorkGroupSizeX 32
+//layout (local_size_x = 4, local_size_y = 16, local_size_z = 1) in;
+layout (local_size_x = WorkGroupSizeX, local_size_y = 1, local_size_z = 1) in;
+
+layout(binding = 0, rgba32f) uniform image2D ImgResult;
+layout(binding = 10) uniform samplerCube ImgEnvironment;
+
+struct Material {
+    // Note: diffuse chance is 1.0f - (SpecularChance + RefractionChance)
+
+    vec3 Albedo; // the color used for diffuse lighting
+    float SpecularChance; // percentage chance of doing a specular reflection
+    
+    vec3 Emissiv; // how much the surface glows
+    float SpecularRoughness; // how rough the specular reflections are
+
+    vec3 RefractionColor;
+    float RefractionChance; // percent chance of doing a refractive transmission
+
+    float RefractionRoughness;// how rough the refractive transmissions are
+    float IOR; // LastHitIndex of refraction. used by fresnel and refraction
+    
+};
+
+struct Cuboid {
+    vec3 Min;
+    vec3 Max;
+    
+    Material Material;
+};
+
+struct Sphere {
+    vec3 Position;
+    float Radius;
+
+    Material Material;
+};
+
+struct Cell 
+{
+    vec3 Min;
+    float Start;
+
+    vec3 Max;
+    float End;
+};
+
+struct HitInfo {
+    float T;
+    bool FromInside;
+    vec3 NearHitPos;
+    vec3 Normal;
+    Material Material;
+};
+
+struct Ray {
+    vec3 Origin;
+    vec3 Direction;
+};
+
+layout (shared, binding = 0) uniform BasicDataUBO
+{
+	mat4 projection;
+    mat4 invProjection;
+    vec2 nearFar;
+	mat4 view;
+	mat4 invView;
+    mat4 projectionView;
+	vec3 viewPos;
+} basicDataUBO;
+
+layout (std140, binding = 1) uniform GameObjectsUBO
+{
+    Sphere[343] Spheres;
+	Cuboid[64] Cuboids;
+} gameObjectsUBO;
+
+
+layout (std430, binding = 0) readonly buffer GridCellsSSBO
+{
+    Cell[10 * 10 * 10] Cells;
+    int[] Indecis;
+} gridCellsSSBO;
+
+vec3 PathTrace(Ray ray);
+bool GetClosestIntersectingRayObject(Ray ray, out HitInfo hitInfo);
+bool GetClosestIntersectingLight(Ray ray, out HitInfo hitInfo);
+bool RaySphereIntersect(Ray ray, Sphere sphere, out float t1, out float t2);
+bool RayCuboidIntersect(Ray ray, Cuboid cuboid, out float t1, out float t2);
+bool RayCuboidIntersect(Ray ray, vec3 aabbMin, vec3 aabbMax, out float t1, out float t2);
+vec3 GetNormal(Sphere sphere, vec3 surfacePosition);
+vec3 GetNormal(Cuboid cuboid, vec3 surfacePosition);
+vec3 GetRandomUnitVector(inout uint rndSeed);
+uint GetWangHash(inout uint seed);
+float GetRandomFloat01(inout uint state);
+float GetRelevantT(float t1, float t2);
+float FresnelReflectAmount(float n1, float n2, vec3 normal, vec3 incident, float f0);
+float Fresnel(float n1, float n2, float cosTheta, float minReflect);
+vec3 LessThan(vec3 f, float value);
+vec3 SRGBToLinear(vec3 rgb);
+Ray GetWorldSpaceRay(mat4 inverseProj, mat4 inverseView, vec3 viewPos, vec2 normalizedDeviceCoors);
+bool IsInside(vec2 pos, vec2 size);
+
+uniform vec2 uboGameObjectsSize;
+uniform int ssboCellsSize;
+
+uniform int rayDepth;
+uniform int SSP;
+
+layout (location = 0) uniform uint thisRendererFrame;
+
+uint rndSeed;
+void main()
+{
+    ivec2 imgResultSize = imageSize(ImgResult);
+    ivec2 imgCoord = ivec2(gl_GlobalInvocationID.x / imgResultSize.y, gl_GlobalInvocationID.x % imgResultSize.y);
+    //ivec2 imgCoord = ivec2(gl_GlobalInvocationID.xy);
+    if (!IsInside(imgCoord, imgResultSize))
+        return;
+
+    rndSeed = gl_GlobalInvocationID.x * 1973 + gl_GlobalInvocationID.y * 9277 + thisRendererFrame * 2699 | 1;
+
+    vec2 jitter = vec2(GetRandomFloat01(rndSeed), GetRandomFloat01(rndSeed)) - 0.5;
+    vec2 NDC = (imgCoord + jitter) / imgResultSize * 2.0 - 1.0;
+    Ray rayEyeToWorld = GetWorldSpaceRay(basicDataUBO.invProjection, basicDataUBO.invView, basicDataUBO.viewPos, NDC);
+    
+    vec3 color = vec3(0);
+    for (int i = 0; i < SSP; i++)
+        color += PathTrace(rayEyeToWorld);
+    
+    color /= SSP;
+    
+
+    vec3 lastFrameColor = imageLoad(ImgResult, imgCoord).rgb;
+    color = mix(lastFrameColor, color, 1.0 / thisRendererFrame);
+
+    imageStore(ImgResult, imgCoord, vec4(color, 1));
+}
+
+vec3 PathTrace(Ray ray)
+{
+    vec3 throughPut = vec3(1);
+    vec3 ret = vec3(0);
+    HitInfo hitInfo;
+
+    for (int i = 0; i < rayDepth; i++)
+    {
+        if (GetClosestIntersectingRayObject(ray, hitInfo))
+        {
+            if (hitInfo.FromInside)
+            {
+                hitInfo.Normal *= -1.0;
+                throughPut *= exp(-hitInfo.Material.RefractionColor * hitInfo.T);
+            }
+            float specularChance = hitInfo.Material.SpecularChance;
+            float refractionChance = hitInfo.Material.RefractionChance;
+            if (specularChance > 0.0)
+            {
+                specularChance = FresnelReflectAmount(
+                hitInfo.FromInside ? hitInfo.Material.IOR : 1.0, 
+                !hitInfo.FromInside ? hitInfo.Material.IOR : 1.0,
+                ray.Direction, 
+                hitInfo.Normal, 
+                hitInfo.Material.SpecularChance);
+
+                float chanceMultiplier = (1.0 - specularChance) / (1.0 - hitInfo.Material.SpecularChance);
+                refractionChance *= chanceMultiplier;
+            }
+            
+
+            float rayProbability = 1.0;
+            float doSpecular = 0.0;
+            float doRefraction = 0.0;
+            float raySelectRoll = GetRandomFloat01(rndSeed);
+            if (specularChance > 0.0 && raySelectRoll < specularChance)
+            {
+                doSpecular = 1.0;
+                rayProbability = specularChance;
+            }
+            else if (refractionChance > 0.0 && raySelectRoll < specularChance + refractionChance)
+            {
+                doRefraction = 1.0;
+                rayProbability = refractionChance;
+            }
+            else
+            {
+                rayProbability = 1.0 - (specularChance + refractionChance);
+            }
+            rayProbability = max(rayProbability, EPSILON);
+
+            ray.Origin = hitInfo.NearHitPos + hitInfo.Normal * EPSILON * (doRefraction == 1.0 ? -1 : 1);
+
+            vec3 diffuseRayDir = normalize(hitInfo.Normal + GetRandomUnitVector(rndSeed));
+            vec3 specularRayDir = reflect(ray.Direction, hitInfo.Normal);
+            specularRayDir = normalize(mix(specularRayDir, diffuseRayDir, hitInfo.Material.SpecularRoughness));
+
+            vec3 refractionRayDir = refract(ray.Direction, hitInfo.Normal, hitInfo.FromInside ? hitInfo.Material.IOR : 1.0 / hitInfo.Material.IOR);
+            refractionRayDir = normalize(mix(refractionRayDir, normalize(-hitInfo.Normal + GetRandomUnitVector(rndSeed)), hitInfo.Material.RefractionRoughness));
+            
+            ray.Direction = mix(diffuseRayDir, specularRayDir, doSpecular);
+            ray.Direction = mix(ray.Direction, refractionRayDir, doRefraction);
+
+            ret += hitInfo.Material.Emissiv * throughPut;
+
+            if (doRefraction == 0.0)
+                throughPut *= hitInfo.Material.Albedo;
+            
+            throughPut /= rayProbability;
+            
+            
+            float p = max(throughPut.x, max(throughPut.y, throughPut.z));
+            if (GetRandomFloat01(rndSeed) > p)
+                break;
+
+            throughPut *= 1.0 / p;
+            
+        }
+        else
+        {
+            ret += SRGBToLinear(texture(ImgEnvironment, ray.Direction).rgb) * throughPut;
+            break;
+        }
+            
+    }
+    
+    return ret;
+}
+
+bool GetClosestIntersectingRayObject(Ray ray, out HitInfo hitInfo)
+{
+    hitInfo.T = FLOAT_MAX;
+    float t1, t2;
+
+    for (int i = 0; i < uboGameObjectsSize.x; i++)
+    {
+        if (RaySphereIntersect(ray, gameObjectsUBO.Spheres[i], t1, t2) && t2 > 0 && t1 < hitInfo.T)
+        {
+            hitInfo.T = GetRelevantT(t1, t2);
+            hitInfo.FromInside = hitInfo.T == t2;
+            hitInfo.Material = gameObjectsUBO.Spheres[i].Material;
+            hitInfo.NearHitPos = ray.Origin + ray.Direction * hitInfo.T;
+            hitInfo.Normal = GetNormal(gameObjectsUBO.Spheres[i], hitInfo.NearHitPos);
+        }
+    }
+    
+    for (int i = 0; i < uboGameObjectsSize.y; i++)
+    {
+        if (RayCuboidIntersect(ray, gameObjectsUBO.Cuboids[i], t1, t2) && t2 > 0 && t1 < hitInfo.T)
+        {
+            hitInfo.T = GetRelevantT(t1, t2);
+            hitInfo.FromInside = hitInfo.T == t2;
+            hitInfo.Material = gameObjectsUBO.Cuboids[i].Material;
+            hitInfo.NearHitPos = ray.Origin + ray.Direction * hitInfo.T;
+            hitInfo.Normal = GetNormal(gameObjectsUBO.Cuboids[i], hitInfo.NearHitPos);
+        }
+    }
+
+
+    /*
+    // TODO: Use DDA algorithm for traversal
+    float cellT1, cellT2, cellMin = FLOAT_MAX;
+    for (int i = 0; i < ssboCellsSize; i++)
+    {
+        Cell cell = gridCellsSSBO.Cells[i];
+        if (RayCuboidIntersect(ray, cell.Min, cell.Max, cellT1, cellT2) && cellT2 > 0 && cellT1 <= cellMin)
+        {
+            for (int j = int(cell.Start); j < int(cell.End); j++)
+            {
+                int index = gridCellsSSBO.Indecis[j];
+                if (index < uboGameObjectsSize.x)
+                {
+                    if (RaySphereIntersect(ray, gameObjectsUBO.Spheres[index], t1, t2) && t1 <= cellT2 && t2 > 0 && t1 < hitInfo.T)
+                    {
+                        hitInfo.T = GetRelevantT(t1, t2);
+                        hitInfo.FromInside = hitInfo.T == t2;
+                        hitInfo.Material = gameObjectsUBO.Spheres[index].Material;
+                        hitInfo.NearHitPos = ray.Origin + ray.Direction * hitInfo.T;
+                        hitInfo.Normal = GetNormal(gameObjectsUBO.Spheres[index], hitInfo.NearHitPos);
+                        cellMin = cellT1;
+                    }
+                }
+                else
+                {
+                    index -= int(uboGameObjectsSize.x);
+                    if (RayCuboidIntersect(ray, gameObjectsUBO.Cuboids[index], t1, t2) && t1 <= cellT2 && t2 > 0 && t1 < hitInfo.T)
+                    {
+                        hitInfo.T = GetRelevantT(t1, t2);
+                        hitInfo.FromInside = hitInfo.T == t2;
+                        hitInfo.Material = gameObjectsUBO.Cuboids[index].Material;
+                        hitInfo.NearHitPos = ray.Origin + ray.Direction * hitInfo.T;
+                        hitInfo.Normal = GetNormal(gameObjectsUBO.Cuboids[index], hitInfo.NearHitPos);
+                        cellMin = cellT1;
+                    }
+                }
+            }
+        }
+    }
+    */
+    return hitInfo.T != FLOAT_MAX;
+}
+
+bool RaySphereIntersect(Ray ray, Sphere sphere, out float t1, out float t2)
+{
+    // Source: https://antongerdelan.net/opengl/raycasting.html
+    t1 = 0; t2 = 0;
+
+    vec3 sphereToRay = ray.Origin - sphere.Position;
+    float b = dot(ray.Direction, sphereToRay);
+    float c = dot(sphereToRay, sphereToRay) - sphere.Radius * sphere.Radius;
+    float discriminant = b * b - c;
+    if (discriminant < 0)
+        return false; // only imaginary throughPutlision
+
+    float squareRoot = sqrt(discriminant);
+    t1 = -b - squareRoot;
+    t2 = -b + squareRoot;
+
+    return true;
+}
+
+bool RayCuboidIntersect(Ray ray, Cuboid cuboid, out float t1, out float t2)
+{
+    // Source: https://medium.com/@bromanz/another-view-on-the-classic-ray-aabb-intersection-algorithm-for-bvh-traversal-41125138b525
+    t1 = FLOAT_MIN;
+    t2 = FLOAT_MAX;
+
+    vec3 t0s = (cuboid.Min - ray.Origin) / ray.Direction;
+    vec3 t1s = (cuboid.Max - ray.Origin) / ray.Direction;
+
+    vec3 tsmaller = min(t0s, t1s);
+    vec3 tbigger = max(t0s, t1s);
+
+    t1 = max(t1, max(tsmaller.x, max(tsmaller.y, tsmaller.z)));
+    t2 = min(t2, min(tbigger.x, min(tbigger.y, tbigger.z)));
+    return t1 <= t2;
+}
+
+bool RayCuboidIntersect(Ray ray, vec3 aabbMin, vec3 aabbMax, out float t1, out float t2)
+{
+    // Source: https://medium.com/@bromanz/another-view-on-the-classic-ray-aabb-intersection-algorithm-for-bvh-traversal-41125138b525
+    t1 = FLOAT_MIN;
+    t2 = FLOAT_MAX;
+
+    vec3 t0s = (aabbMin - ray.Origin) / ray.Direction;
+    vec3 t1s = (aabbMax - ray.Origin) / ray.Direction;
+
+    vec3 tsmaller = min(t0s, t1s);
+    vec3 tbigger = max(t0s, t1s);
+
+    t1 = max(t1, max(tsmaller.x, max(tsmaller.y, tsmaller.z)));
+    t2 = min(t2, min(tbigger.x, min(tbigger.y, tbigger.z)));
+    return t1 <= t2;
+}
+
+vec3 GetNormal(Sphere sphere, vec3 surfacePosition)
+{
+    return normalize(surfacePosition - sphere.Position);
+}
+
+vec3 GetNormal(Cuboid cuboid, vec3 surfacePosition)
+{
+    // Source: https://gist.github.com/Shtille/1f98c649abeeb7a18c5a56696546d3cf
+    // step(edge,x) : x < edge ? 0 : 1
+
+    vec3 size = (cuboid.Max - cuboid.Min) * 0.5;
+    vec3 pc = surfacePosition - (cuboid.Max + cuboid.Min) * 0.5;
+    
+    vec3 normal = vec3(0.0);
+    normal += vec3(sign(pc.x), 0.0, 0.0) * step(abs(abs(pc.x) - size.x), EPSILON);
+    normal += vec3(0.0, sign(pc.y), 0.0) * step(abs(abs(pc.y) - size.y), EPSILON);
+    normal += vec3(0.0, 0.0, sign(pc.z)) * step(abs(abs(pc.z) - size.z), EPSILON);
+    return normalize(normal);
+}
+
+vec3 GetRandomUnitVector(inout uint rndSeed)
+{
+    float z = GetRandomFloat01(rndSeed) * 2.0 - 1.0;
+    float a = GetRandomFloat01(rndSeed) * 2.0 * PI;
+    float r = (1.0 - z * z); // sqrt(1.0 - z * z)
+    float x = r * cos(a);
+    float y = r * sin(a);
+    return vec3(x, y, z);
+}
+
+uint GetWangHash(inout uint seed)
+{
+    seed = uint(seed ^ uint(61)) ^ uint(seed >> uint(16));
+    seed *= uint(9);
+    seed = seed ^ (seed >> 4);
+    seed *= uint(0x27d4eb2d);
+    seed = seed ^ (seed >> 15);
+    return seed;
+}
+ 
+float GetRandomFloat01(inout uint state)
+{
+    return float(GetWangHash(state)) / 4294967296.0;
+}
+
+float GetRelevantT(float t1, float t2)
+{
+    return t1 < 0 ? t2 : t1;
+}
+
+float FresnelReflectAmount(float n1, float n2, vec3 normal, vec3 incident, float f0)
+{
+    // Schlick aproximation
+    float r0 = (n1 - n2) / (n1 + n2);
+    r0 *= r0;
+    float cosX = -dot(normal, incident);
+    if (n1 > n2)
+    {
+        float n = n1 / n2;
+        float sinT2 = n * n * (1.0 - cosX * cosX);
+        // Total internal reflection
+        if (sinT2 > 1.0)
+            return 1.0;
+        cosX = sqrt(1.0 - sinT2);
+    }
+    float x = 1.0 - cosX;
+    float ret = r0 + (1.0 - r0) * x * x * x * x * x;
+
+    // adjust reflect multiplier for object reflectivity
+    return mix(f0, 1.0, ret);
+}
+
+vec3 LessThan(vec3 f, float value)
+{
+    return vec3(
+        (f.x < value) ? 1.0 : 0.0,
+        (f.y < value) ? 1.0 : 0.0,
+        (f.z < value) ? 1.0 : 0.0);
+}
+
+vec3 SRGBToLinear(vec3 rgb)
+{
+    rgb = clamp(rgb, 0.0, 1.0);
+     
+    return mix(
+        pow(((rgb + 0.055) / 1.055), vec3(2.4)),
+        rgb / 12.92,
+        LessThan(rgb, 0.04045)
+    );
+}
+
+Ray GetWorldSpaceRay(mat4 inverseProj, mat4 inverseView, vec3 viewPos, vec2 normalizedDeviceCoors)
+{
+    vec4 rayEye = inverseProj * vec4(normalizedDeviceCoors.xy, -1.0, 0.0);
+    rayEye.zw = vec2(-1.0, 0.0);
+    return Ray(viewPos, normalize((inverseView * rayEye).xyz));
+}
+
+bool IsInside(vec2 pos, vec2 size)
+{
+    return pos.x < size.x && pos.y < size.y;
+}
