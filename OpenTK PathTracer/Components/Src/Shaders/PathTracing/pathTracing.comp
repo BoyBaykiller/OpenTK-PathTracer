@@ -138,7 +138,7 @@ void main()
     
 
     vec3 lastFrameColor = imageLoad(ImgResult, imgCoord).rgb;
-    color = mix(lastFrameColor, color, 1.0 / thisRendererFrame);
+    color = mix(lastFrameColor, color, 1.0 / float(thisRendererFrame)); // Dividing float by uint is not supported by tested Nvidia cards
 
     imageStore(ImgResult, imgCoord, vec4(color, 1));
 }
