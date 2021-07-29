@@ -1,3 +1,2 @@
 # OpenTK-PathTracer
 <br>
-<br>
