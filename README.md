@@ -20,7 +20,7 @@ Due to the realistic nature of Path Tracers - tracing a ray over many bounces - 
 
 
 ## **Render Samples**
-<<<<<<< HEAD
+
 ![img1](https://github.com/JulianStambuk/OpenTK-PathTracer/blob/main/Screenshots/img1.png?raw=true)
 
 ![img3](https://github.com/JulianStambuk/OpenTK-PathTracer/blob/main/Screenshots/img3.png?raw=true)
