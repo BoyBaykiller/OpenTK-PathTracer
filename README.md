@@ -26,7 +26,3 @@ Due to the realistic nature of Path Tracers - tracing a ray over many bounces - 
 ![img3](https://github.com/JulianStambuk/OpenTK-PathTracer/blob/main/Screenshots/img3.png?raw=true)
 
 ![img2](https://github.com/JulianStambuk/OpenTK-PathTracer/blob/main/Screenshots/img2.png?raw=true)
-=======
-![img0](https://github.com/JulianStambuk/OpenTK-PathTracer/blob/main/Screenshots/img1.png?raw=true)
-![img0](https://github.com/JulianStambuk/OpenTK-PathTracer/blob/main/Screenshots/img3.png?raw=true)
->>>>>>> c2ab0745f649490b72bf883734a9abd73ad15473
