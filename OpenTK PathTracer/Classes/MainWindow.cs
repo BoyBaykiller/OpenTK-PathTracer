@@ -80,7 +80,7 @@ namespace OpenTK_PathTracer
             }
             if (onWindowFocus)
             {
-                grid.Update(gameObjects);
+                //grid.Update(gameObjects);
 
                 if (keyBoardState.IsKeyDown(Key.Escape))
                     Close();
@@ -122,7 +122,6 @@ namespace OpenTK_PathTracer
                     Ray rayWorld = Ray.GetWorldSpaceRay(inverseProjection, camera.View.Inverted(), camera.Position, normalizedDeviceCoords);
 
                     RayTrace(rayWorld, out GameObjectPropertyRenderer.RayObject);
-                    RayTrace(grid, rayWorld, out GameObjectPropertyRenderer.RayObject);
                 }
             }
 
@@ -150,7 +149,7 @@ namespace OpenTK_PathTracer
         protected override void OnLoad(EventArgs e)
         {
             Vector2 uboGameObjectsSize = new Vector2(343, 64);
-            int ssboCellsSize = 10 * 10 * 10;
+            int ssboCellsSize = 8 * 8 * 8;
 
             GL.Disable(EnableCap.DepthTest);
             GL.Disable(EnableCap.CullFace);
@@ -178,7 +177,7 @@ namespace OpenTK_PathTracer
             
             BasicDataUBO = new BufferObject(BufferRangeTarget.UniformBuffer, 0, Vector4.SizeInBytes * 4 * 5 + Vector4.SizeInBytes + Vector4.SizeInBytes, BufferUsageHint.StreamRead);
             GameObjectsUBO = new BufferObject(BufferRangeTarget.UniformBuffer, 1, (int)(Sphere.GPUInstanceSize * uboGameObjectsSize.X + Cuboid.GPUInstanceSize * uboGameObjectsSize.Y), BufferUsageHint.StreamRead);
-            GridCellsSSBO = new BufferObject(BufferRangeTarget.ShaderStorageBuffer, 0, ssboCellsSize * Grid.Cell.GPUInstanceSize + 3000 * sizeof(int), BufferUsageHint.StreamRead);
+            //GridCellsSSBO = new BufferObject(BufferRangeTarget.ShaderStorageBuffer, 0, ssboCellsSize * Grid.Cell.GPUInstanceSize + 1000 * sizeof(int), BufferUsageHint.StreamRead);
 
             Sphere.GlobalClassBufferOffset = 0;
             float width = 40, height = 25, depth = 25;
@@ -192,7 +191,7 @@ namespace OpenTK_PathTracer
                 {
                     for (float y = 0; y < balls; y++)
                     {
-                        gameObjects.Add(new Sphere(new Vector3(dimensions.X / balls * x * 1.1f - dimensions.X / 2, (dimensions.Y / balls) * y - dimensions.Y / 2 + radius, -17), radius, instancesSpheres++, new Material(albedo: new Vector3(0.59f, 0.59f, 0.99f), emissiv: new Vector3(0), refractionColor: Vector3.Zero, specularChance: x / (balls - 1), specularRoughness: y / (balls - 1), indexOfRefraction: 1.4f, refractionChance: 0.3f, refractionRoughnes: 0.1f)));
+                        gameObjects.Add(new Sphere(new Vector3(dimensions.X / balls * x * 1.1f - dimensions.X / 2, (dimensions.Y / balls) * y - dimensions.Y / 2 + radius, -17), radius, instancesSpheres++, new Material(albedo: new Vector3(0.59f, 0.59f, 0.99f), emissiv: new Vector3(0), refractionColor: Vector3.Zero, specularChance: x / (balls - 1), specularRoughness: y / (balls - 1), indexOfRefraction: 1f, refractionChance: 0.0f, refractionRoughnes: 0.1f)));
                     }
                 }
 
@@ -246,7 +245,7 @@ namespace OpenTK_PathTracer
             grid.Update(gameObjects);
 
 
-            // TODO: Clean this up
+            /*
             {
                 Vector4[] gridGPUData = grid.GetGPUFriendlyGridData();
                 GridCellsSSBO.SubData(0, Vector4.SizeInBytes * gridGPUData.Length, gridGPUData);
@@ -255,7 +254,7 @@ namespace OpenTK_PathTracer
                 GridCellsSSBO.SubData(ssboCellsSize * Grid.Cell.GPUInstanceSize, indecisData.Length * sizeof(int), indecisData);
                 pathTracing.program.Upload("ssboCellsSize", grid.Cells.Count);
             }
-
+            */
             
             pathTracing.NumSpheres = instancesSpheres;
             pathTracing.NumCuboids = instancesCuboids;

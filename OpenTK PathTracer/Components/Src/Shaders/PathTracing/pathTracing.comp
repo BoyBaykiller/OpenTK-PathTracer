@@ -1,7 +1,7 @@
 #version 450 core
 #define FLOAT_MAX 3.4028235e+38
 #define FLOAT_MIN -3.4028235e+38
-#define EPSILON 0.0001
+#define EPSILON 0.001
 #define PI 3.14159265358979323846264338327950288419
 
 #define WorkGroupSizeX 32
