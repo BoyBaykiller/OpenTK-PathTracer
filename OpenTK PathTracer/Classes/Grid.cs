@@ -54,6 +54,8 @@ namespace OpenTK_PathTracer
         public Vector3 Min { get; private set; }
         public Vector3 Max { get; private set; }
         public int[] Indecis { get; private set; }
+
+        public AABB RootAABB { get; private set; }
         public void Update(List<GameObject> gameObjects)
         {
             Cells.Clear();
@@ -65,6 +67,7 @@ namespace OpenTK_PathTracer
                 Min = Vec3Min(Min, gameObjects[i].Min);
                 Max = Vec3Max(Max, gameObjects[i].Max);
             }
+            RootAABB = new AABB((Min + Max) * 0.5f, Max - Min);
 
             CellSize = Vector3.Divide(Max - Min, new Vector3(Width, Height, Depth));
             List<int> indecis = new List<int>(gameObjects.Count);

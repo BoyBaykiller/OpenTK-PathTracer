@@ -140,6 +140,7 @@ namespace OpenTK_PathTracer.Render.Objects
             }
             SetTexImage2DCubeMap(new Bitmap(path), textureTarget);
         }
+
         public void SetTexImage2DCubeMap(Bitmap image, TextureTarget textureTarget)
         {
             Width = image.Width;
@@ -151,6 +152,7 @@ namespace OpenTK_PathTracer.Render.Objects
             image.UnlockBits(data);
             image.Dispose();
         }
+
         public void SetTexImage2DCubeMap(string[] paths)
         {
             bool _notfound = false;

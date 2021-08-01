@@ -87,6 +87,7 @@ namespace OpenTK_PathTracer
             Result.AttchToImageUnit(0, 0, false, 0, TextureAccess.ReadWrite, (SizedInternalFormat)Result.PixelInternalFormat);
             environmentMap.CubemapTexture.AttachToUnit(10);
             program.Upload(0, ++ThisRenderNumFrame);
+            
             //GL.DispatchCompute((int)MathF.Ceiling(Width / 4.0f), (int)MathF.Ceiling(Height / 16.0f), 1);
             GL.DispatchCompute((int)MathF.Ceiling(Width * Height / 32.0f), 1, 1);
 

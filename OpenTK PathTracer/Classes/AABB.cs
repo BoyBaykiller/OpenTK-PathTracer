@@ -22,7 +22,6 @@ namespace OpenTK_PathTracer
             Position = position;
             Min = position - (dimensions * 0.5f);
             Max = position + (dimensions * 0.5f);
-
         }
 
         public void Update()

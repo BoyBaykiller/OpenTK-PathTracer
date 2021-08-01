@@ -84,7 +84,7 @@ layout (std140, binding = 1) uniform GameObjectsUBO
 
 layout (std430, binding = 0) readonly buffer GridCellsSSBO
 {
-    Cell[10 * 10 * 10] Cells;
+    Cell[8 * 8 * 8] Cells;
     int[] Indecis;
 } gridCellsSSBO;
 
@@ -138,7 +138,7 @@ void main()
     
 
     vec3 lastFrameColor = imageLoad(ImgResult, imgCoord).rgb;
-    color = mix(lastFrameColor, color, 1.0 / thisRendererFrame);
+    color = mix(lastFrameColor, color, 1.0 / float(thisRendererFrame));
 
     imageStore(ImgResult, imgCoord, vec4(color, 1));
 }
@@ -262,7 +262,7 @@ bool GetClosestIntersectingRayObject(Ray ray, out HitInfo hitInfo)
     }
 
 
-    /*
+/*
     // TODO: Use DDA algorithm for traversal
     float cellT1, cellT2, cellMin = FLOAT_MAX;
     for (int i = 0; i < ssboCellsSize; i++)

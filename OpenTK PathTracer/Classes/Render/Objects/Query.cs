@@ -1,21 +1,20 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 
 using OpenTK.Graphics.OpenGL4;
 
 namespace OpenTK_PathTracer.Render.Objects
 {
-    class Query
+    class Query : IDisposable
     {
-        public int ID { get; private set; }
-
+        public readonly int ID;
         public float ElapsedMilliseconds { get; private set; }
 
+
+        private readonly Stopwatch timer = Stopwatch.StartNew();
+        private bool doStopAndReset = false;
+
         public uint UpdateQueryRate;
-        
-
-        private Stopwatch _timer = Stopwatch.StartNew();
-        private bool _doUpdate = false;
-
         public Query(uint updateQueryRate)
         {
             ID = GL.GenQuery();
@@ -24,31 +23,35 @@ namespace OpenTK_PathTracer.Render.Objects
 
 
         /// <summary>
-        /// Starts a timer on the GPU
+        /// If <paramref name="UpdateQueryRate"/> milliseconds are elapsed since the last Query, a new Query on the GPU, which captures all render commands from now until StopAndReset, is started.
         /// </summary>
         public void Start()
         {
-            if (_timer.ElapsedMilliseconds >= UpdateQueryRate)
+            if (timer.ElapsedMilliseconds >= UpdateQueryRate)
             {
                 GL.BeginQuery(QueryTarget.TimeElapsed, ID);
-                _doUpdate = true;
-                _timer.Restart();
+                doStopAndReset = true;
+                timer.Restart();
             }
-                
         }
 
         /// <summary>
-        /// Resets the timer on the GPU and gets the result
+        /// Resets the Query on the GPU and stores the result in <paramref name="ElapsedMilliseconds"/>
         /// </summary>
         public void StopAndReset()
         {
-            if (_doUpdate)
+            if (doStopAndReset)
             {
                 GL.EndQuery(QueryTarget.TimeElapsed);
                 GL.GetQueryObject(ID, GetQueryObjectParam.QueryResult, out int elapsedTime);
                 ElapsedMilliseconds = elapsedTime / 1000000f;
-                _doUpdate = false;
+                doStopAndReset = false;
             }
+        }
+
+        public void Dispose()
+        {
+            GL.DeleteQuery(ID);
         }
     }
 }
