@@ -33,54 +33,48 @@ namespace OpenTK_PathTracer.Render.Objects
 
         public static Texture GetTexture2D(TextureWrapMode textureWrapMode, PixelInternalFormat pixelInternalFormat, PixelFormat pixelFormat, int width, int height, float[] borderColor = null)
         {
-            var _texture = new Texture(TextureTarget.Texture2D, textureWrapMode, pixelInternalFormat, pixelFormat, false, borderColor == null ? null : borderColor);
-            _texture.SetTexImage(width, height, 0);
-            _texture.Unbind();
+            var texture = new Texture(TextureTarget.Texture2D, textureWrapMode, pixelInternalFormat, pixelFormat, false, borderColor == null ? null : borderColor);
+            texture.SetTexImage(width, height, 0);
 
-            return _texture;
+            return texture;
         }
         public static Texture GetTexture2D(string path, TextureWrapMode textureWrapMode, PixelInternalFormat pixelInternalFormat, PixelFormat pixelFormat, bool generateMipmap, float[] borderColor = null)
         {
-            var _texture = new Texture(TextureTarget.Texture2D, textureWrapMode, pixelInternalFormat, pixelFormat, generateMipmap, borderColor == null ? null : borderColor);
-            _texture.SetTexImage2D(path);
+            var texture = new Texture(TextureTarget.Texture2D, textureWrapMode, pixelInternalFormat, pixelFormat, generateMipmap, borderColor == null ? null : borderColor);
+            texture.SetTexImage2D(path);
             if (generateMipmap)
-                _texture.GenerateMipMap();
-            _texture.Unbind();
+                texture.GenerateMipMap();
 
-            return _texture;
+            return texture;
         }
 
-        public static Texture GetTextureCubeMap(TextureWrapMode textureWrapMode, PixelInternalFormat pixelInternalFormat, PixelFormat pixelFormat, int width, int height, float[] borderColor = null)
+        public static Texture GetTextureCubeMap(TextureWrapMode textureWrapMode, PixelInternalFormat pixelInternalFormat, PixelFormat pixelFormat, int size, float[] borderColor = null)
         {
-            var _texture = new Texture(TextureTarget.TextureCubeMap, textureWrapMode, pixelInternalFormat, pixelFormat, false, borderColor == null ? null : borderColor);
-            _texture.SetTexImage(width, height, 0);
-            _texture.Unbind();
+            var texture = new Texture(TextureTarget.TextureCubeMap, textureWrapMode, pixelInternalFormat, pixelFormat, false, borderColor == null ? null : borderColor);
+            texture.SetTexImage(size, size, 0);
 
-            return _texture;
+            return texture;
         }
         public static Texture GetTextureCubeMap(string[] paths, TextureWrapMode textureWrapMode, PixelInternalFormat pixelInternalFormat, PixelFormat pixelFormat, float[] borderColor = null)
         {
-            var _texture = new Texture(TextureTarget.TextureCubeMap, textureWrapMode, pixelInternalFormat, pixelFormat, false, borderColor == null ? null : borderColor);
-            _texture.SetTexImage2DCubeMap(paths);
-            _texture.Unbind();
+            var texture = new Texture(TextureTarget.TextureCubeMap, textureWrapMode, pixelInternalFormat, pixelFormat, false, borderColor == null ? null : borderColor);
+            texture.SetTexImage2DCubeMap(paths);
 
-            return _texture;
+            return texture;
         }
         public static Texture GetTextureCubeMap(Bitmap[] images, TextureWrapMode textureWrapMode, PixelInternalFormat pixelInternalFormat, PixelFormat pixelFormat, float[] borderColor = null)
         {
-            var _texture = new Texture(TextureTarget.TextureCubeMap, textureWrapMode, pixelInternalFormat, pixelFormat, false, borderColor == null ? null : borderColor);
-            _texture.SetTexImage2DCubeMap(images);
-            _texture.Unbind();
+            var texture = new Texture(TextureTarget.TextureCubeMap, textureWrapMode, pixelInternalFormat, pixelFormat, false, borderColor == null ? null : borderColor);
+            texture.SetTexImage2DCubeMap(images);
 
-            return _texture;
+            return texture;
         }
 
         public static Texture GetTexture2DArray(TextureWrapMode textureWrapMode, PixelInternalFormat pixelInternalFormat, PixelFormat pixelFormat, int width, int height, int textureCount, bool enableMipmap)
         {
-            var _texture = new Texture(TextureTarget.Texture2DArray, textureWrapMode, pixelInternalFormat, pixelFormat, enableMipmap, null);
-            _texture.SetTexImage(width, height, textureCount);
-            //_texture.Unbind();
-            return _texture;
+            var texture = new Texture(TextureTarget.Texture2DArray, textureWrapMode, pixelInternalFormat, pixelFormat, enableMipmap, null);
+            texture.SetTexImage(width, height, textureCount);
+            return texture;
         }
 
         public void SetParameters(TextureWrapMode textureWrapMode, PixelInternalFormat pixelInternalFormat, bool enableMipMap, float[] borderColor = null)
@@ -99,11 +93,11 @@ namespace OpenTK_PathTracer.Render.Objects
                 GL.TexParameter(TextureTarget, TextureParameterName.TextureMagFilter, (int)TextureMinFilter.Linear);
                 GL.TexParameter(TextureTarget, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
             }
-            if (TextureTarget == TextureTarget.TextureCubeMap)
-                GL.TexParameter(TextureTarget, TextureParameterName.TextureWrapR, (int)textureWrapMode);
-
+            
             GL.TexParameter(TextureTarget, TextureParameterName.TextureWrapS, (int)textureWrapMode);
             GL.TexParameter(TextureTarget, TextureParameterName.TextureWrapT, (int)textureWrapMode);
+            if (TextureTarget == TextureTarget.TextureCubeMap)
+                GL.TexParameter(TextureTarget, TextureParameterName.TextureWrapR, (int)textureWrapMode);
 
             if (borderColor != null)
                 GL.TexParameter(TextureTarget, TextureParameterName.TextureBorderColor, borderColor);
@@ -172,10 +166,15 @@ namespace OpenTK_PathTracer.Render.Objects
         public void SetTexImage2DCubeMap(Bitmap[] images)
         {
             if (!images.All(i => i.Width == images[0].Width && i.Height == images[0].Height))
+            {
                 Console.WriteLine("Texture: Cubemap textures have different size");
-
+                return;
+            }
+                
             for (int i = 0; i < 6; i++)
+            {
                 SetTexImage2DCubeMap(images[i], TextureTarget.TextureCubeMapPositiveX + i);
+            }
         }
 
         public void SetSubTexImage2DArray(string path, int index)
@@ -198,7 +197,7 @@ namespace OpenTK_PathTracer.Render.Objects
             image.Dispose();
         }
 
-        public void SetTexImage(int width, int height, int depth = 0)
+        public void SetTexImage(int width, int height, int depth = 1)
         {
             Bind();
             switch (TextureTarget)
@@ -213,7 +212,8 @@ namespace OpenTK_PathTracer.Render.Objects
                     break;
 
                 case TextureTarget.Texture2DArray:
-                    GL.TexImage3D(TextureTarget.Texture2DArray, 0, PixelInternalFormat, width, height, depth, 0, PixelFormat, PixelType.UnsignedByte, IntPtr.Zero);
+                    GL.TexImage3D(TextureTarget.Texture2DArray, 0, PixelInternalFormat, width, height, depth, 0, PixelFormat, PixelType.Float, IntPtr.Zero);
+                    Depth = depth;
                     break;
 
                 default:
@@ -221,7 +221,7 @@ namespace OpenTK_PathTracer.Render.Objects
                     break;
             }
 
-            Width = width; Height = height; Depth = depth;
+            Width = width; Height = height; 
         }
 
         public void AttchToImageUnit(int unit, int level, bool layered, int layer, TextureAccess textureAccess, SizedInternalFormat sizedInternalFormat)
@@ -231,9 +231,6 @@ namespace OpenTK_PathTracer.Render.Objects
 
         public void GenerateMipMap()
         {
-            //Bind();
-            //GL.TexParameter(TextureTarget, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapLinear);
-            //GL.TexParameter(TextureTarget, TextureParameterName.TextureLodBias, -0.5f);
             GL.GenerateTextureMipmap(ID);
         }
 
@@ -258,8 +255,8 @@ namespace OpenTK_PathTracer.Render.Objects
         public static void DetachTextureFromUnit(int unit)
         {
             Texture.Zero.AttachToUnit(unit);
-            //GL.BindTextureUnit(unit, 0);
         }
+
         public void Dispose()
         {
             GL.DeleteTexture(ID);

@@ -10,10 +10,6 @@ namespace OpenTK_PathTracer
 {
     class PathTracing : RenderEffect
     {
-        public int Width { get => Result.Width; }
-        public int Height { get => Result.Height; }
-
-
         private int _numSpheres;
         public int NumSpheres
         {
@@ -64,19 +60,18 @@ namespace OpenTK_PathTracer
             }
         }
 
+        public readonly EnvironmentMap environmentMap;
         public PathTracing(EnvironmentMap environmentMap, int width, int height, int rayDepth, int ssp)
         {
-            Query = new Query(1000);
-            program = new ShaderProgram(new Shader[] { new Shader(ShaderType.ComputeShader, @"Src\Shaders\PathTracing\pathTracing.comp") });
-            Result = Texture.GetTexture2D(TextureWrapMode.ClampToBorder, PixelInternalFormat.Rgba32f, PixelFormat.Rgb, width, height);
+            //Query = new Query(1000);
+
+            Result = Texture.GetTexture2D(TextureWrapMode.ClampToBorder, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, width, height);
+            program = new ShaderProgram(new Shader[] { new Shader(ShaderType.ComputeShader, @"Src\Shaders\PathTracing\compute.comp") });
             
             RayDepth = rayDepth;
             SSP = ssp;
             this.environmentMap = environmentMap;
         }
-
-        public readonly ShaderProgram program; // public until code cleanup
-        private readonly EnvironmentMap environmentMap;
 
         public uint ThisRenderNumFrame = 0;
         public override void Run(params object[] _)
@@ -85,11 +80,12 @@ namespace OpenTK_PathTracer
 
             program.Use();
             Result.AttchToImageUnit(0, 0, false, 0, TextureAccess.ReadWrite, (SizedInternalFormat)Result.PixelInternalFormat);
-            environmentMap.CubemapTexture.AttachToUnit(10);
+            environmentMap.CubemapTexture.AttachToUnit(0);
             program.Upload(0, ++ThisRenderNumFrame);
             
-            //GL.DispatchCompute((int)MathF.Ceiling(Width / 4.0f), (int)MathF.Ceiling(Height / 16.0f), 1);
+            //GL.DispatchCompute((int)MathF.Ceiling(Width / 8.0f), (int)MathF.Ceiling(Height / 4.0f), 1);
             GL.DispatchCompute((int)MathF.Ceiling(Width * Height / 32.0f), 1, 1);
+            GL.MemoryBarrier(MemoryBarrierFlags.ShaderImageAccessBarrierBit);
 
             //Query.StopAndReset();
         }

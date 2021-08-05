@@ -1,24 +1,24 @@
 #version 450 core
 layout(location = 0) out vec4 FragColor;
 
-layout(binding = 0) uniform sampler2D SamplerTexture;
-layout(binding = 1) uniform sampler2D SamplerRasterizer;
+layout(binding = 0) uniform sampler2D Sampler0;
+layout(binding = 1) uniform sampler2D Sampler1;
+layout(binding = 2) uniform sampler2D Sampler2;
 
 vec3 LessThan(vec3 f, float value);
-vec3 LinearToSRGB(vec3 rgb);
-vec3 SRGBToLinear(vec3 rgb);
+vec3 InverseGamma(vec3 rgb);
 vec3 ACESFilm(vec3 x);
 
-layout (location = 0) uniform float DEBUG;
 
 in vec2 TexCoord;
 void main()
 {
-    vec3 color = texture(SamplerTexture, TexCoord).rgb;
-    color += texture(SamplerRasterizer, TexCoord).rgb;
-
+    vec3 color = texture(Sampler0, TexCoord).rgb;
+    color += texture(Sampler1, TexCoord).rgb;
+    //color += texture(Sampler2, TexCoord).rgb;
+    
     color = ACESFilm(color);
-    color = LinearToSRGB(color);
+    color = InverseGamma(color);
     
     FragColor = vec4(color, 1.0); 
 }
@@ -31,10 +31,9 @@ vec3 LessThan(vec3 f, float value)
         (f.z < value) ? 1.0 : 0.0);
 }
 
-vec3 LinearToSRGB(vec3 rgb)
+vec3 InverseGamma(vec3 rgb)
 {
     rgb = clamp(rgb, 0.0, 1.0);
-     
     return mix(
         pow(rgb, vec3(1.0 / 2.4)) * 1.055 - 0.055,
         rgb * 12.92,
@@ -42,17 +41,6 @@ vec3 LinearToSRGB(vec3 rgb)
     );
 }
  
-vec3 SRGBToLinear(vec3 rgb)
-{
-    rgb = clamp(rgb, 0.0, 1.0);
-     
-    return mix(
-        pow(((rgb + 0.055) / 1.055), vec3(2.4)),
-        rgb / 12.92,
-        LessThan(rgb, 0.04045)
-    );
-}
-
 // ACES tone mapping curve fit to go from HDR to LDR
 //https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/
 vec3 ACESFilm(vec3 x)

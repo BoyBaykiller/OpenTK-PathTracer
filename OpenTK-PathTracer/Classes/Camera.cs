@@ -14,7 +14,7 @@ namespace OpenTK_PathTracer
         public float MovmentSpeed;
         public float MouseSensitivity;
         public Matrix4 View { get; private set; }
-        public Camera(Vector3 position, Vector3 viewDir, Vector3 up, float mouseSensitivity = 0.1f, float speed = 10, float resistance = 0.911f)
+        public Camera(Vector3 position, Vector3 viewDir, Vector3 up, float mouseSensitivity = 0.1f, float speed = 10)
         {
             View = Matrix4.LookAt(position, position + viewDir, up);
             Position = position;
@@ -68,7 +68,7 @@ namespace OpenTK_PathTracer
             if (keyboardState.IsKeyDown(Key.A))
                 acceleration -= Vector3.Cross(ViewDir, Up).Normalized();
 
-            Velocity += acceleration;
+            Velocity += keyboardState.IsKeyDown(Key.LShift) ? acceleration * 5 : acceleration;
             Position += Velocity * dT;
             if (Vector3.Dot(Velocity, Velocity) < 0.1f)
                 Velocity = Vector3.Zero;
@@ -76,9 +76,11 @@ namespace OpenTK_PathTracer
                 frameChanged = true;
 
             Velocity *= 0.95f;
-            View = Matrix4.LookAt(Position, Position + ViewDir, Up);
+            View = GenerateMatrix(Position, ViewDir, Up);
             
             lastMouseState = mouseState;
         }
+
+        public static Matrix4 GenerateMatrix(Vector3 position, Vector3 viewDir, Vector3 up) => Matrix4.LookAt(position, position + viewDir, up);
     }
 }

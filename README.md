@@ -5,7 +5,7 @@ I am presenting to you a noisy, yet fully [Path Traced](https://de.wikipedia.org
 
 The calculations and rendering are done in real-time using OpenGL.  
 I upload the whole Scene (only consisting out of Cuboids and Spheres for now) to a UBO which is then accessed in a Compute Shader where all the Path Tracing happens.
-Due to the realistic nature of Path Tracers - tracing a ray over many bounces - various effects like soft shadows, reflections and ambient occlusion emerge automatically, without explicitly adding any code like you would have to do in a rasterizer.
+Due to the realistic nature of Path Tracers - tracing a ray over many bounces - various effects like soft shadows, reflections or ambient occlusion emerge automatically, without explicitly adding any code like you would have to do in a rasterizer.
 
 ## **Controls**
 

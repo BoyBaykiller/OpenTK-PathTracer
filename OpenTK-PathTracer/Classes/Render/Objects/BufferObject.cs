@@ -57,7 +57,7 @@ namespace OpenTK_PathTracer.Render.Objects
         }
 
         /// <summary>
-        /// Sets <paramref name="WritingOffset"/> to 0 and overrides the content to 0
+        /// Sets <paramref name="BufferOffset"/> to 0 and overrides the content with 0
         /// </summary>
         /// <param name="removeData"></param>
         public void Reset()
@@ -103,6 +103,16 @@ namespace OpenTK_PathTracer.Render.Objects
             Bind();
             GL.BufferData(BufferTarget, size, IntPtr.Zero, BufferUsageHint);
             Size = size;
+        }
+
+        public void GetSubData<T5>(int offset, int size, T5[] data) where T5 : struct
+        {
+            GL.GetNamedBufferSubData(ID, (IntPtr)offset, size, data);
+        }
+
+        public void GetSubData(int offset, int size, IntPtr data)
+        {
+            GL.GetNamedBufferSubData(ID, (IntPtr)offset, size, data);
         }
     }
 }

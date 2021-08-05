@@ -11,7 +11,7 @@ namespace OpenTK_PathTracer.Render.Objects
         public float ElapsedMilliseconds { get; private set; }
 
 
-        private readonly Stopwatch timer = Stopwatch.StartNew();
+        private readonly Stopwatch timer = new Stopwatch();
         private bool doStopAndReset = false;
 
         public uint UpdateQueryRate;
@@ -27,7 +27,7 @@ namespace OpenTK_PathTracer.Render.Objects
         /// </summary>
         public void Start()
         {
-            if (timer.ElapsedMilliseconds >= UpdateQueryRate)
+            if (!timer.IsRunning || timer.ElapsedMilliseconds >= UpdateQueryRate)
             {
                 GL.BeginQuery(QueryTarget.TimeElapsed, ID);
                 doStopAndReset = true;

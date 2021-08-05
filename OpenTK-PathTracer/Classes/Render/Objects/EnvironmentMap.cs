@@ -7,12 +7,23 @@ using OpenTK.Graphics.OpenGL4;
 
 namespace OpenTK_PathTracer.Render.Objects
 {
-    class EnvironmentMap
+    class EnvironmentMap : IDisposable
     {
-        public Texture CubemapTexture { get; private set; }
+        public Texture CubemapTexture;
+
         public EnvironmentMap()
         {
-            CubemapTexture = new Texture(TextureTarget.TextureCubeMap, TextureWrapMode.ClampToBorder, PixelInternalFormat.Rgb, PixelFormat.Rgb, false);
+            CubemapTexture = new Texture(TextureTarget.TextureCubeMap, TextureWrapMode.ClampToBorder, PixelInternalFormat.Srgb, PixelFormat.Rgba, false);
+        }
+
+        public EnvironmentMap(Texture texture)
+        {
+            if (texture.TextureTarget != TextureTarget.TextureCubeMap)
+            {
+                Console.WriteLine($"EnvironmentMap: Specified texture is not of Type {TextureTarget.TextureCubeMap}");
+                return;
+            }
+            CubemapTexture = texture;
         }
 
         public enum Side
@@ -29,6 +40,7 @@ namespace OpenTK_PathTracer.Render.Objects
         {
             CubemapTexture.SetTexImage2DCubeMap(image, (TextureTarget)side);
         }
+
         public void SetSideParallel(string[] paths)
         {
             if (paths.Length != 6)
@@ -58,6 +70,11 @@ namespace OpenTK_PathTracer.Render.Objects
                 CubemapTexture.SetTexImage2DCubeMap(bitmaps);
             });
             ThreadManager.ExecuteOnMainThread(action, ThreadManager.Priority.ASAP);
+        }
+
+        public void Dispose()
+        {
+            CubemapTexture.Dispose();
         }
     }
 }

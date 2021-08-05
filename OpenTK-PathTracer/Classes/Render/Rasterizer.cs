@@ -7,46 +7,42 @@ namespace OpenTK_PathTracer.Render
 {
     class Rasterizer : RenderEffect
     {
-        public int Width { get => Result.Width; }
-        public int Height { get => Result.Height; }
-
-        public Framebuffer Framebuffer { get; private set; } = new Framebuffer();
-        
-        private readonly ShaderProgram program;
         private readonly VAO vao;
         private readonly BufferObject vbo;
         public Rasterizer(int width, int height)
         {
-            Query = new Query(1000);
+            //Query = new Query(1000);
+            
+            framebuffer = new Framebuffer();
             Result = Texture.GetTexture2D(TextureWrapMode.ClampToBorder, PixelInternalFormat.Rgb, PixelFormat.Rgb, width, height);
-            Framebuffer.SetRenderTarget(FramebufferAttachment.ColorAttachment0, Result);
+            framebuffer.AddRenderTarget(FramebufferAttachment.ColorAttachment0, Result);
+            
             program = new ShaderProgram(new Shader[] { new Shader(ShaderType.VertexShader, @"Src\Shaders\Rasterizer\vertex.vs"), new Shader(ShaderType.FragmentShader, @"Src\Shaders\Rasterizer\fragment.frag") });
+
             vao = new VAO();
             {
-                vbo = new BufferObject(BufferTarget.ArrayBuffer, vertecis.Length * sizeof(float), BufferUsageHint.StaticDraw);
-                vbo.SubData(0, vertecis.Length * sizeof(float), vertecis);
+                vbo = new BufferObject(BufferTarget.ArrayBuffer, unitCubeVerts.Length * sizeof(float), BufferUsageHint.StaticDraw);
+                vbo.SubData(0, unitCubeVerts.Length * sizeof(float), unitCubeVerts);
                 vao.SetAttribPointer(0, 3, VertexAttribPointerType.Float, 3 * sizeof(float), 0 * sizeof(float));
             }
+            
         }
 
-        public override void Run(params object[] arrAABB)
+        public override void Run(params object[] aabbArr)
         {
             //Query.Start();
-
-            Framebuffer.Bind();
+            framebuffer.Clear(ClearBufferMask.ColorBufferBit);
             program.Use();
             vao.Bind();
-
-            //GL.Clear(ClearBufferMask.ColorBufferBit);
             GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
-            AABB[] aabbs = (AABB[])arrAABB[0];
-
+            
+            AABB[] aabbs = (AABB[])aabbArr[0];
             for (int i = 0; i < aabbs.Length; i++)
             {
                 //Matrix4 model = Matrix4.CreateScale(aabbs[i].Dimensions) * Matrix4.CreateTranslation(aabbs[i].Position);
                 Matrix4 model = Matrix4.CreateScale(aabbs[i].Max - aabbs[i].Min) * Matrix4.CreateTranslation(aabbs[i].Position);
                 program.Upload(0, model);
-                GL.DrawArrays(PrimitiveType.Quads, 0, vertecis.Length / 3);
+                GL.DrawArrays(PrimitiveType.Quads, 0, unitCubeVerts.Length / 3);
             }
 
             GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Fill);
@@ -59,10 +55,7 @@ namespace OpenTK_PathTracer.Render
             Result.SetTexImage(width, height);
         }
 
-        /// <summary>
-        /// Represents the coordinates of a simple unit cube
-        /// </summary>
-        private static readonly float[] vertecis = new float[]
+        private static readonly float[] unitCubeVerts = new float[]
         {
                 -0.5f,  0.5f, -0.5f,
                 -0.5f, -0.5f, -0.5f,
