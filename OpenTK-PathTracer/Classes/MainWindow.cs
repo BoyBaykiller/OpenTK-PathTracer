@@ -164,8 +164,7 @@ namespace OpenTK_PathTracer
             GameObjectsUBO = new BufferObject(BufferRangeTarget.UniformBuffer, 1, (int)(Sphere.GPUInstanceSize * uboGameObjectsSize.X + Cuboid.GPUInstanceSize * uboGameObjectsSize.Y), BufferUsageHint.StreamRead);
             finalProgram = new ShaderProgram(new Shader[] { new Shader(ShaderType.VertexShader, @"Src\Shaders\screenQuad.vs"), new Shader(ShaderType.FragmentShader, @"Src\Shaders\final.frag") });
 
-            AtmosphericScattering = new AtmosphericScattering(1024, 50, 10, 40, 1, new Vector3(300, 530, 440));
-            AtmosphericScattering.WaveLengths = new Vector3(700, 530, 440);
+            AtmosphericScattering = new AtmosphericScattering(1024, 50, 10, 40, 1, new Vector3(700, 530, 440));
             AtmosphericScattering.Run();
 
             PathTracing = new PathTracing(new EnvironmentMap(AtmosphericScattering.Result), Width, Height, 8, 1);

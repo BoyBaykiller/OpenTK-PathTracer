@@ -73,7 +73,7 @@ namespace OpenTK_PathTracer.Render
 
         public AtmosphericScattering(int size, int inScatteringSamples, int densitySamples, float densityFallOff, float atmossphereRadius, Vector3 waveLengths)
         {
-            Query = new Query(1000);
+            Query = new Query(200);
 
             Result = Texture.GetTextureCubeMap(TextureWrapMode.ClampToBorder, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, size);
             program = new ShaderProgram(new Shader[] { new Shader(ShaderType.ComputeShader, @"Src\Shaders\AtmosphericScattering\compute.comp") });

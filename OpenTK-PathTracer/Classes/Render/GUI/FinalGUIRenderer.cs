@@ -59,6 +59,8 @@ namespace OpenTK_PathTracer.Render.GUI
 
             ImGui.Begin("AtmossphericScattering", ImGuiWindowFlags.AlwaysAutoResize);
             {
+                ImGui.Text($"Computation Time: {MathF.Round(mainWindow.AtmosphericScattering.Query.ElapsedMilliseconds, 2)} ms");
+
                 int tempInt = mainWindow.AtmosphericScattering.InScatteringSamples;
                 if (ImGui.SliderInt("InScatteringSamples", ref tempInt, 1, 100))
                 {
