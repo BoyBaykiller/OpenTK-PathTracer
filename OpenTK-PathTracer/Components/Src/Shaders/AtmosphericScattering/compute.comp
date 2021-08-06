@@ -28,36 +28,35 @@ Ray GetWorldSpaceRay(mat4 inverseProj, mat4 inverseView, vec3 viewPos, vec2 norm
 bool IsInside(vec2 pos, vec2 size);
 
 
-const vec3 PlanetPos = vec3(0, -1000, 0);
-const float PlanetRad = 800;
+const vec3 PlanetPos = vec3(0, -800, 0);
+const float PlanetRad = 600;
 uniform float atmossphereRad;
 
-uniform vec3 LightPos = vec3(0, 1000, 0);
+uniform vec3 lightPos;
 
 uniform float densityFallOff;
 
 uniform int inScatteringSamples;
 uniform int densitySamples;
-
+uniform float scatteringStrength;
 
 uniform vec3 waveLengths;
 vec3 ScatteringCoefficients;
+
 void main()
 {
-    ScatteringCoefficients = vec3(pow(400 / max(waveLengths.x, EPSILON), 4), pow(400 / max(waveLengths.y, EPSILON), 4), pow(400 / max(waveLengths.z, EPSILON), 4));
+    ScatteringCoefficients = vec3(pow(400 / max(waveLengths.x, EPSILON), 4), pow(400 / max(waveLengths.y, EPSILON), 4), pow(400 / max(waveLengths.z, EPSILON), 4)) * scatteringStrength;
     ivec2 imgResultSize = imageSize(ImgResult);
-    //ivec3 imgCoord = ivec3(gl_GlobalInvocationID.x % imgResultSize.y, gl_GlobalInvocationID.x / imgResultSize.y, gl_GlobalInvocationID.z);
     ivec3 imgCoord = ivec3(gl_GlobalInvocationID);
-    //if (!IsInside(imgCoord.xy, imgResultSize))
-        //return;
+    if (!IsInside(imgCoord.xy, imgResultSize))
+        return;
+    
     vec2 NDC = vec2(imgCoord.xy) / imgResultSize * 2.0 - 1.0;
     
-    Ray rayEyeToWorld;
-    vec3 scattered;
-
-    rayEyeToWorld = GetWorldSpaceRay(atmoDataUBO.InvProjection, atmoDataUBO.InvView[imgCoord.z], atmoDataUBO.ViewPos, NDC); // PositiveX
-    scattered = CalculateScattering(rayEyeToWorld, inScatteringSamples);
-    imageStore(ImgResult, ivec3(imgCoord), vec4(scattered, 1.0));
+    Ray rayEyeToWorld = GetWorldSpaceRay(atmoDataUBO.InvProjection, atmoDataUBO.InvView[imgCoord.z], atmoDataUBO.ViewPos, NDC);
+    vec3 scattered = CalculateScattering(rayEyeToWorld, inScatteringSamples);
+    
+    imageStore(ImgResult, imgCoord, vec4(scattered, 1.0));
 }
 
 
@@ -82,9 +81,9 @@ vec3 CalculateScattering(Ray ray, int samples)
     vec3 scatteredLight = vec3(0);
     for (int i = 0; i < samples; i++)
     {
-        ray.Direction = normalize(LightPos - ray.Origin);
+        ray.Direction = normalize(lightPos - ray.Origin);
         RaySphereIntersect(ray, PlanetPos, PlanetRad + atmossphereRad, t1, t2);
-        
+    
         float avgDensityAlongRay = AvgDensityOver(ray.Origin, ray.Origin + ray.Direction * t2, densitySamples);
         float avgDensityAlongViewRay = AvgDensityOver(viewPos, ray.Origin, densitySamples);
         vec3 transmitted = exp((-avgDensityAlongRay - avgDensityAlongViewRay) * ScatteringCoefficients); // combines transmittance from Densityray and ViewRay
@@ -92,6 +91,7 @@ vec3 CalculateScattering(Ray ray, int samples)
         float localDensity = DensityAtPoint(ray.Origin);
 
         scatteredLight += localDensity * transmitted * ScatteringCoefficients;
+        
         ray.Origin += deltaStep;
     }
     return scatteredLight / samples;

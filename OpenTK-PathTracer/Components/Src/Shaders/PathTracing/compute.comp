@@ -1,8 +1,10 @@
 #version 450 core
+#extension GL_ARB_bindless_texture : require
 #define FLOAT_MAX 3.4028235e+38
 #define FLOAT_MIN -3.4028235e+38
 #define EPSILON 0.001
 #define PI 3.14159265358979323846264338327950288419
+
 
 //layout (local_size_x = 8, local_size_y = 4, local_size_z = 1) in;
 layout (local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
@@ -71,6 +73,7 @@ layout (std140, binding = 1) uniform GameObjectsUBO
 	Cuboid[64] Cuboids;
 } gameObjectsUBO;
 
+
 vec3 PathTrace(Ray ray);
 bool GetClosestIntersectingRayObject(Ray ray, out HitInfo hitInfo);
 bool GetClosestIntersectingLight(Ray ray, out HitInfo hitInfo);
@@ -110,10 +113,11 @@ void main()
 
     rndSeed = gl_GlobalInvocationID.x * 1973 + gl_GlobalInvocationID.y * 9277 + thisRendererFrame * 2699 | 1;
 
+
     vec2 jitter = vec2(GetRandomFloat01(rndSeed), GetRandomFloat01(rndSeed)) - 0.5;
     vec2 NDC = (imgCoord + jitter) / imgResultSize * 2.0 - 1.0;
     Ray rayEyeToWorld = GetWorldSpaceRay(basicDataUBO.InvProjection, basicDataUBO.InvView, basicDataUBO.ViewPos, NDC);
-    vec3 test = texture(ImgEnvironment, vec3(1)).rgb;
+
     vec3 color = vec3(0);
     for (int i = 0; i < SSP; i++)
         color += PathTrace(rayEyeToWorld);
@@ -124,6 +128,7 @@ void main()
     color = mix(lastFrameColor, color, 1.0 / float(thisRendererFrame)); // Dividing float by uint is not supported by tested Nvidia cards
 
     imageStore(ImgResult, imgCoord, vec4(color, 1.0));   
+    
 }
 
 const float airIOR = 1.000293;

@@ -35,6 +35,19 @@ namespace OpenTK_PathTracer.Render
             }
         }
 
+        private float _scatteringStrength;
+        public float ScatteringStrength
+        {
+            get => _scatteringStrength;
+
+            set
+            {
+                program.Upload("scatteringStrength", value);
+                _scatteringStrength = value;
+            }
+        }
+
+
         private float _densityFallOff;
         public float DensityFallOff
         {
@@ -46,6 +59,7 @@ namespace OpenTK_PathTracer.Render
                 _densityFallOff = value;
             }
         }
+
 
         private float _atmossphereRadius;
         public float AtmossphereRadius
@@ -59,6 +73,7 @@ namespace OpenTK_PathTracer.Render
             }
         }
 
+
         private Vector3 _waveLenghts;
         public Vector3 WaveLengths
         {
@@ -71,7 +86,19 @@ namespace OpenTK_PathTracer.Render
             }
         }
 
-        public AtmosphericScattering(int size, int inScatteringSamples, int densitySamples, float densityFallOff, float atmossphereRadius, Vector3 waveLengths)
+        private Vector3 _lightPos;
+        public Vector3 LightPos
+        {
+            get => _lightPos;
+
+            set
+            {
+                program.Upload("lightPos", value);
+                _lightPos = value;
+            }
+        }
+
+        public AtmosphericScattering(int size, int inScatteringSamples, int densitySamples, float scatteringStrength, float densityFallOff, float atmossphereRadius, Vector3 waveLengths, Vector3 lightPos)
         {
             Query = new Query(200);
 
@@ -79,7 +106,7 @@ namespace OpenTK_PathTracer.Render
             program = new ShaderProgram(new Shader[] { new Shader(ShaderType.ComputeShader, @"Src\Shaders\AtmosphericScattering\compute.comp") });
             bufferObject = new BufferObject(BufferRangeTarget.UniformBuffer, 2, Vector4.SizeInBytes * 4 * 7 + Vector4.SizeInBytes, BufferUsageHint.StaticDraw);
 
-            Matrix4 invProjection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(90), 1, 0.1f, 100f).Inverted();
+            Matrix4 invProjection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(90), 1, 0.1f, 10f).Inverted();
             Matrix4[] invViews = new Matrix4[]
             {
                 Camera.GenerateMatrix(Vector3.Zero, new Vector3(1.0f, 0.0f, 0.0f), new Vector3(0.0f, -1.0f, 0.0f)), // PositiveX
@@ -88,7 +115,7 @@ namespace OpenTK_PathTracer.Render
                 // Fix: Conventions say that these should be reversed. Am I doing smth reversed in shader?! (May be reversed other GPUs)
                 Camera.GenerateMatrix(Vector3.Zero, new Vector3(0.0f, -1.0f, 0.0f), new Vector3(0.0f, 0.0f, -1.0f)), // NegativeY
                 Camera.GenerateMatrix(Vector3.Zero, new Vector3(0.0f, 1.0f, 0.0f), new Vector3(0.0f, 0.0f, 1.0f)), // PositiveY
-                
+
                 Camera.GenerateMatrix(Vector3.Zero, new Vector3(0.0f, 0.0f, 1.0f), new Vector3(0.0f, -1.0f, 0.0f)), // PositiveZ
                 Camera.GenerateMatrix(Vector3.Zero, new Vector3(0.0f, 0.0f, -1.0f), new Vector3(0.0f, -1.0f, 0.0f)), // NegativeZ
             };
@@ -100,9 +127,11 @@ namespace OpenTK_PathTracer.Render
 
             InScatteringSamples = inScatteringSamples;
             DensitySamples = densitySamples;
+            ScatteringStrength = scatteringStrength;
             DensityFallOff = densityFallOff;
             AtmossphereRadius = atmossphereRadius;
             WaveLengths = waveLengths;
+            LightPos = lightPos;
         }
 
         public override void Run(params object[] viewPos)
@@ -129,7 +158,7 @@ namespace OpenTK_PathTracer.Render
             }
 
             Result.SetTexImage(width, height);
-            Matrix4 invProjection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(90), 1, 0.1f, 100f).Inverted();
+            Matrix4 invProjection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(90), 1, 0.1f, 10f).Inverted();
             bufferObject.SubData(0, Vector4.SizeInBytes * 4, invProjection);
         }
     }

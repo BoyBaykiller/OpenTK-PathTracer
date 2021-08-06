@@ -77,8 +77,16 @@ namespace OpenTK_PathTracer.Render.GUI
                     mainWindow.AtmosphericScattering.Run();
                 }
 
-                float temp = mainWindow.AtmosphericScattering.DensityFallOff;
-                if (ImGui.SliderFloat("DensityFallOff", ref temp, 0.1f, 100))
+                float temp = mainWindow.AtmosphericScattering.ScatteringStrength;
+                if (ImGui.DragFloat("ScatteringStrength", ref temp, 0.15f, 0.1f, 10))
+                {
+                    frameChanged = true;
+                    mainWindow.AtmosphericScattering.ScatteringStrength = temp;
+                    mainWindow.AtmosphericScattering.Run();
+                }
+
+                temp = mainWindow.AtmosphericScattering.DensityFallOff;
+                if (ImGui.DragFloat("DensityFallOff", ref temp, 0.5f, 0.1f, 40))
                 {
                     frameChanged = true;
                     mainWindow.AtmosphericScattering.DensityFallOff = temp;
@@ -86,7 +94,7 @@ namespace OpenTK_PathTracer.Render.GUI
                 }
 
                 temp = mainWindow.AtmosphericScattering.AtmossphereRadius;
-                if (ImGui.SliderFloat("AtmossphereRadius", ref temp, 1, 400))
+                if (ImGui.DragFloat("AtmossphereRadius", ref temp, 0.2f, 0.1f, 100))
                 {
                     frameChanged = true;
                     mainWindow.AtmosphericScattering.AtmossphereRadius = temp;
@@ -101,11 +109,7 @@ namespace OpenTK_PathTracer.Render.GUI
                     mainWindow.AtmosphericScattering.WaveLengths = NVector3ToVector3(nVector3);
                     mainWindow.AtmosphericScattering.Run();
                 }
-
-                ImGui.End();
             }
-           
-
             ImGuiController.Render();
         }
 

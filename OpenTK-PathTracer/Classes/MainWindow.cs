@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Drawing;
 using System.Diagnostics;
 using System.Collections.Generic;
@@ -20,7 +19,7 @@ namespace OpenTK_PathTracer
     {
         public MainWindow() : base(832, 832, new GraphicsMode(0, 0, 0, 0)) { /*WindowState = WindowState.Fullscreen;*/ }
 
-        public const float Epsilon = 0.001f, FOV = 103;
+        public const float Epsilon = 0.005f, FOV = 103;
 
         Matrix4 projection, inverseProjection;
 
@@ -164,10 +163,22 @@ namespace OpenTK_PathTracer
             GameObjectsUBO = new BufferObject(BufferRangeTarget.UniformBuffer, 1, (int)(Sphere.GPUInstanceSize * uboGameObjectsSize.X + Cuboid.GPUInstanceSize * uboGameObjectsSize.Y), BufferUsageHint.StreamRead);
             finalProgram = new ShaderProgram(new Shader[] { new Shader(ShaderType.VertexShader, @"Src\Shaders\screenQuad.vs"), new Shader(ShaderType.FragmentShader, @"Src\Shaders\final.frag") });
 
-            AtmosphericScattering = new AtmosphericScattering(1024, 50, 10, 40, 1, new Vector3(700, 530, 440));
+            //EnvironmentMap skyBox = new EnvironmentMap();
+            //skyBox.SetSideParallel(new string[]
+            //{
+            //    @"Src\Textures\EnvironmentMap\posx.png",
+            //    @"Src\Textures\EnvironmentMap\negx.png",
+            //    @"Src\Textures\EnvironmentMap\posy.png",
+            //    @"Src\Textures\EnvironmentMap\negy.png",
+            //    @"Src\Textures\EnvironmentMap\posz.png",
+            //    @"Src\Textures\EnvironmentMap\negz.png",
+            //});
+
+            AtmosphericScattering = new AtmosphericScattering(1024, 60, 20, 2.1f, 20.0f, 1.0f, new Vector3(700, 530, 440), new Vector3(0, 500, 0));
             AtmosphericScattering.Run();
 
             PathTracing = new PathTracing(new EnvironmentMap(AtmosphericScattering.Result), Width, Height, 8, 1);
+            
             Rasterizer = new Rasterizer(Width, Height);
             PostProcess = new ScreenEffect(new Shader(ShaderType.FragmentShader, @"Src\Shaders\PostProcessing\fragment.frag"), Width, Height);
 
@@ -232,7 +243,6 @@ namespace OpenTK_PathTracer
 
             for (int i = 0; i < gameObjects.Count; i++)
                 gameObjects[i].Upload(GameObjectsUBO);
-
 
             {
                 int ssboCellsSize = 8 * 8 * 8;
