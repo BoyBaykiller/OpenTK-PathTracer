@@ -54,7 +54,7 @@ struct Ray {
     vec3 Direction;
 };
 
-layout (shared, binding = 0) restrict uniform BasicDataUBO
+layout (shared, binding = 0) uniform BasicDataUBO
 {
 	mat4 Projection;
     mat4 InvProjection;
@@ -65,7 +65,7 @@ layout (shared, binding = 0) restrict uniform BasicDataUBO
 	vec3 ViewPos;
 } basicDataUBO;
 
-layout (std140, binding = 1) restrict uniform GameObjectsUBO
+layout (std140, binding = 1) uniform GameObjectsUBO
 {
     Sphere[343] Spheres;
 	Cuboid[64] Cuboids;
