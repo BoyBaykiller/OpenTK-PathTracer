@@ -18,7 +18,7 @@ namespace OpenTK_PathTracer.Render
 
             set
             {
-                program.Upload("inScatteringSamples", value);
+                Program.Upload("inScatteringSamples", value);
                 _inScatteringSamples = value;
             }
         }
@@ -30,7 +30,7 @@ namespace OpenTK_PathTracer.Render
 
             set
             {
-                program.Upload("densitySamples", value);
+                Program.Upload("densitySamples", value);
                 _densitySamples = value;
             }
         }
@@ -42,7 +42,7 @@ namespace OpenTK_PathTracer.Render
 
             set
             {
-                program.Upload("scatteringStrength", value);
+                Program.Upload("scatteringStrength", value);
                 _scatteringStrength = value;
             }
         }
@@ -55,7 +55,7 @@ namespace OpenTK_PathTracer.Render
 
             set
             {
-                program.Upload("densityFallOff", value);
+                Program.Upload("densityFallOff", value);
                 _densityFallOff = value;
             }
         }
@@ -68,7 +68,7 @@ namespace OpenTK_PathTracer.Render
 
             set
             {
-                program.Upload("atmossphereRad", value);
+                Program.Upload("atmossphereRad", value);
                 _atmossphereRadius = value;
             }
         }
@@ -81,7 +81,7 @@ namespace OpenTK_PathTracer.Render
 
             set
             {
-                program.Upload("waveLengths", value);
+                Program.Upload("waveLengths", value);
                 _waveLenghts = value;
             }
         }
@@ -93,7 +93,7 @@ namespace OpenTK_PathTracer.Render
 
             set
             {
-                program.Upload("lightPos", value);
+                Program.Upload("lightPos", value);
                 _lightPos = value;
             }
         }
@@ -102,8 +102,8 @@ namespace OpenTK_PathTracer.Render
         {
             Query = new Query(200);
 
-            Result = Texture.GetTextureCubeMap(TextureWrapMode.ClampToBorder, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, size);
-            program = new ShaderProgram(new Shader[] { new Shader(ShaderType.ComputeShader, @"Src\Shaders\AtmosphericScattering\compute.comp") });
+            Result = Texture.GetTextureCubeMap(TextureWrapMode.ClampToBorder, PixelInternalFormat.Rgba32f, PixelFormat.Rgb, size);
+            Program = new ShaderProgram(new Shader[] { new Shader(ShaderType.ComputeShader, @"Src\Shaders\AtmosphericScattering\compute.comp") });
             bufferObject = new BufferObject(BufferRangeTarget.UniformBuffer, 2, Vector4.SizeInBytes * 4 * 7 + Vector4.SizeInBytes, BufferUsageHint.StaticDraw);
 
             Matrix4 invProjection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(90), 1, 0.1f, 10f).Inverted();
@@ -121,7 +121,7 @@ namespace OpenTK_PathTracer.Render
             };
             Vector3 position = new Vector3(20.43f, -200.249f, -20.67f);
 
-            bufferObject.SubData(0, Vector4.SizeInBytes * 4, invProjection);
+            bufferObject.Append(Vector4.SizeInBytes * 4, invProjection);
             bufferObject.Append(Vector4.SizeInBytes * 4 * invViews.Length, invViews);
             bufferObject.Append(Vector4.SizeInBytes, new Vector4(position, 1.0f));
 
@@ -139,7 +139,7 @@ namespace OpenTK_PathTracer.Render
             Query.Start();
 
             Result.AttchToImageUnit(0, 0, true, 0, TextureAccess.WriteOnly, (SizedInternalFormat)Result.PixelInternalFormat);
-            program.Use();
+            Program.Use();
             GL.DispatchCompute((int)MathF.Ceiling(Width / 32.0f), (int)MathF.Ceiling(Width / 32.0f), 6);
             GL.MemoryBarrier(MemoryBarrierFlags.ShaderImageAccessBarrierBit);
 

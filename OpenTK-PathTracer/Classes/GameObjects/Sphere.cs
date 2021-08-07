@@ -12,7 +12,7 @@ namespace OpenTK_PathTracer.GameObjects
         public float Radius;
         public Sphere(Vector3 position, float radius, int instance, Material material)
         {
-            Position = position; 
+            Position = position;
             Radius = radius;
             Material = material;
             Instance = instance;

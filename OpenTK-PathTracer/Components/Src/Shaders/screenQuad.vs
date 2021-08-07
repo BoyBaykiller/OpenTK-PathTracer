@@ -1,4 +1,4 @@
-#version 450 core
+#version 430 core
 out vec2 TexCoord;
 
 const vec4 data[4] = vec4[]

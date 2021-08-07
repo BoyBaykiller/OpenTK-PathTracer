@@ -20,7 +20,7 @@ namespace OpenTK_PathTracer.Render.Objects
         {
             if (texture.TextureTarget != TextureTarget.TextureCubeMap)
             {
-                Console.WriteLine($"EnvironmentMap: Specified texture is not of Type {TextureTarget.TextureCubeMap}");
+                Console.WriteLine($"EnvironmentMap: Specified texture is not of type {TextureTarget.TextureCubeMap}");
                 return;
             }
             CubemapTexture = texture;
@@ -41,7 +41,7 @@ namespace OpenTK_PathTracer.Render.Objects
             CubemapTexture.SetTexImage2DCubeMap(image, (TextureTarget)side);
         }
 
-        public void SetSideParallel(string[] paths)
+        public void SetAllSidesParallel(string[] paths)
         {
             if (paths.Length != 6)
             {

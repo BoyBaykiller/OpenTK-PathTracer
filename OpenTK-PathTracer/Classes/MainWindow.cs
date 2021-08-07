@@ -32,15 +32,15 @@ namespace OpenTK_PathTracer
         protected override void OnRenderFrame(FrameEventArgs e)
         {
             //AtmosphericScattering.Run(camera.Position);
-            PathTracing.Run();
+            PathTracer.Run();
             
             //Rasterizer.Run((from c in grid.Cells select c.AABB).ToArray()); // new AABB[] { new AABB(Vector3.One, Vector3.One) } (from c in grid.Cells select c.AABB).ToArray()
 
-            PostProcess.Run(new Texture[] { PathTracing.Result, Rasterizer.Result });
+            PostProcesser.Run(new Texture[] { PathTracer.Result, Rasterizer.Result });
 
             GL.Viewport(0, 0, Width, Height);
             Framebuffer.Clear(0, ClearBufferMask.ColorBufferBit);
-            PostProcess.Result.AttachToUnit(0);
+            PostProcesser.Result.AttachToUnit(0);
             finalProgram.Use();
             GL.DrawArrays(PrimitiveType.Quads, 0, 4);
 
@@ -48,7 +48,7 @@ namespace OpenTK_PathTracer
             {
                 FinalGUIRenderer.Run(this, (float)e.Time, out bool frameChanged);
                 if (frameChanged)
-                    PathTracing.ThisRenderNumFrame = 0;
+                    PathTracer.ThisRenderNumFrame = 0;
             }
 
             SwapBuffers();
@@ -64,7 +64,7 @@ namespace OpenTK_PathTracer
         {
             if (fpsTimer.ElapsedMilliseconds >= 1000)
             {
-                Title = $"FPS: {fps}; RayDepth: {PathTracing.RayDepth}; UPS: {ups} SSP: {PathTracing.SSP}; Position {camera.Position}";
+                Title = $"FPS: {fps}; RayDepth: {PathTracer.RayDepth}; UPS: {ups} Position {camera.Position}";
                 FPS = fps;
                 UPS = ups;
                 fps = 0;
@@ -112,7 +112,7 @@ namespace OpenTK_PathTracer
                 {
                     camera.ProcessInputs((float)args.Time, keyBoardState, mouseState, out bool frameChanged);
                     if (frameChanged)
-                        PathTracing.ThisRenderNumFrame = 0;
+                        PathTracer.ThisRenderNumFrame = 0;
                 }
 
                 if (CursorVisible && !FinalGUIRenderer.ImGuiIOPtr.WantCaptureMouse && mouseState.IsButtonDown(MouseButton.Left) && lastMouseState.IsButtonUp(MouseButton.Left))
@@ -140,15 +140,24 @@ namespace OpenTK_PathTracer
         readonly List<GameObject> gameObjects = new List<GameObject>();
         ShaderProgram finalProgram;
         public static BufferObject BasicDataUBO, GameObjectsUBO, GridCellsSSBO;
-        public PathTracing PathTracing;
+        public PathTracing PathTracer;
         public Rasterizer Rasterizer;
-        public ScreenEffect PostProcess;
-        public AtmosphericScattering AtmosphericScattering;
+        public ScreenEffect PostProcesser;
+        public AtmosphericScattering AtmosphericScatterer;
         int instancesSpheres = 0, instancesCuboids = 0;
 
         protected override void OnLoad(EventArgs e)
         {
-            Vector2 uboGameObjectsSize = new Vector2(343, 64);
+            Vector2 uboGameObjectsSize = new Vector2(343, 64); // these are the same numbers as in path tracig shader
+
+            Console.WriteLine($"GPU: {GL.GetString(StringName.Renderer)}");
+            Console.WriteLine($"OpenGL: {GL.GetString(StringName.Version)}");
+            Console.WriteLine($"GLSL: {GL.GetString(StringName.ShadingLanguageVersion)}");
+            // FIX: For some reason MaxUniformBlockSize seems to be ≈32768 for RX 5700XT, although GL.GetInteger(MaxUniformBlockSize) returns 572657868.
+            // I dont want to use SSBO, because of performance. Also see: https://opengl.gpuinfo.org/displayreport.php?id=6204 
+            Console.WriteLine($"MaxShaderStorageBlockSize: {GL.GetInteger((GetPName)All.MaxShaderStorageBlockSize)}");
+            Console.WriteLine($"MaxUniformBlockSize: {GL.GetInteger(GetPName.MaxUniformBlockSize)}");
+
 
             GL.Disable(EnableCap.DepthTest);
             GL.Disable(EnableCap.CullFace);
@@ -162,7 +171,7 @@ namespace OpenTK_PathTracer
             BasicDataUBO = new BufferObject(BufferRangeTarget.UniformBuffer, 0, Vector4.SizeInBytes * 4 * 5 + Vector4.SizeInBytes + Vector4.SizeInBytes, BufferUsageHint.StreamRead);
             GameObjectsUBO = new BufferObject(BufferRangeTarget.UniformBuffer, 1, (int)(Sphere.GPUInstanceSize * uboGameObjectsSize.X + Cuboid.GPUInstanceSize * uboGameObjectsSize.Y), BufferUsageHint.StreamRead);
             finalProgram = new ShaderProgram(new Shader[] { new Shader(ShaderType.VertexShader, @"Src\Shaders\screenQuad.vs"), new Shader(ShaderType.FragmentShader, @"Src\Shaders\final.frag") });
-
+           
             //EnvironmentMap skyBox = new EnvironmentMap();
             //skyBox.SetSideParallel(new string[]
             //{
@@ -174,13 +183,12 @@ namespace OpenTK_PathTracer
             //    @"Src\Textures\EnvironmentMap\negz.png",
             //});
 
-            AtmosphericScattering = new AtmosphericScattering(1024, 60, 20, 2.1f, 20.0f, 1.0f, new Vector3(700, 530, 440), new Vector3(0, 500, 0));
-            AtmosphericScattering.Run();
+            AtmosphericScatterer = new AtmosphericScattering(1024, 60, 20, 2.1f, 35.0f, 1.0f, new Vector3(700, 530, 440), new Vector3(0, 500, 0));
+            AtmosphericScatterer.Run();
 
-            PathTracing = new PathTracing(new EnvironmentMap(AtmosphericScattering.Result), Width, Height, 8, 1);
-            
+            PathTracer = new PathTracing(new EnvironmentMap(AtmosphericScatterer.Result), Width, Height, 8, 1);
             Rasterizer = new Rasterizer(Width, Height);
-            PostProcess = new ScreenEffect(new Shader(ShaderType.FragmentShader, @"Src\Shaders\PostProcessing\fragment.frag"), Width, Height);
+            PostProcesser = new ScreenEffect(new Shader(ShaderType.FragmentShader, @"Src\Shaders\PostProcessing\fragment.frag"), Width, Height);
 
             Sphere.GlobalClassBufferOffset = 0;
             float width = 40, height = 25, depth = 25;
@@ -245,12 +253,12 @@ namespace OpenTK_PathTracer
                 gameObjects[i].Upload(GameObjectsUBO);
 
             {
-                int ssboCellsSize = 8 * 8 * 8;
+                //int ssboCellsSize = 8 * 8 * 8;
                 //GridCellsSSBO = new BufferObject(BufferRangeTarget.ShaderStorageBuffer, 0, ssboCellsSize * Grid.Cell.GPUInstanceSize + 1000 * sizeof(int), BufferUsageHint.StreamRead);
 
-                Grid grid;
-                grid = new Grid(4, 4, 3);
-                grid.Update(gameObjects);
+                //Grid grid;
+                //grid = new Grid(4, 4, 3);
+                //grid.Update(gameObjects);
 
                 //Vector4[] gridGPUData = grid.GetGPUFriendlyGridData();
                 //GridCellsSSBO.SubData(0, Vector4.SizeInBytes * gridGPUData.Length, gridGPUData);
@@ -259,17 +267,20 @@ namespace OpenTK_PathTracer
                 //GridCellsSSBO.SubData(ssboCellsSize * Grid.Cell.GPUInstanceSize, indecisData.Length * sizeof(int), indecisData);
                 //PathTracing.program.Upload("ssboCellsSize", grid.Cells.Count);
             }
+            
 
+            Console.WriteLine($"Bytes allocated UBO: {(uboGameObjectsSize.X * Sphere.GPUInstanceSize + uboGameObjectsSize.Y * Cuboid.GPUInstanceSize)}b");
+            Console.WriteLine($"Bytes used UBO: {(instancesSpheres * Sphere.GPUInstanceSize + instancesCuboids * Cuboid.GPUInstanceSize)}b");
 
-            PathTracing.NumSpheres = instancesSpheres;
-            PathTracing.NumCuboids = instancesCuboids;
+            PathTracer.NumSpheres = instancesSpheres;
+            PathTracer.NumCuboids = instancesCuboids;
         }
 
         protected override void OnResize(EventArgs e)
         {
-            PathTracing.SetSize(Width, Height);
+            PathTracer.SetSize(Width, Height);
             Rasterizer.SetSize(Width, Height);
-            PostProcess.SetSize(Width, Height);
+            PostProcesser.SetSize(Width, Height);
             FinalGUIRenderer.Resize(Width, Height);
 
             projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(FOV), Width / (float)Height, nearFarPlane.X, nearFarPlane.Y);
@@ -360,7 +371,7 @@ namespace OpenTK_PathTracer
             }
         }
 
-        static Random rnd = new Random();
+        readonly static Random rnd = new Random();
         public Vector3 RndVector() => new Vector3((float)rnd.NextDouble(), (float)rnd.NextDouble(), (float)rnd.NextDouble());
     }
 }

@@ -15,13 +15,13 @@ The atmospheric scattering in this cubemap is calculated in yet an other Compute
 
 ### **KeyBoard:**
 * W, A, S, D => Movment
-* E => make visisble / hide mouse cursor for ImGUI
+* E => make visisble / hide mouse cursor for ImGUI and object selection
 * F11 => Go into / out of fullscreen
 * Esc => Close
 
 ### **Mouse:**
-* LButton => Select Object
-
+* LButton => Select object
+* LShift => Faster movment speed
 
 ## **Render Samples**
 

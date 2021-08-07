@@ -18,7 +18,7 @@ namespace OpenTK_PathTracer
             set
             {
                 _numSpheres = value;
-                program.Upload("uboGameObjectsSize", new Vector2(value, NumCuboids));
+                Program.Upload("uboGameObjectsSize", new Vector2(value, NumCuboids));
             }
         }
 
@@ -31,7 +31,7 @@ namespace OpenTK_PathTracer
             set
             {
                 _numCuboids = value;
-                program.Upload("uboGameObjectsSize", new Vector2(NumSpheres, value));
+                Program.Upload("uboGameObjectsSize", new Vector2(NumSpheres, value));
             }
         }
 
@@ -44,7 +44,7 @@ namespace OpenTK_PathTracer
             set
             {
                 _rayDepth = value;
-                program.Upload("rayDepth", value);
+                Program.Upload("rayDepth", value);
             }
         }
 
@@ -56,7 +56,7 @@ namespace OpenTK_PathTracer
             set
             {
                 _ssp = value;
-                program.Upload("SSP", value);
+                Program.Upload("SSP", value);
             }
         }
 
@@ -65,9 +65,10 @@ namespace OpenTK_PathTracer
         {
             //Query = new Query(1000);
 
-            Result = Texture.GetTexture2D(TextureWrapMode.ClampToBorder, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, width, height);
-            program = new ShaderProgram(new Shader[] { new Shader(ShaderType.ComputeShader, @"Src\Shaders\PathTracing\compute.comp") });
-            
+            Result = Texture.GetTexture2D(TextureWrapMode.ClampToBorder, PixelInternalFormat.Rgba32f, PixelFormat.Rgb, width, height);
+            Program = new ShaderProgram(new Shader[] { new Shader(ShaderType.ComputeShader, @"Src\Shaders\PathTracing\compute.comp") });
+
+
             RayDepth = rayDepth;
             SSP = ssp;
             this.environmentMap = environmentMap;
@@ -78,10 +79,9 @@ namespace OpenTK_PathTracer
         {
             //Query.Start();
 
-            program.Use();
+            Program.Upload(0, ++ThisRenderNumFrame);
             Result.AttchToImageUnit(0, 0, false, 0, TextureAccess.ReadWrite, (SizedInternalFormat)Result.PixelInternalFormat);
             environmentMap.CubemapTexture.AttachToUnit(0);
-            program.Upload(0, ++ThisRenderNumFrame);
             
             //GL.DispatchCompute((int)MathF.Ceiling(Width / 8.0f), (int)MathF.Ceiling(Height / 4.0f), 1);
             GL.DispatchCompute((int)MathF.Ceiling(Width * Height / 32.0f), 1, 1);

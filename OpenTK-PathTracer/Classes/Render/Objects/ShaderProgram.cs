@@ -1,5 +1,5 @@
 ﻿using System;
-
+using System.Linq;
 using OpenTK;
 using OpenTK.Graphics.OpenGL4;
 
@@ -8,6 +8,7 @@ namespace OpenTK_PathTracer.Render.Objects
     class Shader : IDisposable
     {
         public readonly int ID;
+        public readonly string Path;
         public readonly ShaderType ShaderType;
 
         public Shader(ShaderType shaderType, string path)
@@ -15,6 +16,7 @@ namespace OpenTK_PathTracer.Render.Objects
             if (!System.IO.File.Exists(path))
                 throw new Exception($"{path} does not exist");
 
+            Path = path;
             ShaderType = shaderType;
             
             ID = GL.CreateShader(shaderType);
@@ -36,11 +38,17 @@ namespace OpenTK_PathTracer.Render.Objects
 
     class ShaderProgram : IDisposable
     {
-        private static int lastBindedID = -1;
+        public readonly int ID;
 
-        private readonly int ID;
+        private static int lastBindedID = -1;
         public ShaderProgram(Shader[] shaders)
         {
+            if (shaders == null || shaders.Length == 0)
+                throw new Exception("ShaderProgram: Shader arrat is empty or null");
+
+            if(!shaders.All(s => shaders.All(s1 => s.ID == s1.ID || s1.ShaderType != s.ShaderType)))
+                throw new Exception("ShaderProgram: A ShaderProgram can only hold one instance of every ShaderType. Validate the shader array. ");
+
             ID = GL.CreateProgram();
 
             for (int i = 0; i < shaders.Length; i++)

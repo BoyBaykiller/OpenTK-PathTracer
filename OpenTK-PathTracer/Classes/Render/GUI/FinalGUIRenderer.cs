@@ -32,19 +32,19 @@ namespace OpenTK_PathTracer.Render.GUI
                 ImGui.Text($"VSync: {mainWindow.VSync}");
                 ImGui.Text($"FPS: {mainWindow.FPS}"); ImGui.SameLine(); ImGui.Text($"UPS: {mainWindow.UPS}");
 
-                int temp = mainWindow.PathTracing.SSP;
+                int temp = mainWindow.PathTracer.SSP;
                 if (ImGui.SliderInt("SSP", ref temp, 1, 10))
                 {
                     frameChanged = true;
-                    mainWindow.PathTracing.SSP = temp;
+                    mainWindow.PathTracer.SSP = temp;
                 }
 
 
-                temp = mainWindow.PathTracing.RayDepth;
+                temp = mainWindow.PathTracer.RayDepth;
                 if (ImGui.SliderInt("RayDepth", ref temp, 1, 50))
                 {
                     frameChanged = true;
-                    mainWindow.PathTracing.RayDepth = temp;
+                    mainWindow.PathTracer.RayDepth = temp;
                 }
 
                 if (ImGui.Button("SpheresRandomMaterial"))
@@ -59,55 +59,55 @@ namespace OpenTK_PathTracer.Render.GUI
 
             ImGui.Begin("AtmossphericScattering", ImGuiWindowFlags.AlwaysAutoResize);
             {
-                ImGui.Text($"Computation Time: {MathF.Round(mainWindow.AtmosphericScattering.Query.ElapsedMilliseconds, 2)} ms");
+                ImGui.Text($"Computation Time: {MathF.Round(mainWindow.AtmosphericScatterer.Query.ElapsedMilliseconds, 2)} ms");
 
-                int tempInt = mainWindow.AtmosphericScattering.InScatteringSamples;
+                int tempInt = mainWindow.AtmosphericScatterer.InScatteringSamples;
                 if (ImGui.SliderInt("InScatteringSamples", ref tempInt, 1, 100))
                 {
                     frameChanged = true;
-                    mainWindow.AtmosphericScattering.InScatteringSamples = tempInt;
-                    mainWindow.AtmosphericScattering.Run();
+                    mainWindow.AtmosphericScatterer.InScatteringSamples = tempInt;
+                    mainWindow.AtmosphericScatterer.Run();
                 }
 
-                tempInt = mainWindow.AtmosphericScattering.DensitySamples;
+                tempInt = mainWindow.AtmosphericScatterer.DensitySamples;
                 if (ImGui.SliderInt("DensitySamples", ref tempInt, 1, 40))
                 {
                     frameChanged = true;
-                    mainWindow.AtmosphericScattering.DensitySamples = tempInt;
-                    mainWindow.AtmosphericScattering.Run();
+                    mainWindow.AtmosphericScatterer.DensitySamples = tempInt;
+                    mainWindow.AtmosphericScatterer.Run();
                 }
 
-                float temp = mainWindow.AtmosphericScattering.ScatteringStrength;
+                float temp = mainWindow.AtmosphericScatterer.ScatteringStrength;
                 if (ImGui.DragFloat("ScatteringStrength", ref temp, 0.15f, 0.1f, 10))
                 {
                     frameChanged = true;
-                    mainWindow.AtmosphericScattering.ScatteringStrength = temp;
-                    mainWindow.AtmosphericScattering.Run();
+                    mainWindow.AtmosphericScatterer.ScatteringStrength = temp;
+                    mainWindow.AtmosphericScatterer.Run();
                 }
 
-                temp = mainWindow.AtmosphericScattering.DensityFallOff;
+                temp = mainWindow.AtmosphericScatterer.DensityFallOff;
                 if (ImGui.DragFloat("DensityFallOff", ref temp, 0.5f, 0.1f, 40))
                 {
                     frameChanged = true;
-                    mainWindow.AtmosphericScattering.DensityFallOff = temp;
-                    mainWindow.AtmosphericScattering.Run();
+                    mainWindow.AtmosphericScatterer.DensityFallOff = temp;
+                    mainWindow.AtmosphericScatterer.Run();
                 }
 
-                temp = mainWindow.AtmosphericScattering.AtmossphereRadius;
+                temp = mainWindow.AtmosphericScatterer.AtmossphereRadius;
                 if (ImGui.DragFloat("AtmossphereRadius", ref temp, 0.2f, 0.1f, 100))
                 {
                     frameChanged = true;
-                    mainWindow.AtmosphericScattering.AtmossphereRadius = temp;
-                    mainWindow.AtmosphericScattering.Run();
+                    mainWindow.AtmosphericScatterer.AtmossphereRadius = temp;
+                    mainWindow.AtmosphericScatterer.Run();
                 }
 
                 System.Numerics.Vector3 nVector3;
-                nVector3 = Vector3ToNVector3(mainWindow.AtmosphericScattering.WaveLengths);
+                nVector3 = Vector3ToNVector3(mainWindow.AtmosphericScatterer.WaveLengths);
                 if (ImGui.InputFloat3("Wavelength (nm)", ref nVector3))
                 {
                     frameChanged = true;
-                    mainWindow.AtmosphericScattering.WaveLengths = NVector3ToVector3(nVector3);
-                    mainWindow.AtmosphericScattering.Run();
+                    mainWindow.AtmosphericScatterer.WaveLengths = NVector3ToVector3(nVector3);
+                    mainWindow.AtmosphericScatterer.Run();
                 }
             }
             ImGuiController.Render();

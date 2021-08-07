@@ -11,8 +11,7 @@ namespace OpenTK_PathTracer.Render.Objects
         public readonly int ID;
         public VAO()
         {
-            ID = GL.GenVertexArray();
-            Bind();
+            GL.CreateVertexArrays(1, out ID);
         }
 
 

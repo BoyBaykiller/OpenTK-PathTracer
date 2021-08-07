@@ -6,23 +6,22 @@ namespace OpenTK_PathTracer.Render.Objects
     {
         public readonly int ID;
 
-        private int _rbo = -1;
+        private int rbo = -1;
         public int RBO
         {
             get
             {
-                if (_rbo == -1)
+                if (rbo == -1)
                     throw new System.Exception("No RBO was attached to the framebuffer yet");
 
-                return _rbo;
+                return rbo;
             }
         }
 
         private static int lastBindedID = -1;
         public Framebuffer()
         {
-            ID = GL.GenFramebuffer();
-            GL.BindFramebuffer(FramebufferTarget.Framebuffer, ID);
+            GL.CreateFramebuffers(1, out ID);
         }
 
         public void Clear(ClearBufferMask clearBufferMask)
@@ -42,10 +41,9 @@ namespace OpenTK_PathTracer.Render.Objects
         {
             Bind();
 
-            _rbo = GL.GenRenderbuffer();
-            GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, _rbo);
+            GL.CreateRenderbuffers(1, out rbo);
             GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, renderbufferStorage, width, height);
-            GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, framebufferAttachment, RenderbufferTarget.Renderbuffer, _rbo);
+            GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, framebufferAttachment, RenderbufferTarget.Renderbuffer, rbo);
         }
 
         /// <summary>

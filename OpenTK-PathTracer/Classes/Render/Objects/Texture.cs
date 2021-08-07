@@ -24,7 +24,7 @@ namespace OpenTK_PathTracer.Render.Objects
 
         public Texture(TextureTarget textureTarget, TextureWrapMode textureWrapMode, PixelInternalFormat pixelInternalFormat, PixelFormat pixelFormat, bool enableMipmap, float[] borderColor = null)
         {
-            ID = GL.GenTexture();
+            GL.CreateTextures(textureTarget, 1, out ID);
             TextureTarget = textureTarget;
             PixelFormat = pixelFormat;
 

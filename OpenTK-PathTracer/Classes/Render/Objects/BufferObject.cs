@@ -35,10 +35,9 @@ namespace OpenTK_PathTracer.Render.Objects
                 Console.WriteLine($"BufferObject: BindingIndex {bindingIndex} is already bound to an other {bufferRangeTarget}");
                 bufferTypeBindingIndexDict[bufferRangeTarget].Add(bindingIndex);
             }
-
             BufferTarget = (BufferTarget)bufferRangeTarget;
             BufferUsageHint = bufferUsageHint;
-            ID = GL.GenBuffer();
+            GL.CreateBuffers(1, out ID);
             Allocate(size);
             GL.BindBufferBase(bufferRangeTarget, bindingIndex, ID);
         }
@@ -47,7 +46,7 @@ namespace OpenTK_PathTracer.Render.Objects
         {
             BufferTarget = bufferTarget;
             BufferUsageHint = bufferUsageHint;
-            ID = GL.GenBuffer();
+            GL.CreateBuffers(1, out ID);
             Allocate(size);
         }
 
@@ -100,8 +99,7 @@ namespace OpenTK_PathTracer.Render.Objects
 
         public void Allocate(int size)
         {
-            Bind();
-            GL.BufferData(BufferTarget, size, IntPtr.Zero, BufferUsageHint);
+            GL.NamedBufferData(ID, size, IntPtr.Zero, BufferUsageHint);
             Size = size;
         }
 

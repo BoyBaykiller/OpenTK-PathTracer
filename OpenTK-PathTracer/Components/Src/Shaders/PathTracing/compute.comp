@@ -1,5 +1,4 @@
-#version 450 core
-#extension GL_ARB_bindless_texture : require
+#version 430 core
 #define FLOAT_MAX 3.4028235e+38
 #define FLOAT_MIN -3.4028235e+38
 #define EPSILON 0.001
@@ -56,7 +55,7 @@ struct Ray {
     vec3 Direction;
 };
 
-layout (shared, binding = 0) uniform BasicDataUBO
+layout (std140, binding = 0) uniform BasicDataUBO
 {
 	mat4 Projection;
     mat4 InvProjection;
@@ -72,7 +71,6 @@ layout (std140, binding = 1) uniform GameObjectsUBO
     Sphere[343] Spheres;
 	Cuboid[64] Cuboids;
 } gameObjectsUBO;
-
 
 vec3 PathTrace(Ray ray);
 bool GetClosestIntersectingRayObject(Ray ray, out HitInfo hitInfo);
@@ -102,7 +100,6 @@ uniform int SSP;
 layout (location = 0) uniform uint thisRendererFrame;
 
 uint rndSeed;
-
 void main()
 {
     ivec2 imgResultSize = imageSize(ImgResult);
@@ -131,7 +128,6 @@ void main()
     
 }
 
-const float airIOR = 1.000293;
 vec3 PathTrace(Ray ray)
 {
     vec3 throughPut = vec3(1);
@@ -152,8 +148,8 @@ vec3 PathTrace(Ray ray)
             if (specularChance > 0.0)
             {
                 specularChance = FresnelReflectAmount(
-                hitInfo.FromInside ? hitInfo.Material.IOR : airIOR, 
-                !hitInfo.FromInside ? hitInfo.Material.IOR : airIOR,
+                hitInfo.FromInside ? hitInfo.Material.IOR : 1.0, 
+                !hitInfo.FromInside ? hitInfo.Material.IOR : 1.0,
                 ray.Direction, 
                 hitInfo.Normal, 
                 specularChance);

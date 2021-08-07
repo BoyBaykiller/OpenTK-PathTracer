@@ -1,4 +1,4 @@
-#version 450 core
+#version 430 core
 layout(location = 0) out vec4 FragColor;
 
 layout(binding = 0) uniform sampler2D Sampler0;
@@ -42,7 +42,7 @@ vec3 InverseGamma(vec3 rgb)
 }
  
 // ACES tone mapping curve fit to go from HDR to LDR
-//https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/
+// https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/
 vec3 ACESFilm(vec3 x)
 {
     float a = 2.51;

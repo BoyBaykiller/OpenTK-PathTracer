@@ -13,11 +13,11 @@ namespace OpenTK_PathTracer.Render
         {
             //Query = new Query(1000);
             
-            framebuffer = new Framebuffer();
+            Framebuffer = new Framebuffer();
             Result = Texture.GetTexture2D(TextureWrapMode.ClampToBorder, PixelInternalFormat.Rgb, PixelFormat.Rgb, width, height);
-            framebuffer.AddRenderTarget(FramebufferAttachment.ColorAttachment0, Result);
+            Framebuffer.AddRenderTarget(FramebufferAttachment.ColorAttachment0, Result);
             
-            program = new ShaderProgram(new Shader[] { new Shader(ShaderType.VertexShader, @"Src\Shaders\Rasterizer\vertex.vs"), new Shader(ShaderType.FragmentShader, @"Src\Shaders\Rasterizer\fragment.frag") });
+            Program = new ShaderProgram(new Shader[] { new Shader(ShaderType.VertexShader, @"Src\Shaders\Rasterizer\vertex.vs"), new Shader(ShaderType.FragmentShader, @"Src\Shaders\Rasterizer\fragment.frag") });
 
             vao = new VAO();
             {
@@ -25,14 +25,12 @@ namespace OpenTK_PathTracer.Render
                 vbo.SubData(0, unitCubeVerts.Length * sizeof(float), unitCubeVerts);
                 vao.SetAttribPointer(0, 3, VertexAttribPointerType.Float, 3 * sizeof(float), 0 * sizeof(float));
             }
-            
         }
 
         public override void Run(params object[] aabbArr)
         {
             //Query.Start();
-            framebuffer.Clear(ClearBufferMask.ColorBufferBit);
-            program.Use();
+            Framebuffer.Clear(ClearBufferMask.ColorBufferBit);
             vao.Bind();
             GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
             
@@ -41,7 +39,7 @@ namespace OpenTK_PathTracer.Render
             {
                 //Matrix4 model = Matrix4.CreateScale(aabbs[i].Dimensions) * Matrix4.CreateTranslation(aabbs[i].Position);
                 Matrix4 model = Matrix4.CreateScale(aabbs[i].Max - aabbs[i].Min) * Matrix4.CreateTranslation(aabbs[i].Position);
-                program.Upload(0, model);
+                Program.Upload(0, model);
                 GL.DrawArrays(PrimitiveType.Quads, 0, unitCubeVerts.Length / 3);
             }
 
