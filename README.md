@@ -1,6 +1,6 @@
 # C# OpenGL OpenTK Path Tracer
 
-I am presenting a noisy, yet fully [Path Tracer](https://de.wikipedia.org/wiki/Path_Tracing) written in C#.  
+I am presenting a noisy, yet fully [Path Traced](https://de.wikipedia.org/wiki/Path_Tracing) renderer written in C#.  
 
 
 The calculations and rendering are done in real time using OpenGl.  
