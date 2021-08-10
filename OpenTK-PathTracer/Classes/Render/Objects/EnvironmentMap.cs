@@ -26,7 +26,7 @@ namespace OpenTK_PathTracer.Render.Objects
             CubemapTexture = texture;
         }
 
-        public enum Side
+        public enum Face
         {
             PositiveX = 34069,
             NegativeX = 34070,
@@ -36,12 +36,12 @@ namespace OpenTK_PathTracer.Render.Objects
             NegativeZ = 34074,
         }
 
-        public void SetSide(Bitmap image, Side side)
+        public void SetFace(Bitmap image, Face side)
         {
             CubemapTexture.SetTexImage2DCubeMap(image, (TextureTarget)side);
         }
 
-        public void SetAllSidesParallel(string[] paths)
+        public void SetAllFacesParallel(string[] paths)
         {
             if (paths.Length != 6)
             {

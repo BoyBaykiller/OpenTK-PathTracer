@@ -11,9 +11,9 @@ namespace OpenTK_PathTracer.Render.Objects
         public readonly int ID;
         public VAO()
         {
-            GL.CreateVertexArrays(1, out ID);
+            ID = GL.GenVertexArray();
+            GL.BindVertexArray(ID);
         }
-
 
         public void SetAttribPointer(int index, int floats, VertexAttribPointerType vertexAttribPointerType, int stride, int offset, bool normalize = false)
         {

@@ -60,8 +60,32 @@ namespace OpenTK_PathTracer
             }
         }
 
+        private float _focalLength;
+        public float FocalLength
+        {
+            get => _focalLength;
+
+            set
+            {
+                _focalLength = value;
+                Program.Upload("focalLength", value);
+            }
+        }
+
+        private float _apertureRadius;
+        public float ApertureRadius
+        {
+            get => _apertureRadius;
+
+            set
+            {
+                _apertureRadius = value;
+                Program.Upload("apertureRadius", value);
+            }
+        }
+
         public readonly EnvironmentMap environmentMap;
-        public PathTracing(EnvironmentMap environmentMap, int width, int height, int rayDepth, int ssp)
+        public PathTracing(EnvironmentMap environmentMap, int width, int height, int rayDepth, int ssp, float focalLength, float apertureRadius)
         {
             //Query = new Query(1000);
 
@@ -71,10 +95,13 @@ namespace OpenTK_PathTracer
 
             RayDepth = rayDepth;
             SSP = ssp;
+            FocalLength = focalLength;
+            ApertureRadius = apertureRadius;
             this.environmentMap = environmentMap;
         }
 
-        public uint ThisRenderNumFrame = 0;
+        public int Samples => ThisRenderNumFrame * SSP;
+        public int ThisRenderNumFrame;
         public override void Run(params object[] _)
         {
             //Query.Start();

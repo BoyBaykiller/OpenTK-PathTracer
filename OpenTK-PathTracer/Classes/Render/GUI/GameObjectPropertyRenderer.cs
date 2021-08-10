@@ -1,7 +1,6 @@
 ﻿using System;
 
 using ImGuiNET;
-
 using OpenTK_PathTracer.GameObjects;
 
 namespace OpenTK_PathTracer.Render.GUI
@@ -9,16 +8,17 @@ namespace OpenTK_PathTracer.Render.GUI
     static class GameObjectPropertyRenderer
     {
         public static GameObject RayObject;
+        public static float Distance;
         public static void Run(out bool hadInput)
         {
             hadInput = false;
-
             ImGui.Begin("GameObjectProperties", ImGuiWindowFlags.AlwaysAutoResize);
             if (RayObject == null)
             {
                 ImGui.Text("No object selected (Press e to go into select mode)");
                 return;
             }
+            ImGui.Text($"Distance: {MathF.Round(Distance, 3)}");
 
             System.Numerics.Vector3 nVector3;
             nVector3 = Vector3ToNVector3(RayObject.Position);

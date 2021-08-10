@@ -1,21 +1,22 @@
-#version 450 core 
+#version 430 core 
 
 layout (location = 0) in vec3 inPosition;
 
 layout (std140, binding = 0) uniform BasicDataUBO
 {
-	mat4 projection;
-    mat4 invProjection;
-    vec2 nearFar;
-	mat4 view;
-	mat4 invView;
-    mat4 projectionView;
-	vec4 viewPos;
+	mat4 Projection;
+    mat4 InvProjection;
+    vec2 NearFar;
+	mat4 View;
+	mat4 InvView;
+    mat4 ProjectionView;
+	vec3 ViewPos;
+    vec3 ViewDir;
 } basicDataUBO;
 
 layout (location = 0) uniform mat4 modelMatrix;
 
 void main()
 {
-    gl_Position = basicDataUBO.projectionView * modelMatrix * vec4(inPosition, 1.0);
+    gl_Position = basicDataUBO.ProjectionView * modelMatrix * vec4(inPosition, 1.0);
 }

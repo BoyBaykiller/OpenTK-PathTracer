@@ -22,7 +22,7 @@ namespace OpenTK_PathTracer.Render
             vao = new VAO();
             {
                 vbo = new BufferObject(BufferTarget.ArrayBuffer, unitCubeVerts.Length * sizeof(float), BufferUsageHint.StaticDraw);
-                vbo.SubData(0, unitCubeVerts.Length * sizeof(float), unitCubeVerts);
+                vbo.Append(unitCubeVerts.Length * sizeof(float), unitCubeVerts);
                 vao.SetAttribPointer(0, 3, VertexAttribPointerType.Float, 3 * sizeof(float), 0 * sizeof(float));
             }
         }
@@ -55,6 +55,7 @@ namespace OpenTK_PathTracer.Render
 
         private static readonly float[] unitCubeVerts = new float[]
         {
+                // Back
                 -0.5f,  0.5f, -0.5f,
                 -0.5f, -0.5f, -0.5f,
                  0.5f, -0.5f, -0.5f,

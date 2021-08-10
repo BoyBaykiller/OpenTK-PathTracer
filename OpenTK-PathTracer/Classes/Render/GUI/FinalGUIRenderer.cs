@@ -27,7 +27,7 @@ namespace OpenTK_PathTracer.Render.GUI
 
             ImGui.SetNextWindowBgAlpha(windowAlpha);
             
-            ImGui.Begin("Overview");
+            ImGui.Begin("PathTracing", ImGuiWindowFlags.AlwaysAutoResize);
             {
                 ImGui.Text($"VSync: {mainWindow.VSync}");
                 ImGui.Text($"FPS: {mainWindow.FPS}"); ImGui.SameLine(); ImGui.Text($"UPS: {mainWindow.UPS}");
@@ -47,10 +47,30 @@ namespace OpenTK_PathTracer.Render.GUI
                     mainWindow.PathTracer.RayDepth = temp;
                 }
 
+                float floatTemp = mainWindow.PathTracer.FocalLength;
+                if (ImGui.InputFloat("FocalLength", ref floatTemp, 0.1f))
+                {
+                    frameChanged = true;
+                    mainWindow.PathTracer.FocalLength = MathF.Max(floatTemp, 0);
+                }
+
+                floatTemp = mainWindow.PathTracer.ApertureRadius;
+                if (ImGui.InputFloat("ApertureRadius", ref floatTemp, 0.002f))
+                {
+                    frameChanged = true;
+                    mainWindow.PathTracer.ApertureRadius = MathF.Max(floatTemp, 0);
+                }
+
                 if (ImGui.Button("SpheresRandomMaterial"))
                 {
                     frameChanged = true;
                     mainWindow.NewRandomBalls(40, 25, 25);
+                }
+
+                if (ImGui.Button("Screenshot"))
+                {
+                    System.IO.Directory.CreateDirectory("Screenshots");
+                    Screenshotter.DoScreenshot(mainWindow.Width, mainWindow.Height).Save($@"Screenshots\Samples_{mainWindow.PathTracer.Samples}.png", System.Drawing.Imaging.ImageFormat.Png);
                 }
 
                 ImGui.End();

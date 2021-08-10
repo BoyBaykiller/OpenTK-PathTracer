@@ -33,7 +33,7 @@ vec3 LessThan(vec3 f, float value)
 
 vec3 InverseGamma(vec3 rgb)
 {
-    rgb = clamp(rgb, 0.0, 1.0);
+    //rgb = clamp(rgb, 0.0, 1.0);
     return mix(
         pow(rgb, vec3(1.0 / 2.4)) * 1.055 - 0.055,
         rgb * 12.92,

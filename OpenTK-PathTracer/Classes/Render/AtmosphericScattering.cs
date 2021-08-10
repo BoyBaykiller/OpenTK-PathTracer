@@ -158,8 +158,6 @@ namespace OpenTK_PathTracer.Render
             }
 
             Result.SetTexImage(width, height);
-            Matrix4 invProjection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(90), 1, 0.1f, 10f).Inverted();
-            bufferObject.SubData(0, Vector4.SizeInBytes * 4, invProjection);
         }
     }
 }

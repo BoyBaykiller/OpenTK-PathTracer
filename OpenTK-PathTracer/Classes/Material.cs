@@ -56,5 +56,15 @@ namespace OpenTK_PathTracer
         {
             return $"<Material A: {Albedo},\n E: {Emissiv},\n R: {RefractionColor},\n S%: {SpecularChance},\n SR: {SpecularRoughness},\n IOR: {IOR},\n R% {RefractionChance},\n RR: {RefractionRoughnes}>";
         }
+
+
+        private readonly static Random rnd = new Random();
+        public static Material GetRndMaterial()
+        {
+            bool isEmissiv = rnd.NextDouble() < 0.2;
+            return new Material(albedo: RndVector3(), emissiv: isEmissiv ? RndVector3() : Vector3.Zero, refractionColor: RndVector3() * 2, specularChance: (float)rnd.NextDouble(), specularRoughness: (float)rnd.NextDouble(), indexOfRefraction: (float)rnd.NextDouble() + 1, refractionChance: (float)rnd.NextDouble(), refractionRoughnes: (float)rnd.NextDouble());
+        }
+
+        public static Vector3 RndVector3() => new Vector3((float)rnd.NextDouble(), (float)rnd.NextDouble(), (float)rnd.NextDouble());
     }
 }

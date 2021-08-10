@@ -46,7 +46,8 @@ namespace OpenTK_PathTracer.Render.Objects
         {
             BufferTarget = bufferTarget;
             BufferUsageHint = bufferUsageHint;
-            GL.CreateBuffers(1, out ID);
+            ID = GL.GenBuffer();
+            GL.BindBuffer(bufferTarget, ID);
             Allocate(size);
         }
 

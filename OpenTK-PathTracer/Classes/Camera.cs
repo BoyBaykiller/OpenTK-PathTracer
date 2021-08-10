@@ -68,12 +68,14 @@ namespace OpenTK_PathTracer
             if (keyboardState.IsKeyDown(Key.A))
                 acceleration -= Vector3.Cross(ViewDir, Up).Normalized();
 
-            Velocity += keyboardState.IsKeyDown(Key.LShift) ? acceleration * 5 : acceleration;
-            Position += Velocity * dT;
+            
+            Velocity += keyboardState.IsKeyDown(Key.LShift) ? acceleration * 5 : (keyboardState.IsKeyDown(Key.LControl) ? acceleration * 0.35f : acceleration);
             if (Vector3.Dot(Velocity, Velocity) < 0.1f)
                 Velocity = Vector3.Zero;
             else
                 frameChanged = true;
+
+            Position += Velocity * dT;
 
             Velocity *= 0.95f;
             View = GenerateMatrix(Position, ViewDir, Up);

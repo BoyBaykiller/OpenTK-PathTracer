@@ -6,15 +6,15 @@ namespace OpenTK_PathTracer.Render.Objects
     {
         public readonly int ID;
 
-        private int rbo = -1;
+        private int _rbo = -1;
         public int RBO
         {
             get
             {
-                if (rbo == -1)
+                if (_rbo == -1)
                     throw new System.Exception("No RBO was attached to the framebuffer yet");
 
-                return rbo;
+                return _rbo;
             }
         }
 
@@ -32,18 +32,14 @@ namespace OpenTK_PathTracer.Render.Objects
 
         public void AddRenderTarget(FramebufferAttachment framebufferAttachment, Texture texture)
         {
-            Bind();
-            GL.FramebufferTexture(FramebufferTarget.Framebuffer, framebufferAttachment, texture.ID, 0);
-
+            GL.NamedFramebufferTexture(ID, framebufferAttachment, texture.ID, 0);
         }
 
         public void SetRenderbuffer(RenderbufferStorage renderbufferStorage, FramebufferAttachment framebufferAttachment, int width, int height)
         {
-            Bind();
-
-            GL.CreateRenderbuffers(1, out rbo);
-            GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, renderbufferStorage, width, height);
-            GL.FramebufferRenderbuffer(FramebufferTarget.Framebuffer, framebufferAttachment, RenderbufferTarget.Renderbuffer, rbo);
+            GL.CreateRenderbuffers(1, out _rbo);
+            GL.NamedRenderbufferStorage(ID, renderbufferStorage, width, height);
+            GL.NamedFramebufferRenderbuffer(ID, framebufferAttachment, RenderbufferTarget.Renderbuffer, _rbo);
         }
 
         /// <summary>
@@ -53,8 +49,7 @@ namespace OpenTK_PathTracer.Render.Objects
         /// <param name="drawBuffersEnums"></param>
         public void DrawRenderTargets(DrawBuffersEnum[] drawBuffersEnums)
         {
-            Bind();
-            GL.DrawBuffers(drawBuffersEnums.Length, drawBuffersEnums);
+            GL.NamedFramebufferDrawBuffers(ID, drawBuffersEnums.Length, drawBuffersEnums);
         }
 
         public void Bind(FramebufferTarget framebufferTarget = FramebufferTarget.Framebuffer)
