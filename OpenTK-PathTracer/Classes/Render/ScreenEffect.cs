@@ -13,10 +13,10 @@ namespace OpenTK_PathTracer.Render
                 System.Console.WriteLine("ScreenEffect: Only pass in shaders of type FragmentShader");
                 return;
             }
-            //Query = new Query(1000);
-            
+
             Framebuffer = new Framebuffer();
-            Result = Texture.GetTexture2D(TextureWrapMode.ClampToBorder, PixelInternalFormat.Rgb, PixelFormat.Rgb, width, height);
+            Result = Texture.GetTexture2D(TextureWrapMode.ClampToBorder, PixelInternalFormat.Rgba, PixelFormat.Rgba, width, height, false);
+
             Framebuffer.AddRenderTarget(FramebufferAttachment.ColorAttachment0, Result);
 
             Program = new ShaderProgram(new Shader[] { new Shader(ShaderType.VertexShader, @"Src\Shaders\screenQuad.vs"), fragmentShader });
@@ -24,7 +24,8 @@ namespace OpenTK_PathTracer.Render
 
         public override void Run(params object[] textureArr)
         {
-            //Query.Start();
+            Query.Start();
+
             GL.Viewport(0, 0, Result.Width, Result.Height);
 
             Framebuffer.Bind();
@@ -34,7 +35,7 @@ namespace OpenTK_PathTracer.Render
                 ((Texture)textureArr[i]).AttachToUnit(i);
             GL.DrawArrays(PrimitiveType.Quads, 0, 4);
 
-            //Query.StopAndReset();
+            Query.StopAndReset();
         }
 
         public override void SetSize(int width, int height)

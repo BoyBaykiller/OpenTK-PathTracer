@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+
 using OpenTK;
 using OpenTK.Graphics.OpenGL4;
 
@@ -14,7 +15,7 @@ namespace OpenTK_PathTracer.Render.Objects
         public Shader(ShaderType shaderType, string path)
         {
             if (!System.IO.File.Exists(path))
-                throw new Exception($"{path} does not exist");
+                throw new System.IO.FileNotFoundException($"{path} does not exist");
 
             Path = path;
             ShaderType = shaderType;
@@ -25,9 +26,7 @@ namespace OpenTK_PathTracer.Render.Objects
 
             string compileInfo = GL.GetShaderInfoLog(ID);
             if (compileInfo != string.Empty)
-            {
                 Console.WriteLine($"Error under {path}. {compileInfo}");
-            }
         }
 
         public void Dispose()
@@ -41,10 +40,10 @@ namespace OpenTK_PathTracer.Render.Objects
         public readonly int ID;
 
         private static int lastBindedID = -1;
-        public ShaderProgram(Shader[] shaders)
+        public ShaderProgram(params Shader[] shaders)
         {
             if (shaders == null || shaders.Length == 0)
-                throw new Exception("ShaderProgram: Shader arrat is empty or null");
+                throw new IndexOutOfRangeException("ShaderProgram: Shader array is empty or null");
 
             if(!shaders.All(s => shaders.All(s1 => s.ID == s1.ID || s1.ShaderType != s.ShaderType)))
                 throw new Exception("ShaderProgram: A ShaderProgram can only hold one instance of every ShaderType. Validate the shader array. ");

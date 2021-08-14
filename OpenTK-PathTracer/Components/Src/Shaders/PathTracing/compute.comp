@@ -1,14 +1,13 @@
 #version 430 core
+#extension GL_ARB_bindless_texture : require
 #define FLOAT_MAX 3.4028235e+38
 #define FLOAT_MIN -3.4028235e+38
 #define EPSILON 0.001
 #define PI 3.1415926535898
 
-//layout (local_size_x = 8, local_size_y = 4, local_size_z = 1) in;
 layout (local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
 
 layout(binding = 0, rgba32f) restrict uniform image2D ImgResult;
-layout(binding = 0) uniform samplerCube ImgEnvironment;
 
 struct Material {
     // Note: diffuse chance is 1.0f - (SpecularChance + RefractionChance)
@@ -68,9 +67,15 @@ layout (std140, binding = 0) uniform BasicDataUBO
 
 layout (std140, binding = 1) uniform GameObjectsUBO
 {
-    Sphere[343] Spheres;
-	Cuboid[64] Cuboids;
+    Sphere Spheres[256];
+	Cuboid Cuboids[64];
 } gameObjectsUBO;
+
+layout (std140, binding = 2) uniform SamplerUBO
+{
+    // sizeof(sampler) == 64bit
+    samplerCube SamplerEnvironment; 
+} samplerUBO;
 
 vec3 PathTrace(Ray ray);
 bool GetClosestIntersectingRayObject(Ray ray, out HitInfo hitInfo);
@@ -79,6 +84,7 @@ bool RaySphereIntersect(Ray ray, Sphere sphere, out float t1, out float t2);
 bool RayCuboidIntersect(Ray ray, Cuboid cuboid, out float t1, out float t2);
 vec3 GetNormal(Sphere sphere, vec3 surfacePosition);
 vec3 GetNormal(Cuboid cuboid, vec3 surfacePosition);
+vec2 GetUVSphere(vec3 normal);
 vec3 GetCosWeightedHemissphereDir(inout uint rndSeed, vec3 normal);
 vec2 GetPointOnCircle(inout uint rndSeed);
 uint GetWangHash(inout uint seed);
@@ -111,11 +117,10 @@ void main()
         //return;
 
     rndSeed = gl_GlobalInvocationID.x * 1973 + gl_GlobalInvocationID.y * 9277 + thisRendererFrame * 2699 | 1;
-    
     vec3 color = vec3(0);
     for (int i = 0; i < SSP; i++)
     {   
-        vec2 subPixelOffset = vec2(GetRandomFloat01(rndSeed), GetRandomFloat01(rndSeed)) - 0.5; // integrating over whole pixel ellimates aliasing
+        vec2 subPixelOffset = vec2(GetRandomFloat01(rndSeed), GetRandomFloat01(rndSeed)) - 0.5; // integrating over whole pixel eliminates aliasing
         vec2 ndc = (imgCoord + subPixelOffset) / imgResultSize * 2.0 - 1.0;
         Ray rayEyeToWorld = GetWorldSpaceRay(basicDataUBO.InvProjection, basicDataUBO.InvView, basicDataUBO.ViewPos, ndc);
 
@@ -128,10 +133,9 @@ void main()
         color += PathTrace(rayEyeToWorld);
     }  
     color /= SSP;
-
     vec3 lastFrameColor = imageLoad(ImgResult, imgCoord).rgb;
-    color = mix(lastFrameColor, color, 1.0 / thisRendererFrame);
 
+    color = mix(lastFrameColor, color, 1.0 / (thisRendererFrame + 1));
     imageStore(ImgResult, imgCoord, vec4(color, 1.0));   
 }
 
@@ -213,7 +217,7 @@ vec3 PathTrace(Ray ray)
         }
         else
         {
-            ret += texture(ImgEnvironment, ray.Direction).rgb * throughPut;
+            ret += texture(samplerUBO.SamplerEnvironment, ray.Direction).rgb * throughPut;
             break;
         }  
     }
@@ -307,6 +311,11 @@ vec3 GetNormal(Cuboid cuboid, vec3 surfacePosition)
     normal += vec3(0.0, sign(centerSurface.y), 0.0) * step(abs(abs(centerSurface.y) - size.y), EPSILON);
     normal += vec3(0.0, 0.0, sign(centerSurface.z)) * step(abs(abs(centerSurface.z) - size.z), EPSILON);
     return normalize(normal);
+}
+
+vec2 GetUVSphere(vec3 normal)
+{
+    return vec2(atan(normal.x, normal.z) / (2 * PI) + 0.5, 1.0 - (normal.y * 0.5 + 0.5));
 }
 
 vec3 GetCosWeightedHemissphereDir(inout uint rndSeed, vec3 normal)

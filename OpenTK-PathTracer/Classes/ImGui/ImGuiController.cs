@@ -290,7 +290,7 @@ namespace OpenTK_PathTracer.GUI
                     GL.NamedBufferData(_vertexBuffer, newSize, IntPtr.Zero, BufferUsageHint.DynamicDraw);
                     _vertexBufferSize = newSize;
 
-                    Console.WriteLine($"Resized dear ImGuiNET.ImGui vertex buffer to new size {_vertexBufferSize}");
+                    //Console.WriteLine($"Resized dear ImGuiNET.ImGui vertex buffer to new size {_vertexBufferSize}");
                 }
 
                 int indexSize = cmd_list.IdxBuffer.Size * sizeof(ushort);
@@ -300,7 +300,7 @@ namespace OpenTK_PathTracer.GUI
                     GL.NamedBufferData(_indexBuffer, newSize, IntPtr.Zero, BufferUsageHint.DynamicDraw);
                     _indexBufferSize = newSize;
 
-                    Console.WriteLine($"Resized dear ImGuiNET.ImGui index buffer to new size {_indexBufferSize}");
+                    //Console.WriteLine($"Resized dear ImGuiNET.ImGui index buffer to new size {_indexBufferSize}");
                 }
             }
 

@@ -52,7 +52,7 @@ namespace OpenTK_PathTracer
             viewDir.X = MathF.Cos(MathHelper.DegreesToRadians(LookXY.X)) * MathF.Cos(MathHelper.DegreesToRadians(LookXY.Y));
             viewDir.Y = MathF.Sin(MathHelper.DegreesToRadians(LookXY.Y));
             viewDir.Z = MathF.Sin(MathHelper.DegreesToRadians(LookXY.X)) * MathF.Cos(MathHelper.DegreesToRadians(LookXY.Y));
-            ViewDir = viewDir.Normalized();
+            ViewDir = viewDir;
 
 
             Vector3 acceleration = Vector3.Zero;
@@ -70,13 +70,12 @@ namespace OpenTK_PathTracer
 
             
             Velocity += keyboardState.IsKeyDown(Key.LShift) ? acceleration * 5 : (keyboardState.IsKeyDown(Key.LControl) ? acceleration * 0.35f : acceleration);
-            if (Vector3.Dot(Velocity, Velocity) < 0.1f)
+            if (Vector3.Dot(Velocity, Velocity) < 0.01f)
                 Velocity = Vector3.Zero;
             else
                 frameChanged = true;
 
             Position += Velocity * dT;
-
             Velocity *= 0.95f;
             View = GenerateMatrix(Position, ViewDir, Up);
             

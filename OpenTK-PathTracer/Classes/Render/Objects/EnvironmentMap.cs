@@ -13,7 +13,7 @@ namespace OpenTK_PathTracer.Render.Objects
 
         public EnvironmentMap()
         {
-            CubemapTexture = new Texture(TextureTarget.TextureCubeMap, TextureWrapMode.ClampToBorder, PixelInternalFormat.Srgb, PixelFormat.Rgba, false);
+            CubemapTexture = new Texture(TextureTarget.TextureCubeMap, TextureWrapMode.ClampToBorder, PixelInternalFormat.SrgbAlpha, PixelFormat.Rgba, false);
         }
 
         public EnvironmentMap(Texture texture)
@@ -44,15 +44,10 @@ namespace OpenTK_PathTracer.Render.Objects
         public void SetAllFacesParallel(string[] paths)
         {
             if (paths.Length != 6)
-            {
-                Console.WriteLine("EnvironmentMap: Number of images must be equal to six");
-                return;
-            }
+                throw new Exception("EnvironmentMap: Number of images must be equal to six");
+            
             if (!paths.All(p => System.IO.File.Exists(p)))
-            {
-                Console.WriteLine("EnvironmentMap: At least on of the specified paths is invalid");
-                return;
-            }
+                throw new System.IO.FileNotFoundException("EnvironmentMap: At least on of the specified paths is invalid");
 
             Bitmap[] bitmaps = new Bitmap[6];
             Task taskImageLoader = Task.Run(() =>
@@ -63,13 +58,8 @@ namespace OpenTK_PathTracer.Render.Objects
                 });
             });
 
-            
-            Action action = new Action(() =>
-            {
-                taskImageLoader.Wait();
-                CubemapTexture.SetTexImage2DCubeMap(bitmaps);
-            });
-            ThreadManager.ExecuteOnMainThread(action, ThreadManager.Priority.ASAP);
+            taskImageLoader.Wait();
+            CubemapTexture.SetTexImage2DCubeMap(bitmaps);
         }
 
         public void Dispose()

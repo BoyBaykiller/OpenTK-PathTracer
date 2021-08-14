@@ -31,8 +31,6 @@ namespace OpenTK_PathTracer
             RefractionRoughnes = refractionRoughnes;
         }
 
-        
-
         public override int BufferOffset => throw new NotImplementedException();
 
         readonly Vector4[] GPUData = new Vector4[4];
@@ -65,6 +63,6 @@ namespace OpenTK_PathTracer
             return new Material(albedo: RndVector3(), emissiv: isEmissiv ? RndVector3() : Vector3.Zero, refractionColor: RndVector3() * 2, specularChance: (float)rnd.NextDouble(), specularRoughness: (float)rnd.NextDouble(), indexOfRefraction: (float)rnd.NextDouble() + 1, refractionChance: (float)rnd.NextDouble(), refractionRoughnes: (float)rnd.NextDouble());
         }
 
-        public static Vector3 RndVector3() => new Vector3((float)rnd.NextDouble(), (float)rnd.NextDouble(), (float)rnd.NextDouble());
+        private static Vector3 RndVector3() => new Vector3((float)rnd.NextDouble(), (float)rnd.NextDouble(), (float)rnd.NextDouble());
     }
 }

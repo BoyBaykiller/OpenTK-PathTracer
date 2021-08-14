@@ -84,20 +84,23 @@ namespace OpenTK_PathTracer
             }
         }
 
-        public readonly EnvironmentMap environmentMap;
+        public readonly EnvironmentMap EnvironmentMap;
         public PathTracing(EnvironmentMap environmentMap, int width, int height, int rayDepth, int ssp, float focalLength, float apertureRadius)
         {
-            //Query = new Query(1000);
+            Result = Texture.GetTexture2D(TextureWrapMode.ClampToBorder, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, width, height, false);
+            Program = new ShaderProgram(new Shader(ShaderType.ComputeShader, @"Src\Shaders\PathTracing\compute.comp"));
 
-            Result = Texture.GetTexture2D(TextureWrapMode.ClampToBorder, PixelInternalFormat.Rgba32f, PixelFormat.Rgb, width, height);
-            Program = new ShaderProgram(new Shader[] { new Shader(ShaderType.ComputeShader, @"Src\Shaders\PathTracing\compute.comp") });
-
+            // Testing ARB_bindless_texture
+            BufferObject bufferObject = new BufferObject(BufferRangeTarget.UniformBuffer, 2, 1 * Vector4.SizeInBytes, BufferUsageHint.StaticDraw);
+            environmentMap.CubemapTexture.MakeBindless();
+            environmentMap.CubemapTexture.MakeResident();
+            bufferObject.Append(Vector4.SizeInBytes, environmentMap.CubemapTexture.TextureHandle);
 
             RayDepth = rayDepth;
             SSP = ssp;
             FocalLength = focalLength;
             ApertureRadius = apertureRadius;
-            this.environmentMap = environmentMap;
+            EnvironmentMap = environmentMap;
         }
 
         public int Samples => ThisRenderNumFrame * SSP;
@@ -106,13 +109,12 @@ namespace OpenTK_PathTracer
         {
             //Query.Start();
 
-            Program.Upload(0, ++ThisRenderNumFrame);
-            Result.AttchToImageUnit(0, 0, false, 0, TextureAccess.ReadWrite, (SizedInternalFormat)Result.PixelInternalFormat);
-            environmentMap.CubemapTexture.AttachToUnit(0);
+            Program.Upload(0, ThisRenderNumFrame);
+            Result.AttachToImageUnit(0, 0, false, 0, TextureAccess.ReadWrite, (SizedInternalFormat)Result.PixelInternalFormat);
             
-            //GL.DispatchCompute((int)MathF.Ceiling(Width / 8.0f), (int)MathF.Ceiling(Height / 4.0f), 1);
             GL.DispatchCompute((int)MathF.Ceiling(Width * Height / 32.0f), 1, 1);
             GL.MemoryBarrier(MemoryBarrierFlags.ShaderImageAccessBarrierBit);
+            ThisRenderNumFrame++;
 
             //Query.StopAndReset();
         }

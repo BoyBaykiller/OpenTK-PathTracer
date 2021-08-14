@@ -5,14 +5,17 @@ using OpenTK.Graphics.OpenGL4;
 
 namespace OpenTK_PathTracer.Render.Objects
 {
+    /// <summary>
+    /// This measures the timings of GPU commands
+    /// </summary>
     class Query : IDisposable
     {
         public readonly int ID;
         public float ElapsedMilliseconds { get; private set; }
 
-
         private readonly Stopwatch timer = new Stopwatch();
         private bool doStopAndReset = false;
+
 
         public uint UpdatePeriod;
         public Query(uint updatePeriodInMs)

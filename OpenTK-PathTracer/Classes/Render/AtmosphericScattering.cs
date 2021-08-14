@@ -100,11 +100,9 @@ namespace OpenTK_PathTracer.Render
 
         public AtmosphericScattering(int size, int inScatteringSamples, int densitySamples, float scatteringStrength, float densityFallOff, float atmossphereRadius, Vector3 waveLengths, Vector3 lightPos)
         {
-            Query = new Query(200);
-
-            Result = Texture.GetTextureCubeMap(TextureWrapMode.ClampToBorder, PixelInternalFormat.Rgba32f, PixelFormat.Rgb, size);
-            Program = new ShaderProgram(new Shader[] { new Shader(ShaderType.ComputeShader, @"Src\Shaders\AtmosphericScattering\compute.comp") });
-            bufferObject = new BufferObject(BufferRangeTarget.UniformBuffer, 2, Vector4.SizeInBytes * 4 * 7 + Vector4.SizeInBytes, BufferUsageHint.StaticDraw);
+            Result = Texture.GetTextureCubeMap(TextureWrapMode.ClampToBorder, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, size, false);
+            Program = new ShaderProgram(new Shader(ShaderType.ComputeShader, @"Src\Shaders\AtmosphericScattering\compute.comp"));
+            bufferObject = new BufferObject(BufferRangeTarget.UniformBuffer, 3, Vector4.SizeInBytes * 4 * 7 + Vector4.SizeInBytes, BufferUsageHint.StreamRead);
 
             Matrix4 invProjection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(90), 1, 0.1f, 10f).Inverted();
             Matrix4[] invViews = new Matrix4[]
@@ -119,7 +117,7 @@ namespace OpenTK_PathTracer.Render
                 Camera.GenerateMatrix(Vector3.Zero, new Vector3(0.0f, 0.0f, 1.0f), new Vector3(0.0f, -1.0f, 0.0f)), // PositiveZ
                 Camera.GenerateMatrix(Vector3.Zero, new Vector3(0.0f, 0.0f, -1.0f), new Vector3(0.0f, -1.0f, 0.0f)), // NegativeZ
             };
-            Vector3 position = new Vector3(20.43f, -200.249f, -20.67f);
+            Vector3 position = new Vector3(20.43f, -201.99f, -20.67f);
 
             bufferObject.Append(Vector4.SizeInBytes * 4, invProjection);
             bufferObject.Append(Vector4.SizeInBytes * 4 * invViews.Length, invViews);
@@ -138,13 +136,14 @@ namespace OpenTK_PathTracer.Render
         {
             Query.Start();
 
-            Result.AttchToImageUnit(0, 0, true, 0, TextureAccess.WriteOnly, (SizedInternalFormat)Result.PixelInternalFormat);
+            Result.AttachToImageUnit(0, 0, true, 0, TextureAccess.WriteOnly, (SizedInternalFormat)Result.PixelInternalFormat);
             Program.Use();
-            GL.DispatchCompute((int)MathF.Ceiling(Width / 32.0f), (int)MathF.Ceiling(Width / 32.0f), 6);
-            GL.MemoryBarrier(MemoryBarrierFlags.ShaderImageAccessBarrierBit);
 
             if (viewPos.Length == 1)
                 bufferObject.SubData(Vector4.SizeInBytes * 4 * 7, Vector4.SizeInBytes, new Vector4((Vector3)viewPos[0], 1.0f));
+
+            GL.DispatchCompute((int)MathF.Ceiling(Width / 32.0f), (int)MathF.Ceiling(Width / 32.0f), 6);
+            GL.MemoryBarrier(MemoryBarrierFlags.ShaderImageAccessBarrierBit);
 
             Query.StopAndReset();
         }

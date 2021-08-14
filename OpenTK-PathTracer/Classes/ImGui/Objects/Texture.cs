@@ -100,7 +100,6 @@ namespace OpenTK_PathTracer.GUI.Objects
             Height = height;
             InternalFormat = srgb ? Srgb8Alpha8 : SizedInternalFormat.Rgba8;
             MipmapLevels = generateMipmaps == false ? 1 : (int)Math.Floor(Math.Log(Math.Max(Width, Height), 2));
-
             Util.CreateTexture(TextureTarget.Texture2D, Name, out GLTexture);
             GL.TextureStorage2D(GLTexture, MipmapLevels, InternalFormat, Width, Height);
 

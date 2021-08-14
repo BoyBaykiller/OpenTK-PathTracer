@@ -37,7 +37,8 @@ namespace OpenTK_PathTracer.Render.Objects
             }
             BufferTarget = (BufferTarget)bufferRangeTarget;
             BufferUsageHint = bufferUsageHint;
-            GL.CreateBuffers(1, out ID);
+            ID = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget, ID);
             Allocate(size);
             GL.BindBufferBase(bufferRangeTarget, bindingIndex, ID);
         }
@@ -108,7 +109,6 @@ namespace OpenTK_PathTracer.Render.Objects
         {
             GL.GetNamedBufferSubData(ID, (IntPtr)offset, size, data);
         }
-
         public void GetSubData(int offset, int size, IntPtr data)
         {
             GL.GetNamedBufferSubData(ID, (IntPtr)offset, size, data);

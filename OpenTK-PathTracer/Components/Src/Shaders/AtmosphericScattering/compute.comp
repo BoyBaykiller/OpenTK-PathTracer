@@ -13,7 +13,7 @@ struct Ray {
     vec3 Direction;
 };
 
-layout (std140, binding = 2) uniform AtmossphericDataUBO
+layout (std140, binding = 3) uniform AtmossphericDataUBO
 {
     mat4 InvProjection;
     mat4[6] InvView;

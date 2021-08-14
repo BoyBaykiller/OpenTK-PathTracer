@@ -11,13 +11,11 @@ namespace OpenTK_PathTracer.Render
         private readonly BufferObject vbo;
         public Rasterizer(int width, int height)
         {
-            //Query = new Query(1000);
-            
             Framebuffer = new Framebuffer();
-            Result = Texture.GetTexture2D(TextureWrapMode.ClampToBorder, PixelInternalFormat.Rgb, PixelFormat.Rgb, width, height);
+            Result = Texture.GetTexture2D(TextureWrapMode.ClampToBorder, PixelInternalFormat.Rgb, PixelFormat.Rgb, width, height, false);
             Framebuffer.AddRenderTarget(FramebufferAttachment.ColorAttachment0, Result);
             
-            Program = new ShaderProgram(new Shader[] { new Shader(ShaderType.VertexShader, @"Src\Shaders\Rasterizer\vertex.vs"), new Shader(ShaderType.FragmentShader, @"Src\Shaders\Rasterizer\fragment.frag") });
+            Program = new ShaderProgram(new Shader(ShaderType.VertexShader, @"Src\Shaders\Rasterizer\vertex.vs"), new Shader(ShaderType.FragmentShader, @"Src\Shaders\Rasterizer\fragment.frag"));
 
             vao = new VAO();
             {

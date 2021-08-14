@@ -29,29 +29,35 @@ namespace OpenTK_PathTracer
 
         public readonly Camera Camera = new Camera(new Vector3(-9, 12, 4), Vector3.Normalize(new Vector3(0.3f, -0.3f, -0.5f)), new Vector3(0, 1, 0)); // new Vector3(-9, 12, 4) || new Vector3(-11, 9.3f, -9.7f)
 
+
+        public bool IsRenderInBackground = true;
         protected override void OnRenderFrame(FrameEventArgs e)
         {
-            //AtmosphericScattering.Run(camera.Position);
-            PathTracer.Run();
-            
-            //Rasterizer.Run((from c in grid.Cells select c.AABB).ToArray()); // new AABB[] { new AABB(Vector3.One, Vector3.One) } (from c in grid.Cells select c.AABB).ToArray()
-            PostProcesser.Run(new Texture[] { PathTracer.Result, Rasterizer.Result });
-            
-            GL.Viewport(0, 0, Width, Height);
-            Framebuffer.Clear(0, ClearBufferMask.ColorBufferBit);
-            PostProcesser.Result.AttachToUnit(0);
-            finalProgram.Use();
-            GL.DrawArrays(PrimitiveType.Quads, 0, 4);
-
-            if (onWindowFocus)
+            if (Focused || (!Focused && IsRenderInBackground))
             {
-                FinalGUIRenderer.Run(this, (float)e.Time, out bool frameChanged);
-                if (frameChanged)
-                    PathTracer.ThisRenderNumFrame = 0;
-            }
+                //AtmosphericScatterer.Run(Camera.Position);
+                PathTracer.Run();
 
-            SwapBuffers();
-            fps++;
+                //Rasterizer.Run((from c in grid.Cells select c.AABB).ToArray()); // new AABB[] { new AABB(Vector3.One, Vector3.One) } (from c in grid.Cells select c.AABB).ToArray()
+                
+                PostProcesser.Run(PathTracer.Result, Rasterizer.Result);
+
+                GL.Viewport(0, 0, Width, Height);
+                Framebuffer.Clear(0, ClearBufferMask.ColorBufferBit);
+                PostProcesser.Result.AttachToUnit(0);
+                finalProgram.Use();
+                GL.DrawArrays(PrimitiveType.Quads, 0, 4);
+
+                if (Focused)
+                {
+                    FinalGUIRenderer.Run(this, (float)e.Time, out bool frameChanged);
+                    if (frameChanged)
+                        PathTracer.ThisRenderNumFrame = 0;
+                }
+                SwapBuffers();
+                fps++;
+            }
+            
             base.OnRenderFrame(e);
         }
 
@@ -69,19 +75,20 @@ namespace OpenTK_PathTracer
                 fps = 0;
                 ups = 0;
                 fpsTimer.Restart();
+                //Console.WriteLine(PostProcesser.Query.ElapsedMilliseconds);
             }
             ThreadManager.InvokeQueuedActions();
+            if (Focused)
+            {
+                KeyboardState keyBoardState = Keyboard.GetState();
+                MouseState mouseState = Mouse.GetState();
 
-            KeyboardState keyBoardState = Keyboard.GetState();
-            MouseState mouseState = Mouse.GetState();
-            
-            if (FinalGUIRenderer.ImGuiIOPtr.WantCaptureMouse && !CursorVisible)
-            {
-                Point _point = PointToScreen(new Point(Width / 2, Height / 2));
-                Mouse.SetPosition(_point.X, _point.Y);
-            }
-            if (onWindowFocus)
-            {
+                if (FinalGUIRenderer.ImGuiIOPtr.WantCaptureMouse && !CursorVisible)
+                {
+                    Point _point = PointToScreen(new Point(Width / 2, Height / 2));
+                    Mouse.SetPosition(_point.X, _point.Y);
+                }
+
                 //grid.Update(gameObjects);
 
                 if (keyBoardState.IsKeyDown(Key.Escape))
@@ -95,7 +102,7 @@ namespace OpenTK_PathTracer
                     WindowState = WindowState == WindowState.Normal ? WindowState.Fullscreen : WindowState.Normal;
                 }
 
-                if (keyBoardState.IsKeyDown(Key.E) && lastKeyBoardState.IsKeyUp(Key.E))
+                if (keyBoardState.IsKeyDown(Key.E) && lastKeyBoardState.IsKeyUp(Key.E) && !FinalGUIRenderer.ImGuiIOPtr.WantCaptureKeyboard)
                 {
                     CursorVisible = !CursorVisible;
                     CursorGrabbed = !CursorGrabbed;
@@ -132,17 +139,16 @@ namespace OpenTK_PathTracer
                     GameObjectPropertyRenderer.Distance = (rayWorld.Origin - rayWorld.GetPoint(t)).Length;
                     //RayTrace(grid, rayWorld, out GameObjectPropertyRenderer.RayObject);
                 }
+
+                int oldOffset = Vector4.SizeInBytes * 4 * 2 + Vector4.SizeInBytes;
+                BasicDataUBO.Append(Vector4.SizeInBytes * 4 * 3, new Matrix4[] { Camera.View, Camera.View.Inverted(), Camera.View * projection });
+                BasicDataUBO.Append(Vector4.SizeInBytes, Camera.Position);
+                BasicDataUBO.Append(Vector4.SizeInBytes, Camera.ViewDir);
+                BasicDataUBO.BufferOffset = oldOffset;
+
+                lastKeyBoardState = keyBoardState;
+                lastMouseState = mouseState;
             }
-
-
-            int oldOffset = Vector4.SizeInBytes * 4 * 2 + Vector4.SizeInBytes;
-            BasicDataUBO.Append(Vector4.SizeInBytes * 4 * 3, new Matrix4[] { Camera.View, Camera.View.Inverted(), Camera.View * projection });
-            BasicDataUBO.Append(Vector4.SizeInBytes, Camera.Position);
-            BasicDataUBO.Append(Vector4.SizeInBytes, Camera.ViewDir);
-            BasicDataUBO.BufferOffset = oldOffset;
-
-            lastKeyBoardState = keyBoardState;
-            lastMouseState = mouseState;
             ups++;
             base.OnUpdateFrame(args);
         }
@@ -158,8 +164,7 @@ namespace OpenTK_PathTracer
         int instancesSpheres = 0, instancesCuboids = 0;
         protected override void OnLoad(EventArgs e)
         {
-            Vector2 uboGameObjectsSize = new Vector2(343, 64); // these are the same numbers as in path tracig shader
-
+            Vector2 uboGameObjectsSize = new Vector2(256, 64); // these are the same numbers as in path tracig shader
             Console.WriteLine($"GPU: {GL.GetString(StringName.Renderer)}");
             Console.WriteLine($"OpenGL: {GL.GetString(StringName.Version)}");
             Console.WriteLine($"GLSL: {GL.GetString(StringName.ShadingLanguageVersion)}");
@@ -171,16 +176,12 @@ namespace OpenTK_PathTracer
             GL.Disable(EnableCap.DepthTest);
             GL.Disable(EnableCap.CullFace);
             GL.Disable(EnableCap.Multisample);
-            GL.Enable(EnableCap.TextureCubeMapSeamless);
+            // TextureCubeMapSeamless gets enabled in Texture class through GL_ARB_seamless_cubemap_per_texture to be compatible with ARB_bindless_texture
+            //GL.Disable(EnableCap.TextureCubeMapSeamless);
 
             VSync = VSyncMode.Off;
             CursorVisible = false;
             CursorGrabbed = true;
-
-            BasicDataUBO = new BufferObject(BufferRangeTarget.UniformBuffer, 0, Vector4.SizeInBytes * 4 * 5 + Vector4.SizeInBytes * 3, BufferUsageHint.StreamRead);
-            GameObjectsUBO = new BufferObject(BufferRangeTarget.UniformBuffer, 1, (int)(Sphere.GPUInstanceSize * uboGameObjectsSize.X + Cuboid.GPUInstanceSize * uboGameObjectsSize.Y), BufferUsageHint.StreamRead);
-            finalProgram = new ShaderProgram(new Shader[] { new Shader(ShaderType.VertexShader, @"Src\Shaders\screenQuad.vs"), new Shader(ShaderType.FragmentShader, @"Src\Shaders\final.frag") });
-
             //EnvironmentMap skyBox = new EnvironmentMap();
             //skyBox.SetAllFacesParallel(new string[]
             //{
@@ -192,10 +193,15 @@ namespace OpenTK_PathTracer
             //    @"Src\Textures\EnvironmentMap\negz.png",
             //});
 
-            AtmosphericScatterer = new AtmosphericScattering(1024, 60, 20, 2.1f, 35.0f, 1.0f, new Vector3(700, 530, 440), new Vector3(0, 500, 0));
+            finalProgram = new ShaderProgram(new Shader(ShaderType.VertexShader, @"Src\Shaders\screenQuad.vs"), new Shader(ShaderType.FragmentShader, @"Src\Shaders\final.frag"));
+            GameObjectsUBO = new BufferObject(BufferRangeTarget.UniformBuffer, 1, (int)(Sphere.GPUInstanceSize * uboGameObjectsSize.X + Cuboid.GPUInstanceSize * uboGameObjectsSize.Y), BufferUsageHint.StreamRead);
+            BasicDataUBO = new BufferObject(BufferRangeTarget.UniformBuffer, 0, Vector4.SizeInBytes * 4 * 5 + Vector4.SizeInBytes * 3, BufferUsageHint.StreamRead);
+
+            AtmosphericScatterer = new AtmosphericScattering(128, 100, 10, 2.1f, 35.0f, 0.01f, new Vector3(700, 530, 440), new Vector3(0, 500, 0));
             AtmosphericScatterer.Run();
 
-            PathTracer = new PathTracing(new EnvironmentMap(AtmosphericScatterer.Result), Width, Height, 8, 1, 20f, 0.07f);            
+            PathTracer = new PathTracing(new EnvironmentMap(AtmosphericScatterer.Result), Width, Height, 8, 1, 20f, 0.07f);
+            //PathTracer = new PathTracing(skyBox, Width, Height, 8, 1, 20f, 0.07f);
             Rasterizer = new Rasterizer(Width, Height);
             PostProcesser = new ScreenEffect(new Shader(ShaderType.FragmentShader, @"Src\Shaders\PostProcessing\fragment.frag"), Width, Height);
 
@@ -239,7 +245,7 @@ namespace OpenTK_PathTracer
                     gameObjects.Add(new Sphere(position, radius, instancesSpheres++, material1));
                 }
             }
-
+            
             Cuboid.GlobalClassBufferOffset = (int)(Sphere.GPUInstanceSize * uboGameObjectsSize.X);
             {
                 Cuboid down = new Cuboid(new Vector3(0, -height / 2, -10), new Vector3(width, Epsilon, depth), instancesCuboids++, new Material(albedo: new Vector3(1, 0.4f, 0.04f), emissiv: new Vector3(0), refractionColor: Vector3.Zero, specularChance: 0.11f, specularRoughness: 0.051f, indexOfRefraction: 1f, refractionChance: 0, refractionRoughnes: 0));
@@ -255,9 +261,9 @@ namespace OpenTK_PathTracer
 
                 Cuboid middle = new Cuboid(new Vector3(right.Position.X * 0.55f, down.Position.Y + 12f / 2 + Epsilon, back.Position.Z * 0.4f), new Vector3(3f, 12, 3f), instancesCuboids++, new Material(albedo: new Vector3(0.917f, 0.945f, 0.513f), emissiv: new Vector3(0), refractionColor: Vector3.Zero, specularChance: 1.0f, specularRoughness: 0f, indexOfRefraction: 1f, refractionChance: 0, refractionRoughnes: 0));
 
-                gameObjects.AddRange(new Cuboid[] { down, up, upLight0, back, right, left, middle });
+                gameObjects.AddRange(new Cuboid[] { down, upLight0, up, back, right, left, middle });
             }
-
+            
             for (int i = 0; i < gameObjects.Count; i++)
                 gameObjects[i].Upload(GameObjectsUBO);
 
@@ -276,25 +282,27 @@ namespace OpenTK_PathTracer
                 //PathTracing.program.Upload("ssboCellsSize", grid.Cells.Count);
             }
 
-            Console.WriteLine($"Bytes allocated UBO: {(uboGameObjectsSize.X * Sphere.GPUInstanceSize + uboGameObjectsSize.Y * Cuboid.GPUInstanceSize)}");
-            Console.WriteLine($"Bytes used UBO: {(instancesSpheres * Sphere.GPUInstanceSize + instancesCuboids * Cuboid.GPUInstanceSize)}");
-
             PathTracer.NumSpheres = instancesSpheres;
             PathTracer.NumCuboids = instancesCuboids;
         }
-
+        
+        int lastWidth = -1, lastHeight = -1;
         protected override void OnResize(EventArgs e)
         {
-            PathTracer.SetSize(Width, Height);
-            Rasterizer.SetSize(Width, Height);
-            PostProcesser.SetSize(Width, Height);
-            FinalGUIRenderer.Resize(Width, Height);
+            if (lastWidth != Width && lastHeight != Height && Width != 0 && Height != 0) // dont resize when minimizing and maximizing
+            {
+                PathTracer.SetSize(Width, Height);
+                Rasterizer.SetSize(Width, Height);
+                PostProcesser.SetSize(Width, Height);
+                FinalGUIRenderer.Resize(Width, Height);
 
-            projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(FOV), Width / (float)Height, nearFarPlane.X, nearFarPlane.Y);
-            inverseProjection = projection.Inverted();
-            BasicDataUBO.BufferOffset = 0;
-            BasicDataUBO.Append(Vector4.SizeInBytes * 4 * 2, new Matrix4[] { projection, inverseProjection });
-            BasicDataUBO.Append(Vector2.SizeInBytes + Vector2.SizeInBytes, nearFarPlane);
+                projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(FOV), Width / (float)Height, nearFarPlane.X, nearFarPlane.Y);
+                inverseProjection = projection.Inverted();
+                BasicDataUBO.BufferOffset = 0;
+                BasicDataUBO.Append(Vector4.SizeInBytes * 4 * 2, new Matrix4[] { projection, inverseProjection });
+                BasicDataUBO.Append(Vector2.SizeInBytes + Vector2.SizeInBytes, nearFarPlane);
+                lastWidth = Width; lastHeight = Height;
+            }
             base.OnResize(e);
         }
 
@@ -303,11 +311,9 @@ namespace OpenTK_PathTracer
             FinalGUIRenderer.ImGuiController.PressChar(e.KeyChar);
         }
        
-        public bool onWindowFocus = true;
         protected override void OnFocusedChanged(EventArgs e)
         {
-            onWindowFocus = !onWindowFocus;
-            if (onWindowFocus)
+            if (Focused)
                 Camera.lastMouseState = Mouse.GetState();
         }
 
@@ -359,7 +365,6 @@ namespace OpenTK_PathTracer
         }
         public static float GetRelevantT(float t1, float t2) => t1 < 0 ? t2 : t1;
         
-
         public void NewRandomBalls(float xRange, float yRange, float zRange)
         {
             int balls = 6;

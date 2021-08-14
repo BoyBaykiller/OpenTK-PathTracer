@@ -31,7 +31,7 @@ namespace OpenTK_PathTracer.Render.GUI
             {
                 ImGui.Text($"VSync: {mainWindow.VSync}");
                 ImGui.Text($"FPS: {mainWindow.FPS}"); ImGui.SameLine(); ImGui.Text($"UPS: {mainWindow.UPS}");
-
+                ImGui.Checkbox("RenderInBackground", ref mainWindow.IsRenderInBackground);
                 int temp = mainWindow.PathTracer.SSP;
                 if (ImGui.SliderInt("SSP", ref temp, 1, 10))
                 {

@@ -2,7 +2,6 @@
 
 I am presenting a noisy, yet fully [Path Traced](https://de.wikipedia.org/wiki/Path_Tracing) renderer written in C#.  
 
-
 The calculations and rendering are done in real time using OpenGl.  
 I upload the whole Scene (only consisting out of Cuboids and Spheres for now) to a UBO which is then accessed in a Compute Shader where all the Path Tracing happens.
 Due to the realistic nature of Path Tracers various effects like Soft Shadows, Reflections or Ambient Occlusion emerge automatically without explicitly adding code for any of these effects like you would have to do in a traditional rasterizer.
@@ -24,6 +23,7 @@ Screenshots taken via the screenshot feature are saved in the local execution fo
 * W, A, S, D => Movment
 * E => make visisble / hide mouse cursor for [ImGui](https://github.com/ocornut/imgui)
 * F11 => Go into / out of fullscreen
+* V => Enable / Disable VSync
 * Esc => Close
 
 ### **Mouse:**
