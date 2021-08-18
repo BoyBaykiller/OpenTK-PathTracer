@@ -26,25 +26,16 @@ namespace OpenTK_PathTracer.Render.Objects
             CubemapTexture = texture;
         }
 
-        public enum Face
+        
+        public void SetFace(Bitmap image, Texture.Face face)
         {
-            PositiveX = 34069,
-            NegativeX = 34070,
-            PositiveY = 34071,
-            NegativeY = 34072,
-            PositiveZ = 34073,
-            NegativeZ = 34074,
-        }
-
-        public void SetFace(Bitmap image, Face side)
-        {
-            CubemapTexture.SetTexImage2DCubeMap(image, (TextureTarget)side);
+            CubemapTexture.SetTexImage2DCubeMap(image, face);
         }
 
         public void SetAllFacesParallel(string[] paths)
         {
             if (paths.Length != 6)
-                throw new Exception("EnvironmentMap: Number of images must be equal to six");
+                throw new ArgumentException("EnvironmentMap: Number of images must be equal to six");
             
             if (!paths.All(p => System.IO.File.Exists(p)))
                 throw new System.IO.FileNotFoundException("EnvironmentMap: At least on of the specified paths is invalid");

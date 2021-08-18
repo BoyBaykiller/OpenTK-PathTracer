@@ -11,7 +11,16 @@ namespace OpenTK_PathTracer.Render.Objects
 {
     class Texture : IDisposable
     {
-        public static readonly Texture Zero = new Texture(TextureTarget.Texture2D, TextureWrapMode.ClampToBorder, PixelInternalFormat.Rgba, PixelFormat.Rgba, false);
+        public enum Face
+        {
+            PositiveX = 34069,
+            NegativeX = 34070,
+            PositiveY = 34071,
+            NegativeY = 34072,
+            PositiveZ = 34073,
+            NegativeZ = 34074,
+        }
+
         public readonly int ID;
         public TextureTarget TextureTarget { get; private set; }
         public PixelInternalFormat PixelInternalFormat { get; private set; }
@@ -96,10 +105,20 @@ namespace OpenTK_PathTracer.Render.Objects
             return texture;
         }
 
-        public static Texture GetTexture2DArray(TextureWrapMode textureWrapMode, PixelInternalFormat pixelInternalFormat, PixelFormat pixelFormat, int width, int height, int textureCount, bool generateMipmap, float[] borderColor = null)
+        public static Texture GetTexture2DArray(string[] paths, TextureWrapMode textureWrapMode, PixelInternalFormat pixelInternalFormat, PixelFormat pixelFormat, int width, int height, bool generateMipmap, float[] borderColor = null)
         {
             var texture = new Texture(TextureTarget.Texture2DArray, textureWrapMode, pixelInternalFormat, pixelFormat, generateMipmap, borderColor);
-            texture.SetTexImage(width, height, textureCount);
+            texture.SetTexImage(width, height, paths.Length);
+            texture.SetSubTexImage2DArray(paths, 0);
+            if (generateMipmap)
+                texture.GenerateMipMap();
+            return texture;
+        }
+        public static Texture GetTexture2DArray(Bitmap[] images, TextureWrapMode textureWrapMode, PixelInternalFormat pixelInternalFormat, PixelFormat pixelFormat, int width, int height, bool generateMipmap, float[] borderColor = null)
+        {
+            var texture = new Texture(TextureTarget.Texture2DArray, textureWrapMode, pixelInternalFormat, pixelFormat, generateMipmap, borderColor);
+            texture.SetTexImage(width, height, images.Length);
+            texture.SetSubTexImage2DArray(images, 0);
             if (generateMipmap)
                 texture.GenerateMipMap();
             return texture;
@@ -113,7 +132,14 @@ namespace OpenTK_PathTracer.Render.Objects
 
             if (enableMipMap)
             {
-                GL.TexParameter(TextureTarget, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.NearestMipmapNearest);
+                /// Explanation for Mipmap filters from https://learnopengl.com/Getting-started/Textures:
+                /// GL_NEAREST_MIPMAP_NEAREST: takes the nearest mipmap to match the pixel size and uses nearest neighbor interpolation for texture sampling.
+                /// GL_LINEAR_MIPMAP_NEAREST: takes the nearest mipmap level and samples that level using linear interpolation.
+                /// GL_NEAREST_MIPMAP_LINEAR: linearly interpolates between the two mipmaps that most closely match the size of a pixel and samples the interpolated level via nearest neighbor interpolation.
+                /// GL_LINEAR_MIPMAP_LINEAR: linearly interpolates between the two closest mipmaps and samples the interpolated level via linear interpolation.
+                GL.TexParameter(TextureTarget, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.LinearMipmapLinear);
+                GL.TexParameter(TextureTarget, TextureParameterName.TextureMagFilter, (int)TextureMinFilter.Linear);
+
                 GL.TexParameter(TextureTarget, TextureParameterName.TextureLodBias, -0.5f);
             }
             else
@@ -143,35 +169,37 @@ namespace OpenTK_PathTracer.Render.Objects
         }
         public void SetTexImage2D(Bitmap image)
         {
-            BitmapData _data = image.LockBits(new Rectangle(0, 0, image.Width, image.Height), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+            BitmapData data = image.LockBits(new Rectangle(0, 0, image.Width, image.Height), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
             
             Bind();
-            GL.TexImage2D(TextureTarget, 0, PixelInternalFormat, image.Width, image.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, _data.Scan0);
-            image.UnlockBits(_data);
+            GL.TexImage2D(TextureTarget, 0, PixelInternalFormat, image.Width, image.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, data.Scan0);
+            image.UnlockBits(data);
 
             Width = image.Width;
             Height = image.Height;
             image.Dispose();
         }
 
-        public void SetTexImage2DCubeMap(string path, TextureTarget textureTarget)
+
+        public void SetTexImage2DCubeMap(string path, Face textureTarget)
         {
             if (!File.Exists(path))
                 throw new FileNotFoundException($"Texture: Could not find the file {path}");
             SetTexImage2DCubeMap(new Bitmap(path), textureTarget);
         }
-        public void SetTexImage2DCubeMap(Bitmap image, TextureTarget textureTarget)
+        public void SetTexImage2DCubeMap(Bitmap image, Face textureTarget)
         {
             Width = image.Width;
             Height = image.Height;
 
-            Bind();
             BitmapData data = image.LockBits(new Rectangle(0, 0, image.Width, image.Height), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-            GL.TexImage2D(textureTarget, 0, PixelInternalFormat, image.Width, image.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, data.Scan0);
+            
+            Bind();
+            GL.TexImage2D((TextureTarget)textureTarget, 0, PixelInternalFormat, image.Width, image.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, data.Scan0);
+            
             image.UnlockBits(data);
             image.Dispose();
         }
-
         public void SetTexImage2DCubeMap(string[] paths)
         {
             for (int i = 0; i < paths.Length; i++)
@@ -182,14 +210,15 @@ namespace OpenTK_PathTracer.Render.Objects
         public void SetTexImage2DCubeMap(Bitmap[] images)
         {
             if (images.Length != 6)
-                throw new Exception("EnvironmentMap: Number of images must be equal to six");
+                throw new ArgumentException("EnvironmentMap: Number of images must be equal to six");
 
             if (!images.All(i => i.Width == images[0].Width && i.Height == images[0].Height))
-                throw new Exception("Texture: Cubemap textures have different size");
+                throw new ArgumentException("Texture: Cubemap textures have different size");
 
             for (int i = 0; i < 6; i++)
-                SetTexImage2DCubeMap(images[i], TextureTarget.TextureCubeMapPositiveX + i);
+                SetTexImage2DCubeMap(images[i], Face.PositiveX + i);
         }
+
 
         public void SetSubTexImage2DArray(string path, int index)
         {
@@ -200,13 +229,27 @@ namespace OpenTK_PathTracer.Render.Objects
         }
         public void SetSubTexImage2DArray(Bitmap image, int index)
         {
-            BitmapData _data = image.LockBits(new Rectangle(0, 0, image.Width, image.Height), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+            BitmapData data = image.LockBits(new Rectangle(0, 0, image.Width, image.Height), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
 
             Bind();
-            GL.TexSubImage3D(TextureTarget.Texture2DArray, 0, 0, 0, index, image.Width, image.Height, 1, PixelFormat.Rgba, PixelType.UnsignedByte, _data.Scan0);
-            image.UnlockBits(_data);
+            GL.TexSubImage3D(TextureTarget.Texture2DArray, 0, 0, 0, index, image.Width, image.Height, 1, PixelFormat.Rgba, PixelType.UnsignedByte, data.Scan0);
+            image.UnlockBits(data);
             image.Dispose();
         }
+        public void SetSubTexImage2DArray(string[] paths, int offset)
+        {
+            for (int i = 0; i < paths.Length; i++)
+                if (!File.Exists(paths[i]))
+                    throw new FileNotFoundException($"Texture: Could not find the file {paths[i]}");
+
+            SetSubTexImage2DArray(paths.Select(b => new Bitmap(b)).ToArray(), offset);
+        }
+        public void SetSubTexImage2DArray(Bitmap[] images, int offset)
+        {
+            for (int i = 0; i < images.Length; i++)
+                SetSubTexImage2DArray(images[i], offset + i);
+        }
+
 
         public void SetTexImage(int width, int height, int depth = 1)
         {
@@ -249,7 +292,6 @@ namespace OpenTK_PathTracer.Render.Objects
         {
             GL.Arb.MakeTextureHandleResident(TextureHandle);
         }
-
         public void UnmakeResident()
         {
             GL.Arb.MakeTextureHandleNonResident(TextureHandle);
@@ -269,24 +311,10 @@ namespace OpenTK_PathTracer.Render.Objects
             GL.BindTexture(TextureTarget, 0);
         }
 
-        public void AttachToUnit(int unit)
-        {
-            GL.BindTextureUnit(unit, ID);
-        }
-        public void DetachFromToUnit(int unit)
-        {
-            GL.BindTextureUnit(unit, Texture.Zero.ID);
-        }
+        public void AttachToUnit(int unit) => GL.BindTextureUnit(unit, ID);
 
-        public static void AttachTextureToUnit(int unit, int textureID)
-        {
-            GL.BindTextureUnit(unit, textureID);
-        }
-
-        public static void DetachTextureFromUnit(int unit)
-        {
-            Texture.Zero.AttachToUnit(unit);
-        }
+        public static void AttachToUnit(int unit, int textureID) => GL.BindTextureUnit(unit, textureID);
+        public static void DetachFromUnit(int unit) => GL.BindTextureUnit(unit, 0);
 
         public void Dispose()
         {

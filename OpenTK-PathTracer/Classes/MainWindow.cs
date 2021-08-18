@@ -162,6 +162,13 @@ namespace OpenTK_PathTracer
         public AtmosphericScattering AtmosphericScatterer;
         Grid grid;
         int instancesSpheres = 0, instancesCuboids = 0;
+
+        public void DebugMessageCallback(DebugSource source, DebugType type, int id, DebugSeverity severity, int length, IntPtr message, IntPtr userParam)
+        {
+            Console.WriteLine($"Source: {source}, Type: {type}, id: {id}, severity: {severity}, length {length}, message: {message}, userParam: {userParam}");
+            System.Threading.Thread.Sleep(10000);
+        }
+
         protected override void OnLoad(EventArgs e)
         {
             Vector2 uboGameObjectsSize = new Vector2(256, 64); // these are the same numbers as in path tracig shader
@@ -178,11 +185,19 @@ namespace OpenTK_PathTracer
             GL.Disable(EnableCap.Multisample);
             // TextureCubeMapSeamless gets enabled in Texture class through GL_ARB_seamless_cubemap_per_texture to be compatible with ARB_bindless_texture
             //GL.Disable(EnableCap.TextureCubeMapSeamless);
+            IntPtr someUserData = IntPtr.Zero;
+            IntPtr message = IntPtr.Zero;
+
+            //GL.Enable(EnableCap.DebugOutput);            
+            GL.Enable(EnableCap.DebugOutputSynchronous);            
+            GL.DebugMessageCallback(DebugMessageCallback, someUserData);
+
+            GL.GenTextures(-1, out int texture);
 
             VSync = VSyncMode.Off;
             CursorVisible = false;
             CursorGrabbed = true;
-            //EnvironmentMap skyBox = new EnvironmentMap();
+            EnvironmentMap skyBox = new EnvironmentMap();
             //skyBox.SetAllFacesParallel(new string[]
             //{
             //    @"Src\Textures\EnvironmentMap\posx.png",

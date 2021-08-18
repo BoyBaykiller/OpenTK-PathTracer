@@ -9,10 +9,7 @@ namespace OpenTK_PathTracer.Render
         public ScreenEffect(Shader fragmentShader, int width, int height)
         {
             if (fragmentShader.ShaderType != ShaderType.FragmentShader)
-            {
-                System.Console.WriteLine("ScreenEffect: Only pass in shaders of type FragmentShader");
-                return;
-            }
+                throw new System.ArgumentException("ScreenEffect: Only pass in shaders of type FragmentShader");
 
             Framebuffer = new Framebuffer();
             Result = Texture.GetTexture2D(TextureWrapMode.ClampToBorder, PixelInternalFormat.Rgba, PixelFormat.Rgba, width, height, false);
