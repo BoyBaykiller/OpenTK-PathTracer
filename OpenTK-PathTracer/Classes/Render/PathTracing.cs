@@ -87,7 +87,9 @@ namespace OpenTK_PathTracer
         public readonly EnvironmentMap EnvironmentMap;
         public PathTracing(EnvironmentMap environmentMap, int width, int height, int rayDepth, int ssp, float focalLength, float apertureRadius)
         {
-            Result = Texture.GetTexture2D(TextureWrapMode.ClampToBorder, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, width, height, false);
+            Result = new Texture(TextureTarget.Texture2D, TextureWrapMode.ClampToBorder, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, false);
+            Result.Allocate(width, height);
+
             Program = new ShaderProgram(new Shader(ShaderType.ComputeShader, @"Src\Shaders\PathTracing\compute.comp"));
 
             // Testing ARB_bindless_texture
@@ -122,7 +124,7 @@ namespace OpenTK_PathTracer
         public override void SetSize(int width, int height)
         {
             ThisRenderNumFrame = 0;
-            Result.SetTexImage(width, height);
+            Result.Allocate(width, height);
         }
     }
 }

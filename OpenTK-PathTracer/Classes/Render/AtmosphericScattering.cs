@@ -100,7 +100,9 @@ namespace OpenTK_PathTracer.Render
 
         public AtmosphericScattering(int size, int inScatteringSamples, int densitySamples, float scatteringStrength, float densityFallOff, float atmossphereRadius, Vector3 waveLengths, Vector3 lightPos)
         {
-            Result = Texture.GetTextureCubeMap(TextureWrapMode.ClampToBorder, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, size, false);
+            Result = new Texture(TextureTarget.TextureCubeMap, TextureWrapMode.ClampToBorder, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, false);
+            Result.Allocate(size, size);
+
             Program = new ShaderProgram(new Shader(ShaderType.ComputeShader, @"Src\Shaders\AtmosphericScattering\compute.comp"));
             bufferObject = new BufferObject(BufferRangeTarget.UniformBuffer, 3, Vector4.SizeInBytes * 4 * 7 + Vector4.SizeInBytes, BufferUsageHint.StreamRead);
 
@@ -156,7 +158,7 @@ namespace OpenTK_PathTracer.Render
                 return;
             }
 
-            Result.SetTexImage(width, height);
+            Result.Allocate(width, height);
         }
     }
 }

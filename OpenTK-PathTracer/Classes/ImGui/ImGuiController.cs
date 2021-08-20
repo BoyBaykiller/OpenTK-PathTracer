@@ -132,8 +132,6 @@ namespace OpenTK_PathTracer.GUI
             GL.EnableVertexArrayAttrib(_vertexArray, 2);
             GL.VertexArrayAttribBinding(_vertexArray, 2, 0);
             GL.VertexArrayAttribFormat(_vertexArray, 2, 4, VertexAttribType.UnsignedByte, true, 16);
-
-            Util.CheckGLError("End of ImGuiNET.ImGui setup");
         }
 
         /// <summary>
@@ -318,10 +316,8 @@ namespace OpenTK_PathTracer.GUI
             OpenTK_PathTracer.Render.Objects.ShaderProgram.Use(_shader.Program);
             GL.UniformMatrix4(_shader.GetUniformLocation("projection_matrix"), false, ref mvp);
             GL.Uniform1(_shader.GetUniformLocation("in_fontTexture"), 0);
-            Util.CheckGLError("Projection");
 
             GL.BindVertexArray(_vertexArray);
-            Util.CheckGLError("VAO");
 
             draw_data.ScaleClipRects(io.DisplayFramebufferScale);
 
@@ -332,7 +328,6 @@ namespace OpenTK_PathTracer.GUI
             //GL.BlendFuncSeparate(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha, BlendingFactorSrc.One, BlendingFactorDest.One);
             GL.Disable(EnableCap.CullFace);
             GL.Disable(EnableCap.DepthTest);
-            Util.CheckGLError($"Render state");
 
             // Render command lists
             for (int n = 0; n < draw_data.CmdListsCount; n++)
@@ -340,10 +335,8 @@ namespace OpenTK_PathTracer.GUI
                 ImDrawListPtr cmd_list = draw_data.CmdListsRange[n];
 
                 GL.NamedBufferSubData(_vertexBuffer, IntPtr.Zero, cmd_list.VtxBuffer.Size * Unsafe.SizeOf<ImDrawVert>(), cmd_list.VtxBuffer.Data);
-                Util.CheckGLError($"Data Vert {n}");
 
                 GL.NamedBufferSubData(_indexBuffer, IntPtr.Zero, cmd_list.IdxBuffer.Size * sizeof(ushort), cmd_list.IdxBuffer.Data);
-                Util.CheckGLError($"Data Idx {n}");
 
                 int vtx_offset = 0;
                 int idx_offset = 0;
@@ -359,12 +352,10 @@ namespace OpenTK_PathTracer.GUI
                     {
                         GL.ActiveTexture(TextureUnit.Texture0);
                         GL.BindTexture(TextureTarget.Texture2D, (int)pcmd.TextureId);
-                        Util.CheckGLError("Texture");
 
                         // We do _windowHeight - (int)clip.W instead of (int)clip.Y because gl has flipped Y when it comes to these coordinates
                         var clip = pcmd.ClipRect;
                         GL.Scissor((int)clip.X, _windowHeight - (int)clip.W, (int)(clip.Z - clip.X), (int)(clip.W - clip.Y));
-                        Util.CheckGLError("Scissor");
 
                         if ((io.BackendFlags & ImGuiNET.ImGuiBackendFlags.RendererHasVtxOffset) != 0)
                         {
@@ -374,7 +365,6 @@ namespace OpenTK_PathTracer.GUI
                         {
                             GL.DrawElements(BeginMode.Triangles, (int)pcmd.ElemCount, DrawElementsType.UnsignedShort, (int)pcmd.IdxOffset * sizeof(ushort));
                         }
-                        Util.CheckGLError("Draw");
                     }
 
                     idx_offset += (int)pcmd.ElemCount;

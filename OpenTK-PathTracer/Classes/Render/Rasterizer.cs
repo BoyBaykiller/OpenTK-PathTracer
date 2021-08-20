@@ -12,7 +12,10 @@ namespace OpenTK_PathTracer.Render
         public Rasterizer(int width, int height)
         {
             Framebuffer = new Framebuffer();
-            Result = Texture.GetTexture2D(TextureWrapMode.ClampToBorder, PixelInternalFormat.Rgb, PixelFormat.Rgb, width, height, false);
+           
+            Result = new Texture(TextureTarget.Texture2D, TextureWrapMode.ClampToBorder, PixelInternalFormat.Rgba, PixelFormat.Rgba, false);
+            Result.Allocate(width, height);
+            
             Framebuffer.AddRenderTarget(FramebufferAttachment.ColorAttachment0, Result);
             
             Program = new ShaderProgram(new Shader(ShaderType.VertexShader, @"Src\Shaders\Rasterizer\vertex.vs"), new Shader(ShaderType.FragmentShader, @"Src\Shaders\Rasterizer\fragment.frag"));
@@ -48,7 +51,7 @@ namespace OpenTK_PathTracer.Render
 
         public override void SetSize(int width, int height)
         {
-            Result.SetTexImage(width, height);
+            Result.Allocate(width, height);
         }
 
         private static readonly float[] unitCubeVerts = new float[]

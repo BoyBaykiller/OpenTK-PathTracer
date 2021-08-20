@@ -52,30 +52,23 @@ namespace OpenTK_PathTracer.GUI.Objects
                 MipmapLevels = 1;
             }
 
-            Util.CheckGLError("Clear");
-
             Util.CreateTexture(TextureTarget.Texture2D, Name, out GLTexture);
             GL.TextureStorage2D(GLTexture, MipmapLevels, InternalFormat, Width, Height);
-            Util.CheckGLError("Storage2d");
 
             BitmapData data = image.LockBits(new System.Drawing.Rectangle(0, 0, Width, Height),
                 ImageLockMode.ReadOnly, global::System.Drawing.Imaging.PixelFormat.Format32bppArgb);
             
             GL.TextureSubImage2D(GLTexture, 0, 0, 0, Width, Height, PixelFormat.Bgra, PixelType.UnsignedByte, data.Scan0);
-            Util.CheckGLError("SubImage");
 
             image.UnlockBits(data);
 
             if (generateMipmaps) GL.GenerateTextureMipmap(GLTexture);
 
             GL.TextureParameter(GLTexture, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
-            Util.CheckGLError("WrapS");
             GL.TextureParameter(GLTexture, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
-            Util.CheckGLError("WrapT");
 
             GL.TextureParameter(GLTexture, TextureParameterName.TextureMinFilter, (int)(generateMipmaps ? TextureMinFilter.Linear : TextureMinFilter.LinearMipmapLinear));
             GL.TextureParameter(GLTexture, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
-            Util.CheckGLError("Filtering");
 
             GL.TextureParameter(GLTexture, TextureParameterName.TextureMaxLevel, MipmapLevels - 1);
 

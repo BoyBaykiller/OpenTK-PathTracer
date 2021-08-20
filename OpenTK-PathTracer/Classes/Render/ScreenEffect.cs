@@ -12,7 +12,9 @@ namespace OpenTK_PathTracer.Render
                 throw new System.ArgumentException("ScreenEffect: Only pass in shaders of type FragmentShader");
 
             Framebuffer = new Framebuffer();
-            Result = Texture.GetTexture2D(TextureWrapMode.ClampToBorder, PixelInternalFormat.Rgba, PixelFormat.Rgba, width, height, false);
+           
+            Result = new Texture(TextureTarget.Texture2D, TextureWrapMode.ClampToBorder, PixelInternalFormat.Rgba, PixelFormat.Rgba, false);
+            Result.Allocate(width, height);
 
             Framebuffer.AddRenderTarget(FramebufferAttachment.ColorAttachment0, Result);
 
@@ -37,7 +39,7 @@ namespace OpenTK_PathTracer.Render
 
         public override void SetSize(int width, int height)
         {
-            Result.SetTexImage(width, height);
+            Result.Allocate(width, height);
         }
     }
 }

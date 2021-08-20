@@ -12,13 +12,13 @@ using OpenTK_PathTracer.Render;
 using OpenTK_PathTracer.Render.GUI;
 using OpenTK_PathTracer.GameObjects;
 using OpenTK_PathTracer.Render.Objects;
+using System.Linq;
 
 namespace OpenTK_PathTracer
 {
     class MainWindow : GameWindow
     {
-        public MainWindow() : base(832, 832, new GraphicsMode(0, 0, 0, 0)) { /*WindowState = WindowState.Fullscreen;*/ }
-
+        public MainWindow() : base(832, 832, new GraphicsMode(0, 0, 0, 0)) {  /*WindowState = WindowState.Fullscreen;*/  }
         public const float Epsilon = 0.005f, FOV = 103;
 
         Matrix4 projection, inverseProjection;
@@ -42,7 +42,6 @@ namespace OpenTK_PathTracer
                 
                 PostProcesser.Run(PathTracer.Result, Rasterizer.Result);
 
-                GL.Viewport(0, 0, Width, Height);
                 Framebuffer.Clear(0, ClearBufferMask.ColorBufferBit);
                 PostProcesser.Result.AttachToUnit(0);
                 finalProgram.Use();
@@ -75,9 +74,9 @@ namespace OpenTK_PathTracer
                 fps = 0;
                 ups = 0;
                 fpsTimer.Restart();
-                //Console.WriteLine(PostProcesser.Query.ElapsedMilliseconds);
             }
             ThreadManager.InvokeQueuedActions();
+
             if (Focused)
             {
                 KeyboardState keyBoardState = Keyboard.GetState();
@@ -160,15 +159,8 @@ namespace OpenTK_PathTracer
         public Rasterizer Rasterizer;
         public ScreenEffect PostProcesser;
         public AtmosphericScattering AtmosphericScatterer;
-        Grid grid;
+        Grid grid = new Grid(4, 4, 3);
         int instancesSpheres = 0, instancesCuboids = 0;
-
-        public void DebugMessageCallback(DebugSource source, DebugType type, int id, DebugSeverity severity, int length, IntPtr message, IntPtr userParam)
-        {
-            Console.WriteLine($"Source: {source}, Type: {type}, id: {id}, severity: {severity}, length {length}, message: {message}, userParam: {userParam}");
-            System.Threading.Thread.Sleep(10000);
-        }
-
         protected override void OnLoad(EventArgs e)
         {
             Vector2 uboGameObjectsSize = new Vector2(256, 64); // these are the same numbers as in path tracig shader
@@ -185,19 +177,12 @@ namespace OpenTK_PathTracer
             GL.Disable(EnableCap.Multisample);
             // TextureCubeMapSeamless gets enabled in Texture class through GL_ARB_seamless_cubemap_per_texture to be compatible with ARB_bindless_texture
             //GL.Disable(EnableCap.TextureCubeMapSeamless);
-            IntPtr someUserData = IntPtr.Zero;
-            IntPtr message = IntPtr.Zero;
-
-            //GL.Enable(EnableCap.DebugOutput);            
-            GL.Enable(EnableCap.DebugOutputSynchronous);            
-            GL.DebugMessageCallback(DebugMessageCallback, someUserData);
-
-            GL.GenTextures(-1, out int texture);
 
             VSync = VSyncMode.Off;
             CursorVisible = false;
             CursorGrabbed = true;
-            EnvironmentMap skyBox = new EnvironmentMap();
+
+            //EnvironmentMap skyBox = new EnvironmentMap();
             //skyBox.SetAllFacesParallel(new string[]
             //{
             //    @"Src\Textures\EnvironmentMap\posx.png",
@@ -207,13 +192,12 @@ namespace OpenTK_PathTracer
             //    @"Src\Textures\EnvironmentMap\posz.png",
             //    @"Src\Textures\EnvironmentMap\negz.png",
             //});
+            AtmosphericScatterer = new AtmosphericScattering(128, 100, 10, 2.1f, 35.0f, 0.01f, new Vector3(700, 530, 440), new Vector3(0, 500, 0));
+            AtmosphericScatterer.Run();
 
             finalProgram = new ShaderProgram(new Shader(ShaderType.VertexShader, @"Src\Shaders\screenQuad.vs"), new Shader(ShaderType.FragmentShader, @"Src\Shaders\final.frag"));
             GameObjectsUBO = new BufferObject(BufferRangeTarget.UniformBuffer, 1, (int)(Sphere.GPUInstanceSize * uboGameObjectsSize.X + Cuboid.GPUInstanceSize * uboGameObjectsSize.Y), BufferUsageHint.StreamRead);
             BasicDataUBO = new BufferObject(BufferRangeTarget.UniformBuffer, 0, Vector4.SizeInBytes * 4 * 5 + Vector4.SizeInBytes * 3, BufferUsageHint.StreamRead);
-
-            AtmosphericScatterer = new AtmosphericScattering(128, 100, 10, 2.1f, 35.0f, 0.01f, new Vector3(700, 530, 440), new Vector3(0, 500, 0));
-            AtmosphericScatterer.Run();
 
             PathTracer = new PathTracing(new EnvironmentMap(AtmosphericScatterer.Result), Width, Height, 8, 1, 20f, 0.07f);
             //PathTracer = new PathTracing(skyBox, Width, Height, 8, 1, 20f, 0.07f);
@@ -286,7 +270,6 @@ namespace OpenTK_PathTracer
                 //int ssboCellsSize = 8 * 8 * 8;
                 //GridCellsSSBO = new BufferObject(BufferRangeTarget.ShaderStorageBuffer, 0, ssboCellsSize * Grid.Cell.GPUInstanceSize + 1000 * sizeof(int), BufferUsageHint.StreamRead);
 
-                grid = new Grid(4, 4, 3);
                 grid.Update(gameObjects);
 
                 //Vector4[] gridGPUData = grid.GetGPUFriendlyGridData();

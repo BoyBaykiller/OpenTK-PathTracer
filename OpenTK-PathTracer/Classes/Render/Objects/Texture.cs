@@ -51,14 +51,6 @@ namespace OpenTK_PathTracer.Render.Objects
             SetParameters(textureWrapMode, pixelInternalFormat, enableMipmap, borderColor);
         }
 
-        public static Texture GetTexture2D(TextureWrapMode textureWrapMode, PixelInternalFormat pixelInternalFormat, PixelFormat pixelFormat, int width, int height, bool generateMipmap, float[] borderColor = null)
-        {
-            var texture = new Texture(TextureTarget.Texture2D, textureWrapMode, pixelInternalFormat, pixelFormat, generateMipmap, borderColor);
-            texture.SetTexImage(width, height, 0);
-            if (generateMipmap)
-                texture.GenerateMipMap();
-            return texture;
-        }
         public static Texture GetTexture2D(string path, TextureWrapMode textureWrapMode, PixelInternalFormat pixelInternalFormat, PixelFormat pixelFormat, bool generateMipmap, float[] borderColor = null)
         {
             var texture = new Texture(TextureTarget.Texture2D, textureWrapMode, pixelInternalFormat, pixelFormat, generateMipmap, borderColor);
@@ -78,15 +70,6 @@ namespace OpenTK_PathTracer.Render.Objects
             return texture;
         }
 
-        public static Texture GetTextureCubeMap(TextureWrapMode textureWrapMode, PixelInternalFormat pixelInternalFormat, PixelFormat pixelFormat, int size, bool generateMipmap, float[] borderColor = null)
-        {
-            var texture = new Texture(TextureTarget.TextureCubeMap, textureWrapMode, pixelInternalFormat, pixelFormat, generateMipmap, borderColor);
-            texture.SetTexImage(size, size, 0);
-            if (generateMipmap)
-                texture.GenerateMipMap();
-
-            return texture;
-        }
         public static Texture GetTextureCubeMap(string[] paths, TextureWrapMode textureWrapMode, PixelInternalFormat pixelInternalFormat, PixelFormat pixelFormat, bool generateMipmap, float[] borderColor = null)
         {
             var texture = new Texture(TextureTarget.TextureCubeMap, textureWrapMode, pixelInternalFormat, pixelFormat, generateMipmap, borderColor);
@@ -108,7 +91,7 @@ namespace OpenTK_PathTracer.Render.Objects
         public static Texture GetTexture2DArray(string[] paths, TextureWrapMode textureWrapMode, PixelInternalFormat pixelInternalFormat, PixelFormat pixelFormat, int width, int height, bool generateMipmap, float[] borderColor = null)
         {
             var texture = new Texture(TextureTarget.Texture2DArray, textureWrapMode, pixelInternalFormat, pixelFormat, generateMipmap, borderColor);
-            texture.SetTexImage(width, height, paths.Length);
+            texture.Allocate(width, height, paths.Length);
             texture.SetSubTexImage2DArray(paths, 0);
             if (generateMipmap)
                 texture.GenerateMipMap();
@@ -117,7 +100,7 @@ namespace OpenTK_PathTracer.Render.Objects
         public static Texture GetTexture2DArray(Bitmap[] images, TextureWrapMode textureWrapMode, PixelInternalFormat pixelInternalFormat, PixelFormat pixelFormat, int width, int height, bool generateMipmap, float[] borderColor = null)
         {
             var texture = new Texture(TextureTarget.Texture2DArray, textureWrapMode, pixelInternalFormat, pixelFormat, generateMipmap, borderColor);
-            texture.SetTexImage(width, height, images.Length);
+            texture.Allocate(width, height, images.Length);
             texture.SetSubTexImage2DArray(images, 0);
             if (generateMipmap)
                 texture.GenerateMipMap();
@@ -251,7 +234,7 @@ namespace OpenTK_PathTracer.Render.Objects
         }
 
 
-        public void SetTexImage(int width, int height, int depth = 1)
+        public void Allocate(int width, int height, int depth = 1)
         {
             Bind();
             switch (TextureTarget)
@@ -311,10 +294,19 @@ namespace OpenTK_PathTracer.Render.Objects
             GL.BindTexture(TextureTarget, 0);
         }
 
-        public void AttachToUnit(int unit) => GL.BindTextureUnit(unit, ID);
+        public void AttachToUnit(int unit)
+        {
+            GL.BindTextureUnit(unit, ID);
+        }
 
-        public static void AttachToUnit(int unit, int textureID) => GL.BindTextureUnit(unit, textureID);
-        public static void DetachFromUnit(int unit) => GL.BindTextureUnit(unit, 0);
+        public static void AttachToUnit(int unit, int textureID)
+        {
+            GL.BindTextureUnit(unit, textureID);
+        }
+        public static void DetachFromUnit(int unit)
+        {
+            GL.BindTextureUnit(unit, 0);
+        }
 
         public void Dispose()
         {

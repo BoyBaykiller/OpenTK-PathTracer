@@ -14,16 +14,6 @@ namespace OpenTK_PathTracer.GUI
             return value < min ? min : value > max ? max : value;
         }
 
-        [Conditional("DEBUG")]
-        public static void CheckGLError(string title)
-        {
-            var error = GL.GetError();
-            
-            if (error != ErrorCode.NoError)
-            {
-                Debug.Print($"{title}: {error}");
-            }
-        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void LabelObject(ObjectLabelIdentifier objLabelIdent, int glObject, string name)
