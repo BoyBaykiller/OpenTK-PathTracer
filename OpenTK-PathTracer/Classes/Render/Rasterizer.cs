@@ -17,7 +17,7 @@ namespace OpenTK_PathTracer.Render
             Result.Allocate(width, height);
             
             Framebuffer.AddRenderTarget(FramebufferAttachment.ColorAttachment0, Result);
-            
+
             Program = new ShaderProgram(new Shader(ShaderType.VertexShader, @"Src\Shaders\Rasterizer\vertex.vs"), new Shader(ShaderType.FragmentShader, @"Src\Shaders\Rasterizer\fragment.frag"));
 
             vao = new VAO();
@@ -30,16 +30,19 @@ namespace OpenTK_PathTracer.Render
 
         public override void Run(params object[] aabbArr)
         {
+            GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
+
             //Query.Start();
             Framebuffer.Clear(ClearBufferMask.ColorBufferBit);
+            Program.Use();
             vao.Bind();
-            GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
             
             AABB[] aabbs = (AABB[])aabbArr[0];
             for (int i = 0; i < aabbs.Length; i++)
             {
                 //Matrix4 model = Matrix4.CreateScale(aabbs[i].Dimensions) * Matrix4.CreateTranslation(aabbs[i].Position);
                 Matrix4 model = Matrix4.CreateScale(aabbs[i].Max - aabbs[i].Min) * Matrix4.CreateTranslation(aabbs[i].Position);
+                
                 Program.Upload(0, model);
                 GL.DrawArrays(PrimitiveType.Quads, 0, unitCubeVerts.Length / 3);
             }

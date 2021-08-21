@@ -45,7 +45,6 @@ vec3 ScatteringCoefficients;
 
 void main()
 {
-    ScatteringCoefficients = vec3(pow(400 / max(waveLengths.x, EPSILON), 4), pow(400 / max(waveLengths.y, EPSILON), 4), pow(400 / max(waveLengths.z, EPSILON), 4)) * scatteringStrength;
     ivec2 imgResultSize = imageSize(ImgResult);
     ivec3 imgCoord = ivec3(gl_GlobalInvocationID);
     if (!IsInside(imgCoord.xy, imgResultSize))
@@ -62,6 +61,7 @@ void main()
 
 vec3 CalculateScattering(Ray ray, int samples)
 {
+    ScatteringCoefficients = vec3(pow(400 / max(waveLengths.x, EPSILON), 4), pow(400 / max(waveLengths.y, EPSILON), 4), pow(400 / max(waveLengths.z, EPSILON), 4)) * scatteringStrength;
     vec3 color = vec3(0);
     float t1, t2;
     if (!(RaySphereIntersect(ray, PlanetPos, PlanetRad + atmossphereRad, t1, t2) && t2 > 0))
@@ -100,7 +100,6 @@ vec3 CalculateScattering(Ray ray, int samples)
 float AvgDensityOver(vec3 start, vec3 end, int samples) // Physics terminology: "Optical Depth"
 {   
     // Take integral over DensityAtPoint() from start to end. I dont think there exists a closed-form solution so we are simply going to make an approxiamte using riemann sum
-    // TODO: Conside precomputing this and store it in texture
 
     vec3 rayPos = start;
     vec3 deltaStep = (end - start) / samples;

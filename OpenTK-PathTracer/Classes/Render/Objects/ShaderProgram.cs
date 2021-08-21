@@ -49,7 +49,7 @@ namespace OpenTK_PathTracer.Render.Objects
                 throw new Exception("ShaderProgram: A ShaderProgram can only hold one instance of every ShaderType. Validate the shader array. ");
 
             ID = GL.CreateProgram();
-
+            
             for (int i = 0; i < shaders.Length; i++)
                 GL.AttachShader(ID, shaders[i].ID);
 
@@ -79,121 +79,112 @@ namespace OpenTK_PathTracer.Render.Objects
             }
         }
 
-        public static void UploadToBinded(int location, Matrix4 matrix4, bool transpose = false)
+        public static void UploadToProgram(int id, int location, Matrix4 matrix4, bool transpose = false)
         {
-            GL.UniformMatrix4(location, transpose, ref matrix4);
+            GL.ProgramUniformMatrix4(id, location, transpose, ref matrix4);
         }
         public void Upload(int location, Matrix4 matrix4, bool transpose = false)
         {
-            Use();
-            GL.UniformMatrix4(location, transpose, ref matrix4);
+            GL.ProgramUniformMatrix4(ID, location, transpose, ref matrix4);
         }
         public void Upload(string name, Matrix4 matrix4, bool transpose = false)
         {
-            GL.UniformMatrix4(GetUniformLocation(name), transpose, ref matrix4);
+            GL.ProgramUniformMatrix4(ID, GetUniformLocation(name), transpose, ref matrix4);
         }
 
-        public static void UploadToBinded(int location, Vector4 vector4)
+        public static void UploadToProgram(int id, int location, Vector4 vector4)
         {
-            GL.Uniform4(location, vector4);
+            GL.ProgramUniform4(id, location, vector4);
         }
         public void Upload(int location, Vector4 vector4)
         {
-            Use();
-            GL.Uniform4(location, vector4);
+            GL.ProgramUniform4(ID, location, vector4);
         }
         public void Upload(string name, Vector4 vector4)
         {
-            GL.Uniform4(GetUniformLocation(name), vector4);
+            GL.ProgramUniform4(ID, GetUniformLocation(name), vector4);
         }
 
-        public static void UploadToBinded(int location, Vector3 vector3)
+        public static void UploadToProgram(int id, int location, Vector3 vector3)
         {
-            GL.Uniform3(location, vector3);
+            GL.ProgramUniform3(id, location, vector3);
         }
         public void Upload(int location, Vector3 vector3)
         {
-            Use();
-            GL.Uniform3(location, vector3);
+            GL.ProgramUniform3(ID, location, vector3);
         }
         public void Upload(string name, Vector3 vector3)
         {
-            GL.Uniform3(GetUniformLocation(name), vector3);
+            GL.ProgramUniform3(ID, GetUniformLocation(name), vector3);
         }
 
-        public static void UploadToBinded(int location, Vector2 vector2)
+        public static void UploadToProgram(int id, int location, Vector2 vector2)
         {
-            GL.Uniform2(location, vector2);
+            GL.ProgramUniform2(id, location, vector2);
         }
         public void Upload(int location, Vector2 vector2)
         {
-            Use();
-            GL.Uniform2(location, vector2);
+            GL.ProgramUniform2(ID, location, vector2);
         }
         public void Upload(string name, Vector2 vector2)
         {
-            GL.Uniform2(GetUniformLocation(name), vector2);
+            GL.ProgramUniform2(ID, GetUniformLocation(name), vector2);
         }
 
-        public static void UploadToBinded(int location, float x)
+        public static void UploadToProgram(int id, int location, float x)
         {
-            GL.Uniform1(location, x);
+            GL.ProgramUniform1(id, location, x);
         }
         public void Upload(int location, float x)
         {
-            Use();
-            GL.Uniform1(location, x);
+            GL.ProgramUniform1(ID, location, x);
         }
         public void Upload(string name, float x)
         {
-            GL.Uniform1(GetUniformLocation(name), x);
+            GL.ProgramUniform1(ID, GetUniformLocation(name), x);
         }
 
-        public static void UploadToBinded(int location, int x)
+        public static void UploadToProgram(int id, int location, int x)
         {
-            GL.Uniform1(location, x);
+            GL.ProgramUniform1(id, location, x);
         }
         public void Upload(int location, int x)
         {
-            Use();
-            GL.Uniform1(location, x);
+            GL.ProgramUniform1(ID, location, x);
         }
         public void Upload(string name, int x)
         {
-            GL.Uniform1(GetUniformLocation(name), x);
+            GL.ProgramUniform1(ID, GetUniformLocation(name), x);
         }
 
-        public static void UploadToBinded(int location, uint x)
+        public static void UploadToProgram(int id, int location, uint x)
         {
-            GL.Uniform1(location, x);
+            GL.ProgramUniform1(id, location, x);
         }
         public void Upload(int location, uint x)
         {
-            Use();
-            GL.Uniform1(location, x);
+            GL.ProgramUniform1(ID, location, x);
         }
         public void Upload(string name, uint x)
         {
-            GL.Uniform1(GetUniformLocation(name), x);
+            GL.ProgramUniform1(ID, GetUniformLocation(name), x);
         }
 
-        public static void UploadToBinded(int location, bool x)
+        public static void UploadToProgram(int id, int location, bool x)
         {
-            GL.Uniform1(location, x ? 1 : 0);
+            GL.ProgramUniform1(id, location, x ? 1 : 0);
         }
         public void Upload(int location, bool x)
         {
-            Use();
-            GL.Uniform1(location, x ? 1 : 0);
+            GL.ProgramUniform1(ID, location, x ? 1 : 0);
         }
         public void Upload(string name, bool x)
         {
-            GL.Uniform1(GetUniformLocation(name), x ? 1 : 0);
+            GL.ProgramUniform1(ID, GetUniformLocation(name), x ? 1 : 0);
         }
 
         public int GetUniformLocation(string name)
         {
-            Use();
             return GL.GetUniformLocation(ID, name);
         }
 

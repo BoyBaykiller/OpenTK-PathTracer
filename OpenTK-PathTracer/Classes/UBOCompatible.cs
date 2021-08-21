@@ -14,8 +14,6 @@ namespace OpenTK_PathTracer
         {
             Vector4[] data = GetGPUFriendlyData();
             buffer.SubData(BufferOffset, Vector4.SizeInBytes * data.Length, data);
-
-            //BufferOffset += Vector4.SizeInBytes * data.Length;
         }
     }
 }

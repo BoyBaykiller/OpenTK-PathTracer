@@ -111,12 +111,12 @@ namespace OpenTK_PathTracer
         {
             //Query.Start();
 
-            Program.Upload(0, ThisRenderNumFrame);
+            Program.Use();
+            Program.Upload(0, ThisRenderNumFrame++);
             Result.AttachToImageUnit(0, 0, false, 0, TextureAccess.ReadWrite, (SizedInternalFormat)Result.PixelInternalFormat);
             
             GL.DispatchCompute((int)MathF.Ceiling(Width * Height / 32.0f), 1, 1);
             GL.MemoryBarrier(MemoryBarrierFlags.ShaderImageAccessBarrierBit);
-            ThisRenderNumFrame++;
 
             //Query.StopAndReset();
         }

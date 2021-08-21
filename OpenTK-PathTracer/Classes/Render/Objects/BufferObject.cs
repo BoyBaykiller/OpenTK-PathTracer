@@ -5,7 +5,7 @@ using OpenTK.Graphics.OpenGL4;
 
 namespace OpenTK_PathTracer.Render.Objects
 {
-    public class BufferObject
+    public class BufferObject : IDisposable
     {
         public static readonly Dictionary<BufferRangeTarget, List<int>> bufferTypeBindingIndexDict = new Dictionary<BufferRangeTarget, List<int>>()
         {
@@ -21,13 +21,6 @@ namespace OpenTK_PathTracer.Render.Objects
         public int BufferOffset;
         public int Size { get; private set; }
 
-
-        /// <summary>
-        /// Creates a <paramref name="BufferObject"/> and allocates the associated memory on the GPU
-        /// </summary>
-        /// <param name="bindingIndex">The index in the shader</param>
-        /// <param name="size"></param>
-        /// <param name="bufferUsageHint"></param>
         public BufferObject(BufferRangeTarget bufferRangeTarget, int bindingIndex, int size, BufferUsageHint bufferUsageHint)
         {
             if (bufferTypeBindingIndexDict[bufferRangeTarget].Contains(bindingIndex))
@@ -38,7 +31,7 @@ namespace OpenTK_PathTracer.Render.Objects
             BufferTarget = (BufferTarget)bufferRangeTarget;
             BufferUsageHint = bufferUsageHint;
             ID = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget, ID);
+            Bind();
             Allocate(size);
             GL.BindBufferBase(bufferRangeTarget, bindingIndex, ID);
         }
@@ -112,6 +105,11 @@ namespace OpenTK_PathTracer.Render.Objects
         public void GetSubData(int offset, int size, IntPtr data)
         {
             GL.GetNamedBufferSubData(ID, (IntPtr)offset, size, data);
+        }
+
+        public void Dispose()
+        {
+            GL.DeleteBuffer(ID);
         }
     }
 }

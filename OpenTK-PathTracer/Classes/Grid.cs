@@ -91,6 +91,9 @@ namespace OpenTK_PathTracer
             Indecis = indecis.ToArray();
         }
 
+        private static Vector3 Vec3Min(Vector3 a, Vector3 b) => new Vector3(MathF.Min(a.X, b.X), MathF.Min(a.Y, b.Y), MathF.Min(a.Z, b.Z));
+        private static Vector3 Vec3Max(Vector3 a, Vector3 b) => new Vector3(MathF.Max(a.X, b.X), MathF.Max(a.Y, b.Y), MathF.Max(a.Z, b.Z));
+
         public bool GetGridPosition(Vector3 worldPos, out Vector3 gridPos)
         {
             // round((worldPos - Min - CellSize / 2) / CellSize);
@@ -108,22 +111,5 @@ namespace OpenTK_PathTracer
         }
 
         public bool IsValidGridPosition(Vector3 gridPos) => gridPos.X >= 0 && gridPos.X < Width && gridPos.Y >= 0 && gridPos.Y < Height && gridPos.Z >= 0 && gridPos.Z < Depth;
-
-        private static Vector3 Vec3Min(Vector3 a, Vector3 b) => new Vector3(MathF.Min(a.X, b.X), MathF.Min(a.Y, b.Y), MathF.Min(a.Z, b.Z));
-        private static Vector3 Vec3Max(Vector3 a, Vector3 b) => new Vector3(MathF.Max(a.X, b.X), MathF.Max(a.Y, b.Y), MathF.Max(a.Z, b.Z));
-
-        public Vector4[] GetGPUFriendlyGridData()
-        {
-            List<Vector4> cellData = new List<Vector4>(Cell.GPUInstanceSize / 16 * Cells.Count);
-            for (int i = 0; i < Cells.Count; i++)
-                cellData.AddRange(Cells[i].GetGPUFriendlyData());
-
-            return cellData.ToArray();
-        }
-
-        public int[] GetGPUFriendlyIndecisData()
-        {
-            return Indecis;
-        }
     }
 }

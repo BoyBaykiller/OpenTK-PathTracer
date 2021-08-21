@@ -113,14 +113,6 @@ namespace OpenTK_PathTracer
                     }
                 }
 
-                if (keyBoardState.IsKeyDown(Key.B))
-                {
-                    Camera.Position = new Vector3(10, -11.2f, -17f + 1.3f + Epsilon);
-                    Camera.ViewDir = new Vector3(0, 0, -1);
-                    Camera.Up = new Vector3(0, 1, 0);
-                    PathTracer.ThisRenderNumFrame = 0;
-                }
-
                 if (!CursorVisible)
                 {
                     Camera.ProcessInputs((float)args.Time, keyBoardState, mouseState, out bool frameChanged);
@@ -161,6 +153,7 @@ namespace OpenTK_PathTracer
         public AtmosphericScattering AtmosphericScatterer;
         Grid grid = new Grid(4, 4, 3);
         int instancesSpheres = 0, instancesCuboids = 0;
+
         protected override void OnLoad(EventArgs e)
         {
             Vector2 uboGameObjectsSize = new Vector2(256, 64); // these are the same numbers as in path tracig shader
@@ -176,7 +169,7 @@ namespace OpenTK_PathTracer
             GL.Disable(EnableCap.CullFace);
             GL.Disable(EnableCap.Multisample);
             // TextureCubeMapSeamless gets enabled in Texture class through GL_ARB_seamless_cubemap_per_texture to be compatible with ARB_bindless_texture
-            //GL.Disable(EnableCap.TextureCubeMapSeamless);
+            //GL.Enable(EnableCap.TextureCubeMapSeamless);
 
             VSync = VSyncMode.Off;
             CursorVisible = false;
@@ -192,7 +185,7 @@ namespace OpenTK_PathTracer
             //    @"Src\Textures\EnvironmentMap\posz.png",
             //    @"Src\Textures\EnvironmentMap\negz.png",
             //});
-            AtmosphericScatterer = new AtmosphericScattering(128, 100, 10, 2.1f, 35.0f, 0.01f, new Vector3(700, 530, 440), new Vector3(0, 500, 0));
+            AtmosphericScatterer = new AtmosphericScattering(128, 100, 10, 2.1f, 35.0f, 0.01f, new Vector3(680, 550, 440), new Vector3(0, 500, 0));
             AtmosphericScatterer.Run();
 
             finalProgram = new ShaderProgram(new Shader(ShaderType.VertexShader, @"Src\Shaders\screenQuad.vs"), new Shader(ShaderType.FragmentShader, @"Src\Shaders\final.frag"));
@@ -298,7 +291,7 @@ namespace OpenTK_PathTracer
                 inverseProjection = projection.Inverted();
                 BasicDataUBO.BufferOffset = 0;
                 BasicDataUBO.Append(Vector4.SizeInBytes * 4 * 2, new Matrix4[] { projection, inverseProjection });
-                BasicDataUBO.Append(Vector2.SizeInBytes + Vector2.SizeInBytes, nearFarPlane);
+                BasicDataUBO.Append(Vector4.SizeInBytes, nearFarPlane);
                 lastWidth = Width; lastHeight = Height;
             }
             base.OnResize(e);

@@ -6,7 +6,7 @@ namespace OpenTK_PathTracer.Render
     abstract class RenderEffect
     {
         public Texture Result { get; protected set; }
-        public Query Query { get; } = new Query(600);
+        public readonly Query Query = new Query(600);
         public  ShaderProgram Program { get; protected set; }
         public Framebuffer Framebuffer { get; protected set; }
 
