@@ -34,7 +34,7 @@ namespace OpenTK_PathTracer.GUI.Objects
         }
         public void UseShader()
         {
-            GL.UseProgram(Program);
+            Render.Objects.ShaderProgram.Use(Program);
         }
 
         public void Dispose()

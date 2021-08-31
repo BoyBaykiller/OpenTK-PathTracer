@@ -1,14 +1,15 @@
-﻿using OpenTK;
-using System;
+﻿using System;
+
+using OpenTK;
 
 namespace OpenTK_PathTracer.GameObjects
 {
-    class Cuboid : GameObject
+    class Cuboid : GameObject, IDisposable
     {
+        public static Cuboid Zero => new Cuboid(position: Vector3.Zero, dimensions: Vector3.One, instance: 0, Material.Zero);
         public static readonly int GPUInstanceSize = Vector4.SizeInBytes * 2 + Material.GPUInstanceSize;
-        public static int GlobalClassBufferOffset;
-        public int Instance { get; private set; }
-
+        
+        public int Instance;
         public Vector3 Dimensions;
         public Cuboid(Vector3 position, Vector3 dimensions, int instance, Material material)
         {
@@ -19,16 +20,16 @@ namespace OpenTK_PathTracer.GameObjects
         }
 
 
-        public override int BufferOffset => GlobalClassBufferOffset + Instance * GPUInstanceSize;
+        public override int BufferOffset => Sphere.GPUInstanceSize * MainWindow.MAX_GAMEOBJECTS_SPHERES + Instance * GPUInstanceSize;
 
         public override Vector3 Min => Position - Dimensions * 0.5f;
         public override Vector3 Max => Position + Dimensions * 0.5f;
 
-        readonly Vector4[] gpuData = new Vector4[2];
+        private readonly Vector4[] gpuData = new Vector4[2];
         public override Vector4[] GetGPUFriendlyData()
         {
-            gpuData[0].Xyz = Position - Dimensions * 0.5f;
-            gpuData[1].Xyz = Position + Dimensions * 0.5f;
+            gpuData[0].Xyz = Min;
+            gpuData[1].Xyz = Max;
 
             return gpuData.AddArray(Material.GetGPUFriendlyData());
         }
@@ -58,6 +59,12 @@ namespace OpenTK_PathTracer.GameObjects
                    this.Max.Y >= aabb.Min.Y &&
                    this.Min.Z <= aabb.Max.Z &&
                    this.Max.Z >= aabb.Min.Z;
+        }
+
+        public void Dispose()
+        {
+            // TODO: Implement
+            throw new NotImplementedException();
         }
     }
 }

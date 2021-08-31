@@ -19,7 +19,6 @@ void main()
     
     color = ACESFilm(color);
     color = InverseGamma(color);
-    
     FragColor = vec4(color, 1.0); 
 }
 

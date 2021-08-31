@@ -30,9 +30,10 @@ namespace OpenTK_PathTracer.Render
 
         public override void Run(params object[] aabbArr)
         {
+            //Query.Start();
+            
             GL.PolygonMode(MaterialFace.FrontAndBack, PolygonMode.Line);
 
-            //Query.Start();
             Framebuffer.Clear(ClearBufferMask.ColorBufferBit);
             Program.Use();
             vao.Bind();
@@ -40,8 +41,7 @@ namespace OpenTK_PathTracer.Render
             AABB[] aabbs = (AABB[])aabbArr[0];
             for (int i = 0; i < aabbs.Length; i++)
             {
-                //Matrix4 model = Matrix4.CreateScale(aabbs[i].Dimensions) * Matrix4.CreateTranslation(aabbs[i].Position);
-                Matrix4 model = Matrix4.CreateScale(aabbs[i].Max - aabbs[i].Min) * Matrix4.CreateTranslation(aabbs[i].Position);
+                Matrix4 model = Matrix4.CreateScale(aabbs[i].Dimensions) * Matrix4.CreateTranslation(aabbs[i].Position);
                 
                 Program.Upload(0, model);
                 GL.DrawArrays(PrimitiveType.Quads, 0, unitCubeVerts.Length / 3);

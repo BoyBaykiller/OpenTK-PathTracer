@@ -41,7 +41,6 @@ namespace OpenTK_PathTracer
             }
         }
 
-        public const int MaxIndecis = 1000;
 
         public int Width, Height, Depth;
         public Grid(int width, int height, int depth)

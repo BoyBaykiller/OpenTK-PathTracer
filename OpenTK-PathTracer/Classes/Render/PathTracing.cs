@@ -73,14 +73,14 @@ namespace OpenTK_PathTracer
         }
 
         private float _apertureRadius;
-        public float ApertureRadius
+        public float ApertureDiameter
         {
             get => _apertureRadius;
 
             set
             {
                 _apertureRadius = value;
-                Program.Upload("apertureRadius", value);
+                Program.Upload("apertureDiameter", value);
             }
         }
 
@@ -96,12 +96,13 @@ namespace OpenTK_PathTracer
             BufferObject bufferObject = new BufferObject(BufferRangeTarget.UniformBuffer, 2, 1 * Vector4.SizeInBytes, BufferUsageHint.StaticDraw);
             environmentMap.CubemapTexture.MakeBindless();
             environmentMap.CubemapTexture.MakeResident();
+
             bufferObject.Append(Vector4.SizeInBytes, environmentMap.CubemapTexture.TextureHandle);
 
             RayDepth = rayDepth;
             SSP = ssp;
             FocalLength = focalLength;
-            ApertureRadius = apertureRadius;
+            ApertureDiameter = apertureRadius;
             EnvironmentMap = environmentMap;
         }
 
@@ -113,6 +114,7 @@ namespace OpenTK_PathTracer
 
             Program.Use();
             Program.Upload(0, ThisRenderNumFrame++);
+            
             Result.AttachToImageUnit(0, 0, false, 0, TextureAccess.ReadWrite, (SizedInternalFormat)Result.PixelInternalFormat);
             
             GL.DispatchCompute((int)MathF.Ceiling(Width * Height / 32.0f), 1, 1);

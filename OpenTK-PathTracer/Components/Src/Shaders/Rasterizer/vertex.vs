@@ -1,8 +1,8 @@
 #version 430 core 
 
-layout (location = 0) in vec3 inPosition;
+layout(location = 0) in vec3 inPosition;
 
-layout (std140, binding = 0) uniform BasicDataUBO
+layout(std140, binding = 0) uniform BasicDataUBO
 {
 	mat4 Projection;
     mat4 InvProjection;
@@ -14,7 +14,7 @@ layout (std140, binding = 0) uniform BasicDataUBO
     vec3 ViewDir;
 } basicDataUBO;
 
-layout (location = 0) uniform mat4 modelMatrix;
+layout(location = 0) uniform mat4 modelMatrix;
 
 void main()
 {

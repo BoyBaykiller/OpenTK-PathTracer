@@ -5,7 +5,7 @@
 #define EPSILON 0.001
 #define PI 3.1415926535898
 
-layout (local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
+layout(local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
 
 layout(binding = 0, rgba32f) restrict uniform image2D ImgResult;
 
@@ -53,7 +53,7 @@ struct Ray {
     vec3 Direction;
 };
 
-layout (std140, binding = 0) uniform BasicDataUBO
+layout(std140, binding = 0) uniform BasicDataUBO
 {
 	mat4 Projection;
     mat4 InvProjection;
@@ -65,13 +65,13 @@ layout (std140, binding = 0) uniform BasicDataUBO
     vec3 ViewDir;
 } basicDataUBO;
 
-layout (std140, binding = 1) uniform GameObjectsUBO
+layout(std140, binding = 1) uniform GameObjectsUBO
 {
     Sphere Spheres[256];
 	Cuboid Cuboids[64];
 } gameObjectsUBO;
 
-layout (std140, binding = 2) uniform SamplerUBO
+layout(std140, binding = 2) uniform SamplerUBO
 {
     // sizeof(sampler) == 64bit
     samplerCube SamplerEnvironment; 
@@ -89,7 +89,7 @@ vec3 GetCosWeightedHemissphereDir(inout uint rndSeed, vec3 normal);
 vec2 GetPointOnCircle(inout uint rndSeed);
 uint GetWangHash(inout uint seed);
 float GetRandomFloat01(inout uint state);
-float GetRelevantT(float t1, float t2);
+float GetSmallestPositive(float t1, float t2);
 float FresnelReflectAmount(float n1, float n2, vec3 normal, vec3 incident, float f0);
 float Fresnel(float n1, float n2, float cosTheta, float minReflect);
 vec3 LessThan(vec3 f, float value);
@@ -103,9 +103,9 @@ uniform int rayDepth;
 uniform int SSP;
 
 uniform float focalLength;
-uniform float apertureRadius;
+uniform float apertureDiameter;
 
-layout (location = 0) uniform int thisRendererFrame;
+layout(location = 0) uniform int thisRendererFrame;
 
 uint rndSeed;
 void main()
@@ -125,7 +125,7 @@ void main()
         Ray rayEyeToWorld = GetWorldSpaceRay(basicDataUBO.InvProjection, basicDataUBO.InvView, basicDataUBO.ViewPos, ndc);
 
         vec3 focalPoint = rayEyeToWorld.Origin + rayEyeToWorld.Direction * focalLength;
-        vec2 offset = apertureRadius * GetPointOnCircle(rndSeed);
+        vec2 offset = apertureDiameter * GetPointOnCircle(rndSeed);
         
         rayEyeToWorld.Origin = (basicDataUBO.InvView * vec4(offset, 0.0, 1.0)).xyz;
         rayEyeToWorld.Direction = normalize(focalPoint - rayEyeToWorld.Origin);
@@ -234,7 +234,7 @@ bool GetClosestIntersectingRayObject(Ray ray, out HitInfo hitInfo)
     {
         if (RaySphereIntersect(ray, gameObjectsUBO.Spheres[i], t1, t2) && t2 > 0 && t1 < hitInfo.T)
         {
-            hitInfo.T = GetRelevantT(t1, t2);
+            hitInfo.T = GetSmallestPositive(t1, t2);
             hitInfo.FromInside = hitInfo.T == t2;
             hitInfo.Material = gameObjectsUBO.Spheres[i].Material;
             hitInfo.NearHitPos = ray.Origin + ray.Direction * hitInfo.T;
@@ -246,7 +246,7 @@ bool GetClosestIntersectingRayObject(Ray ray, out HitInfo hitInfo)
     {
         if (RayCuboidIntersect(ray, gameObjectsUBO.Cuboids[i], t1, t2) && t2 > 0 && t1 < hitInfo.T)
         {
-            hitInfo.T = GetRelevantT(t1, t2);
+            hitInfo.T = GetSmallestPositive(t1, t2);
             hitInfo.FromInside = hitInfo.T == t2;
             hitInfo.Material = gameObjectsUBO.Cuboids[i].Material;
             hitInfo.NearHitPos = ray.Origin + ray.Direction * hitInfo.T;
@@ -260,7 +260,7 @@ bool GetClosestIntersectingRayObject(Ray ray, out HitInfo hitInfo)
 bool RaySphereIntersect(Ray ray, Sphere sphere, out float t1, out float t2)
 {
     // Source: https://antongerdelan.net/opengl/raycasting.html
-    t1 = FLOAT_MAX; t2 = FLOAT_MAX;
+    t1 = t2 = FLOAT_MAX;
 
     vec3 sphereToRay = ray.Origin - sphere.Position;
     float b = dot(ray.Direction, sphereToRay);
@@ -352,8 +352,9 @@ float GetRandomFloat01(inout uint state)
     return float(GetWangHash(state)) / 4294967296.0;
 }
 
-float GetRelevantT(float t1, float t2)
+float GetSmallestPositive(float t1, float t2)
 {
+    // Assumes at least one float > 0
     return t1 < 0 ? t2 : t1;
 }
 

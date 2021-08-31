@@ -1,14 +1,15 @@
-﻿using OpenTK;
-using System;
+﻿using System;
+
+using OpenTK;
 
 namespace OpenTK_PathTracer.GameObjects
 {
-    class Sphere : GameObject
+    class Sphere : GameObject, IDisposable
     {
+        public static Sphere Zero => new Sphere(position: Vector3.Zero, radius: 0.5f, instance: 0, Material.Zero);
         public static readonly int GPUInstanceSize = Vector4.SizeInBytes + Material.GPUInstanceSize;
-        public static int GlobalClassBufferOffset;
-        public int Instance { get; private set; }
-
+        
+        public int Instance;
         public float Radius;
         public Sphere(Vector3 position, float radius, int instance, Material material)
         {
@@ -18,12 +19,12 @@ namespace OpenTK_PathTracer.GameObjects
             Instance = instance;
         }
 
-        public override int BufferOffset => GlobalClassBufferOffset + Instance * GPUInstanceSize;
+        public override int BufferOffset => 0 + Instance * GPUInstanceSize;
 
         public override Vector3 Min => Position - new Vector3(Radius);
         public override Vector3 Max => Position + new Vector3(Radius);
 
-        readonly Vector4[] gpuData = new Vector4[1];
+        private readonly Vector4[] gpuData = new Vector4[1];
         public override Vector4[] GetGPUFriendlyData()
         {
             gpuData[0].Xyz = Position;
@@ -63,6 +64,11 @@ namespace OpenTK_PathTracer.GameObjects
                     (this.Position.Z + this.Radius) > aabb.Min.Z &&
                     (this.Position.Z - this.Radius) < aabb.Max.Z;
         }
-        
+
+        public void Dispose()
+        {
+            // TODO: Implement
+            throw new NotImplementedException();
+        }
     }
 }

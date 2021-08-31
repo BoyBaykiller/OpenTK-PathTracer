@@ -250,7 +250,6 @@ namespace OpenTK_PathTracer.Render.Objects
 
                 case TextureTarget.Texture2DArray:
                     GL.TexImage3D(TextureTarget.Texture2DArray, 0, PixelInternalFormat, width, height, depth, 0, PixelFormat, PixelType.Float, IntPtr.Zero);
-                    Depth = depth;
                     break;
 
                 default:
@@ -258,7 +257,7 @@ namespace OpenTK_PathTracer.Render.Objects
                     break;
             }
 
-            Width = width; Height = height; 
+            Width = width; Height = height; Depth = depth;
         }
 
         public void GenerateMipMap()
