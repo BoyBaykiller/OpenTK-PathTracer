@@ -1,13 +1,12 @@
 ﻿using System;
-
 using OpenTK;
 
 namespace OpenTK_PathTracer.GameObjects
 {
-    class Sphere : GameObject, IDisposable
+    class Sphere : GameObjectBase
     {
         public static Sphere Zero => new Sphere(position: Vector3.Zero, radius: 0.5f, instance: 0, Material.Zero);
-        public static readonly int GPUInstanceSize = Vector4.SizeInBytes + Material.GPUInstanceSize;
+        public const int GPU_INSTANCE_SIZE = 16 + Material.GPU_INSTANCE_SIZE;
         
         public int Instance;
         public float Radius;
@@ -19,7 +18,7 @@ namespace OpenTK_PathTracer.GameObjects
             Instance = instance;
         }
 
-        public override int BufferOffset => 0 + Instance * GPUInstanceSize;
+        public override int BufferOffset => 0 + Instance * GPU_INSTANCE_SIZE;
 
         public override Vector3 Min => Position - new Vector3(Radius);
         public override Vector3 Max => Position + new Vector3(Radius);
@@ -36,7 +35,7 @@ namespace OpenTK_PathTracer.GameObjects
         public override bool IntersectsRay(Ray ray, out float t1, out float t2)
         {
             // Source: https://antongerdelan.net/opengl/raycasting.html
-            t1 = 0; t2 = 0;
+            t1 = t2 = 0;
 
             Vector3 sphereToRay = ray.Origin - this.Position;
             float b = Vector3.Dot(ray.Direction, sphereToRay);
@@ -63,12 +62,6 @@ namespace OpenTK_PathTracer.GameObjects
                     (this.Position.Y - this.Radius) < aabb.Max.Y &&
                     (this.Position.Z + this.Radius) > aabb.Min.Z &&
                     (this.Position.Z - this.Radius) < aabb.Max.Z;
-        }
-
-        public void Dispose()
-        {
-            // TODO: Implement
-            throw new NotImplementedException();
         }
     }
 }

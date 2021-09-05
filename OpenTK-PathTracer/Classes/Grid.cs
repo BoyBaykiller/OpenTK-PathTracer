@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-
 using OpenTK;
-
 using OpenTK_PathTracer.GameObjects;
 
 namespace OpenTK_PathTracer
@@ -55,9 +53,13 @@ namespace OpenTK_PathTracer
         public int[] Indecis { get; private set; }
 
         public AABB RootAABB { get; private set; }
-        public void Update(List<GameObject> gameObjects)
+        public void Update(List<GameObjectBase> gameObjects)
         {
             Cells.Clear();
+
+            if (gameObjects.Count == 0)
+                return;
+
 
             Min = new Vector3(float.MaxValue);
             Max = new Vector3(float.MinValue);

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-
 using OpenTK.Graphics.OpenGL4;
 
 namespace OpenTK_PathTracer.Render.Objects
@@ -25,7 +24,7 @@ namespace OpenTK_PathTracer.Render.Objects
         {
             if (bufferTypeBindingIndexDict[bufferRangeTarget].Contains(bindingIndex))
             {
-                Console.WriteLine($"BufferObject: BindingIndex {bindingIndex} is already bound to an other {bufferRangeTarget}");
+                Console.WriteLine($"BufferObject: BindingIndex {bindingIndex} is already bound to a {bufferRangeTarget}");
                 bufferTypeBindingIndexDict[bufferRangeTarget].Add(bindingIndex);
             }
             BufferTarget = (BufferTarget)bufferRangeTarget;
@@ -41,7 +40,7 @@ namespace OpenTK_PathTracer.Render.Objects
             BufferTarget = bufferTarget;
             BufferUsageHint = bufferUsageHint;
             ID = GL.GenBuffer();
-            GL.BindBuffer(bufferTarget, ID);
+            Bind();
             Allocate(size);
         }
 
@@ -98,12 +97,14 @@ namespace OpenTK_PathTracer.Render.Objects
             Size = size;
         }
 
-        public void GetSubData<T5>(int offset, int size, T5[] data) where T5 : struct
+        public void GetSubData<T5>(int offset, int size, out T5[] data) where T5 : struct
         {
+            data = null;
             GL.GetNamedBufferSubData(ID, (IntPtr)offset, size, data);
         }
-        public void GetSubData(int offset, int size, IntPtr data)
+        public void GetSubData(int offset, int size, out IntPtr data)
         {
+            data = System.Runtime.InteropServices.Marshal.AllocHGlobal(size);
             GL.GetNamedBufferSubData(ID, (IntPtr)offset, size, data);
         }
 

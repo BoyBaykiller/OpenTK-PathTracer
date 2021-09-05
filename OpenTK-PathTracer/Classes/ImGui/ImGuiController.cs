@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-
 using ImGuiNET;
-
 using OpenTK;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Input;

@@ -1,10 +1,9 @@
 ﻿using OpenTK.Graphics.OpenGL4;
-
 using OpenTK_PathTracer.Render.Objects;
 
 namespace OpenTK_PathTracer.Render
 {
-    class ScreenEffect : RenderEffect
+    class ScreenEffect : RenderEffectBase
     {
         public ScreenEffect(Shader fragmentShader, int width, int height)
         {
@@ -31,7 +30,7 @@ namespace OpenTK_PathTracer.Render
             Program.Use();
 
             for (int i = 0; i < textureArr.Length; i++)
-                ((Texture)textureArr[i]).AttachToUnit(i);
+                (textureArr[i] as Texture).AttachToUnit(i);
             GL.DrawArrays(PrimitiveType.Quads, 0, 4);
 
             //Query.StopAndReset();

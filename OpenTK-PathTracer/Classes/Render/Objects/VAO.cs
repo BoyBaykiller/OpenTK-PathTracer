@@ -4,8 +4,6 @@ namespace OpenTK_PathTracer.Render.Objects
 {
     class VAO
     {
-        public static readonly VAO Zero = new VAO();
-
         private static int lastBindedID = -1;
 
         public readonly int ID;

@@ -125,7 +125,7 @@ void main()
         Ray rayEyeToWorld = GetWorldSpaceRay(basicDataUBO.InvProjection, basicDataUBO.InvView, basicDataUBO.ViewPos, ndc);
 
         vec3 focalPoint = rayEyeToWorld.Origin + rayEyeToWorld.Direction * focalLength;
-        vec2 offset = apertureDiameter * GetPointOnCircle(rndSeed);
+        vec2 offset = apertureDiameter * 0.5 * GetPointOnCircle(rndSeed);
         
         rayEyeToWorld.Origin = (basicDataUBO.InvView * vec4(offset, 0.0, 1.0)).xyz;
         rayEyeToWorld.Direction = normalize(focalPoint - rayEyeToWorld.Origin);

@@ -1,14 +1,12 @@
 ﻿using System;
-
 using OpenTK;
 using OpenTK.Graphics.OpenGL4;
-
 using OpenTK_PathTracer.Render;
 using OpenTK_PathTracer.Render.Objects;
 
 namespace OpenTK_PathTracer
 {
-    class PathTracing : RenderEffect
+    class PathTracing : RenderEffectBase
     {
         private int _numSpheres;
         public int NumSpheres

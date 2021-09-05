@@ -1,5 +1,4 @@
 ﻿using System;
-
 using OpenTK;
 using OpenTK.Input;
 
@@ -29,13 +28,11 @@ namespace OpenTK_PathTracer
         }
 
         private Vector2 LookXY = new Vector2();
-
-        public MouseState lastMouseState = new MouseState();
-        public void ProcessInputs(float dT, KeyboardState keyboardState, MouseState mouseState, out bool frameChanged)
+        public void ProcessInputs(float dT, out bool frameChanged)
         {
             frameChanged = false;
 
-            Vector2 mouseDelta = new Vector2(mouseState.X - lastMouseState.X, mouseState.Y - lastMouseState.Y);
+            Vector2 mouseDelta = MouseManager.DeltaPosition;
             if (mouseDelta.X != 0 || mouseDelta.Y != 0)
                 frameChanged = true;
 
@@ -56,20 +53,20 @@ namespace OpenTK_PathTracer
 
 
             Vector3 acceleration = Vector3.Zero;
-            if (keyboardState.IsKeyDown(Key.W))
+            if (KeyboardManager.IsKeyDown(Key.W))
                 acceleration += ViewDir;
             
-            if (keyboardState.IsKeyDown(Key.S))
+            if (KeyboardManager.IsKeyDown(Key.S))
                 acceleration -= ViewDir;
             
-            if (keyboardState.IsKeyDown(Key.D))
+            if (KeyboardManager.IsKeyDown(Key.D))
                 acceleration += Vector3.Cross(ViewDir, Up).Normalized();
 
-            if (keyboardState.IsKeyDown(Key.A))
+            if (KeyboardManager.IsKeyDown(Key.A))
                 acceleration -= Vector3.Cross(ViewDir, Up).Normalized();
 
             
-            Velocity += keyboardState.IsKeyDown(Key.LShift) ? acceleration * 5 : (keyboardState.IsKeyDown(Key.LControl) ? acceleration * 0.35f : acceleration);
+            Velocity += KeyboardManager.IsKeyDown(Key.LShift) ? acceleration * 5 : (KeyboardManager.IsKeyDown(Key.LControl) ? acceleration * 0.35f : acceleration);
             if (Vector3.Dot(Velocity, Velocity) < 0.01f)
                 Velocity = Vector3.Zero;
             else
@@ -78,8 +75,6 @@ namespace OpenTK_PathTracer
             Position += Velocity * dT;
             Velocity *= 0.95f;
             View = GenerateMatrix(Position, ViewDir, Up);
-            
-            lastMouseState = mouseState;
         }
 
         public static Matrix4 GenerateMatrix(Vector3 position, Vector3 viewDir, Vector3 up) => Matrix4.LookAt(position, position + viewDir, up);

@@ -1,13 +1,12 @@
 ﻿using System;
-
 using OpenTK;
 
 namespace OpenTK_PathTracer.GameObjects
 {
-    class Cuboid : GameObject, IDisposable
+    class Cuboid : GameObjectBase
     {
         public static Cuboid Zero => new Cuboid(position: Vector3.Zero, dimensions: Vector3.One, instance: 0, Material.Zero);
-        public static readonly int GPUInstanceSize = Vector4.SizeInBytes * 2 + Material.GPUInstanceSize;
+        public const int GPU_INSTANCE_SIZE = 16 * 2 + Material.GPU_INSTANCE_SIZE;
         
         public int Instance;
         public Vector3 Dimensions;
@@ -20,7 +19,7 @@ namespace OpenTK_PathTracer.GameObjects
         }
 
 
-        public override int BufferOffset => Sphere.GPUInstanceSize * MainWindow.MAX_GAMEOBJECTS_SPHERES + Instance * GPUInstanceSize;
+        public override int BufferOffset => Sphere.GPU_INSTANCE_SIZE * MainWindow.MAX_GAMEOBJECTS_SPHERES + Instance * GPU_INSTANCE_SIZE;
 
         public override Vector3 Min => Position - Dimensions * 0.5f;
         public override Vector3 Max => Position + Dimensions * 0.5f;
@@ -59,12 +58,6 @@ namespace OpenTK_PathTracer.GameObjects
                    this.Max.Y >= aabb.Min.Y &&
                    this.Min.Z <= aabb.Max.Z &&
                    this.Max.Z >= aabb.Min.Z;
-        }
-
-        public void Dispose()
-        {
-            // TODO: Implement
-            throw new NotImplementedException();
         }
     }
 }

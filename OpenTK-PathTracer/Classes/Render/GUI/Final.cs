@@ -1,10 +1,7 @@
 ﻿using System;
-
 using ImGuiNET;
-
 using OpenTK;
 using OpenTK.Input;
-
 using OpenTK_PathTracer.GUI;
 using OpenTK_PathTracer.GameObjects;
 
@@ -13,9 +10,10 @@ namespace OpenTK_PathTracer.Render.GUI
     struct Final
     {
         public static ImGuiController ImGuiController = new ImGuiController(0, 0);
-        private static GameObject pickedObject;
+        private static GameObjectBase pickedObject;
 
         public static ImGuiIOPtr ImGuiIOPtr => ImGui.GetIO();
+
         public static void Run(MainWindow mainWindow, float frameTime, out bool frameChanged)
         {
             ImGuiController.Update(mainWindow, frameTime);
@@ -139,7 +137,7 @@ namespace OpenTK_PathTracer.Render.GUI
                     Sphere newSphere = Sphere.Zero;
                     newSphere.Position = viewRay.GetPoint(1.5f);
                     newSphere.Instance = mainWindow.PathTracer.NumSpheres++;
-                    newSphere.Upload(mainWindow.GameObjectsUBO);
+                    newSphere.Upload();
                     mainWindow.GameObjects.Add(newSphere);
                     
                     pickedObject = newSphere;
@@ -152,7 +150,7 @@ namespace OpenTK_PathTracer.Render.GUI
                     Cuboid newCuboid = Cuboid.Zero;
                     newCuboid.Position = viewRay.GetPoint(1.5f);
                     newCuboid.Instance = mainWindow.PathTracer.NumCuboids++;
-                    newCuboid.Upload(mainWindow.GameObjectsUBO);
+                    newCuboid.Upload();
                     mainWindow.GameObjects.Add(newCuboid);
 
                     pickedObject = newCuboid;
@@ -220,13 +218,12 @@ namespace OpenTK_PathTracer.Render.GUI
 
                     if (hasInput)
                     {
-                        pickedObject.Upload(mainWindow.GameObjectsUBO);
+                        pickedObject.Upload();
                         frameChanged = true;
                     }
                     ImGui.End();
                 }
             }
-            
             ImGuiController.Render();
         }
 
@@ -234,14 +231,37 @@ namespace OpenTK_PathTracer.Render.GUI
         {
             if (mainWindow.CursorVisible && !ImGuiIOPtr.WantCaptureMouse)
             {
-                if (mainWindow.mouseState.IsButtonDown(MouseButton.Left) && mainWindow.lastMouseState.IsButtonUp(MouseButton.Left))
+                if (MouseManager.IsButtonTouched(MouseButton.Left))
                 {
                     System.Drawing.Point windowSpaceCoords = mainWindow.PointToClient(new System.Drawing.Point(Mouse.GetCursorState().X, Mouse.GetCursorState().Y)); windowSpaceCoords.Y = mainWindow.Height - windowSpaceCoords.Y; // [0, Width][0, Height]
                     Vector2 normalizedDeviceCoords = Vector2.Divide(new Vector2(windowSpaceCoords.X, windowSpaceCoords.Y), new Vector2(mainWindow.Width, mainWindow.Height)) * 2.0f - new Vector2(1.0f);
                     Ray rayWorld = Ray.GetWorldSpaceRay(mainWindow.inverseProjection, mainWindow.Camera.View.Inverted(), mainWindow.Camera.Position, normalizedDeviceCoords);
 
                     mainWindow.RayTrace(rayWorld, out pickedObject, out _, out _);
-                    //RayTrace(grid, rayWorld, out GameObjectPropertyRenderer.RayObject);
+
+                    /// DEBUG
+                    //if (pickedObject is Sphere sphere)
+                    //{
+                    //    /// Delete from GPU
+                    //    int start = pickedObject.BufferOffset + Sphere.GPU_INSTANCE_SIZE;
+                    //    int size = Sphere.GPU_INSTANCE_SIZE * mainWindow.PathTracer.NumSpheres - start;
+
+                    //    /// Copys data from GPU to CPU and then with tiny offset back to GPU
+                    //    mainWindow.GameObjectsUBO.GetSubData(start, size, out IntPtr followingSphereData);
+                    //    mainWindow.GameObjectsUBO.SubData(pickedObject.BufferOffset, size, followingSphereData); // override selected sphere
+                    //    System.Runtime.InteropServices.Marshal.FreeHGlobal(followingSphereData);
+
+                    //    /// Delete from CPU
+                    //    mainWindow.GameObjects.Remove(sphere);
+                    //    mainWindow.PathTracer.NumSpheres--;
+
+                    //    for (int i = 0; i < mainWindow.GameObjects.Count; i++)
+                    //        if (mainWindow.GameObjects[i] is Sphere temp && temp != null && temp.Instance > sphere.Instance)
+                    //            temp.Instance--;
+
+                    //    mainWindow.PathTracer.ThisRenderNumFrame = 0;
+                    //    pickedObject = null;
+                    //}
                 }
             }
         }

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-
 using OpenTK.Graphics.OpenGL4;
 
 namespace OpenTK_PathTracer.Render.Objects

@@ -1,13 +1,12 @@
 ﻿using System;
-
 using OpenTK;
 
 namespace OpenTK_PathTracer
 {
-    class Material : UBOCompatible
+    class Material : UBOCompatibleBase
     {
         public static Material Zero => new Material(albedo: Vector3.One, emissiv: Vector3.Zero, refractionColor: Vector3.Zero, specularChance: 0.0f, specularRoughness: 0.0f, indexOfRefraction: 1.0f, refractionChance: 0.0f, refractionRoughnes: 0.0f);
-        public static readonly int GPUInstanceSize = Vector4.SizeInBytes * 4;
+        public const int GPU_INSTANCE_SIZE = 16 * 4;
 
         public Vector3 Albedo;
         public Vector3 Emissiv;
@@ -31,9 +30,9 @@ namespace OpenTK_PathTracer
             RefractionRoughnes = refractionRoughnes;
         }
 
-        public override int BufferOffset => throw new NotImplementedException();
+        public override int BufferOffset => throw new NotSupportedException("Material is not meant to directly be uploaded to the GPU");
 
-        readonly Vector4[] GPUData = new Vector4[4];
+        private readonly Vector4[] GPUData = new Vector4[4];
         public override Vector4[] GetGPUFriendlyData()
         {
             GPUData[0].Xyz = Albedo;
@@ -49,12 +48,6 @@ namespace OpenTK_PathTracer
             GPUData[3].Y = IOR;
             return GPUData;
         }
-
-        public override string ToString()
-        {
-            return $"<Material A: {Albedo},\n E: {Emissiv},\n R: {RefractionColor},\n S%: {SpecularChance},\n SR: {SpecularRoughness},\n IOR: {IOR},\n R% {RefractionChance},\n RR: {RefractionRoughnes}>";
-        }
-
 
         private readonly static Random rnd = new Random();
         public static Material GetRndMaterial()
