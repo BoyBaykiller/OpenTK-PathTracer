@@ -12,7 +12,6 @@ namespace OpenTK_PathTracer
             Array.Resize<T>(ref arr0, arr0.Length + arr1.Length);
             for (int i = 0; i < arr1.Length; i++)
                 arr0[i + oldLength] = arr1[i];
-
             return arr0;
         }
 

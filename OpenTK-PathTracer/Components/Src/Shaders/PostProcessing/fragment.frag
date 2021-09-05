@@ -13,12 +13,14 @@ vec3 ACESFilm(vec3 x);
 in vec2 TexCoord;
 void main()
 {
-    vec3 color = texture(Sampler0, TexCoord).rgb;
+    vec3 color = vec3(0);
+    color += texture(Sampler0, TexCoord).rgb;
     color += texture(Sampler1, TexCoord).rgb;
     //color += texture(Sampler2, TexCoord).rgb;
     
     color = ACESFilm(color);
     color = InverseGamma(color);
+    
     FragColor = vec4(color, 1.0); 
 }
 

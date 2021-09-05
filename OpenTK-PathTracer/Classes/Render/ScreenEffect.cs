@@ -31,7 +31,10 @@ namespace OpenTK_PathTracer.Render
             Program.Use();
 
             for (int i = 0; i < textureArr.Length; i++)
-                ((Texture)textureArr[i]).AttachToUnit(i);
+            {
+                if (textureArr != null)
+                    ((Texture)textureArr[i]).AttachToUnit(i);
+            }
             GL.DrawArrays(PrimitiveType.Quads, 0, 4);
 
             //Query.StopAndReset();

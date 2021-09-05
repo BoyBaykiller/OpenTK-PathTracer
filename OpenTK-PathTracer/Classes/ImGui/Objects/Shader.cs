@@ -37,6 +37,7 @@ namespace OpenTK_PathTracer.GUI.Objects
             Render.Objects.ShaderProgram.Use(Program);
         }
 
+        //TODO: Could be replaced for a destructor
         public void Dispose()
         {
             if (Initialized)

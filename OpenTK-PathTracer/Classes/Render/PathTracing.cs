@@ -72,37 +72,31 @@ namespace OpenTK_PathTracer
             }
         }
 
-        private float _apertureRadius;
+        private float _apertureDiameter;
         public float ApertureDiameter
         {
-            get => _apertureRadius;
+            get => _apertureDiameter;
 
             set
             {
-                _apertureRadius = value;
+                _apertureDiameter = value;
                 Program.Upload("apertureDiameter", value);
             }
         }
 
         public readonly EnvironmentMap EnvironmentMap;
-        public PathTracing(EnvironmentMap environmentMap, int width, int height, int rayDepth, int ssp, float focalLength, float apertureRadius)
+        public PathTracing(EnvironmentMap environmentMap, int width, int height, int rayDepth, int ssp, float focalLength, float apertureDiameter)
         {
             Result = new Texture(TextureTarget.Texture2D, TextureWrapMode.ClampToBorder, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, false);
             Result.Allocate(width, height);
 
             Program = new ShaderProgram(new Shader(ShaderType.ComputeShader, @"Src\Shaders\PathTracing\compute.comp"));
 
-            // Testing ARB_bindless_texture
-            BufferObject bufferObject = new BufferObject(BufferRangeTarget.UniformBuffer, 2, 1 * Vector4.SizeInBytes, BufferUsageHint.StaticDraw);
-            environmentMap.CubemapTexture.MakeBindless();
-            environmentMap.CubemapTexture.MakeResident();
-
-            bufferObject.Append(Vector4.SizeInBytes, environmentMap.CubemapTexture.TextureHandle);
-
+            EnvironmentMap = environmentMap;
             RayDepth = rayDepth;
             SSP = ssp;
             FocalLength = focalLength;
-            ApertureDiameter = apertureRadius;
+            ApertureDiameter = apertureDiameter;
             EnvironmentMap = environmentMap;
         }
 
@@ -112,9 +106,8 @@ namespace OpenTK_PathTracer
         {
             //Query.Start();
 
-            Program.Use();
+            EnvironmentMap.CubemapTexture.AttachToUnit(0);
             Program.Upload(0, ThisRenderNumFrame++);
-            
             Result.AttachToImageUnit(0, 0, false, 0, TextureAccess.ReadWrite, (SizedInternalFormat)Result.PixelInternalFormat);
             
             GL.DispatchCompute((int)MathF.Ceiling(Width * Height / 32.0f), 1, 1);

@@ -1,5 +1,5 @@
 #version 430 core
-#extension GL_ARB_bindless_texture : require
+
 #define FLOAT_MAX 3.4028235e+38
 #define FLOAT_MIN -3.4028235e+38
 #define EPSILON 0.001
@@ -71,12 +71,9 @@ layout(std140, binding = 1) uniform GameObjectsUBO
 	Cuboid Cuboids[64];
 } gameObjectsUBO;
 
-layout(std140, binding = 2) uniform SamplerUBO
-{
-    // sizeof(sampler) == 64bit
-    samplerCube SamplerEnvironment; 
-} samplerUBO;
+layout(binding = 0) uniform samplerCube SamplerEnvironment; 
 
+// Functions declaration
 vec3 PathTrace(Ray ray);
 bool GetClosestIntersectingRayObject(Ray ray, out HitInfo hitInfo);
 bool GetClosestIntersectingLight(Ray ray, out HitInfo hitInfo);
@@ -96,6 +93,7 @@ vec3 LessThan(vec3 f, float value);
 vec3 InverseGammaToLinear(vec3 rgb);
 Ray GetWorldSpaceRay(mat4 inverseProj, mat4 inverseView, vec3 viewPos, vec2 normalizedDeviceCoords);
 bool IsInside(vec2 pos, vec2 size);
+
 
 uniform vec2 uboGameObjectsSize;
 
@@ -217,7 +215,7 @@ vec3 PathTrace(Ray ray)
         }
         else
         {
-            ret += texture(samplerUBO.SamplerEnvironment, ray.Direction).rgb * throughPut;
+            ret += texture(SamplerEnvironment, ray.Direction).rgb * throughPut;
             break;
         }  
     }

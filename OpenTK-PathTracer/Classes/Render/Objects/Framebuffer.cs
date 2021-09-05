@@ -18,10 +18,12 @@ namespace OpenTK_PathTracer.Render.Objects
             }
         }
 
+        private FramebufferTarget Target;
+
         private static int lastBindedID = -1;
         public Framebuffer()
         {
-            GL.CreateFramebuffers(1, out ID);
+            ID = GL.GenFramebuffer();
         }
 
         public void Clear(ClearBufferMask clearBufferMask)
@@ -32,14 +34,18 @@ namespace OpenTK_PathTracer.Render.Objects
 
         public void AddRenderTarget(FramebufferAttachment framebufferAttachment, Texture texture)
         {
-            GL.NamedFramebufferTexture(ID, framebufferAttachment, texture.ID, 0);
+            Bind();
+            GL.FramebufferTexture(Target, framebufferAttachment, texture.ID, 0);
         }
 
         public void SetRenderbuffer(RenderbufferStorage renderbufferStorage, FramebufferAttachment framebufferAttachment, int width, int height)
         {
-            GL.CreateRenderbuffers(1, out _rbo);
-            GL.NamedRenderbufferStorage(ID, renderbufferStorage, width, height);
-            GL.NamedFramebufferRenderbuffer(ID, framebufferAttachment, RenderbufferTarget.Renderbuffer, _rbo);
+            Bind();
+
+            _rbo = GL.GenRenderbuffer();
+            GL.BindRenderbuffer(RenderbufferTarget.Renderbuffer, _rbo);
+            GL.RenderbufferStorage(RenderbufferTarget.Renderbuffer, renderbufferStorage, width, height);
+            GL.FramebufferRenderbuffer(Target, framebufferAttachment, RenderbufferTarget.Renderbuffer, _rbo);
         }
 
         /// <summary>
@@ -47,10 +53,10 @@ namespace OpenTK_PathTracer.Render.Objects
         /// That means if you have two Rendertargets attached you need to tell OpenGL through this function to actually render to both of them
         /// </summary>
         /// <param name="drawBuffersEnums"></param>
-        public void DrawRenderTargets(params DrawBuffersEnum[] drawBuffersEnums)
-        {
-            GL.NamedFramebufferDrawBuffers(ID, drawBuffersEnums.Length, drawBuffersEnums);
-        }
+        //public void DrawRenderTargets(params DrawBuffersEnum[] drawBuffersEnums)
+        //{
+        //    GL.FramebufferDrawBuffers(Target, drawBuffersEnums.Length, drawBuffersEnums);
+        //}
 
         public void Bind(FramebufferTarget framebufferTarget = FramebufferTarget.Framebuffer)
         {
@@ -58,6 +64,7 @@ namespace OpenTK_PathTracer.Render.Objects
             {
                 GL.BindFramebuffer(framebufferTarget, ID);
                 lastBindedID = ID;
+                Target = framebufferTarget;
             }  
         }
 
@@ -77,9 +84,12 @@ namespace OpenTK_PathTracer.Render.Objects
         }
 
 
-        public FramebufferStatus GetFBOStatus()
+        public FramebufferStatus GetGBOStatus()
         {
-            return GL.CheckNamedFramebufferStatus(ID, FramebufferTarget.Framebuffer);
+            Bind();
+            var status = (FramebufferStatus)GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer);
+            Bind(0);
+            return status;
         }
     }
 }

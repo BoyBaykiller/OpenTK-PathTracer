@@ -44,11 +44,18 @@ namespace OpenTK_PathTracer.Render.Objects
 
         public Texture(TextureTarget textureTarget, TextureWrapMode textureWrapMode, PixelInternalFormat pixelInternalFormat, PixelFormat pixelFormat, bool enableMipmap, float[] borderColor = null)
         {
-            GL.CreateTextures(textureTarget, 1, out ID);
+            ID = GL.GenTexture();
             TextureTarget = textureTarget;
             PixelFormat = pixelFormat;
 
             SetParameters(textureWrapMode, pixelInternalFormat, enableMipmap, borderColor);
+        }
+
+        public void Clear()
+        {
+            Bind();
+            byte[] data = new byte[Width * Height * 4];
+            GL.TexSubImage2D(TextureTarget, 0, 0, 0, Width, Height, PixelFormat, PixelType.UnsignedByte, data);
         }
 
         public static Texture GetTexture2D(string path, TextureWrapMode textureWrapMode, PixelInternalFormat pixelInternalFormat, PixelFormat pixelFormat, bool generateMipmap, float[] borderColor = null)
@@ -107,6 +114,8 @@ namespace OpenTK_PathTracer.Render.Objects
             return texture;
         }
 
+
+
         public void SetParameters(TextureWrapMode textureWrapMode, PixelInternalFormat pixelInternalFormat, bool enableMipMap, float[] borderColor = null)
         {
             Bind();
@@ -136,7 +145,7 @@ namespace OpenTK_PathTracer.Render.Objects
             if (TextureTarget == TextureTarget.TextureCubeMap)
             {
                 GL.TexParameter(TextureTarget, TextureParameterName.TextureWrapR, (int)textureWrapMode);
-                GL.TexParameter(TextureTarget, (TextureParameterName)All.TextureCubeMapSeamless, 1);
+                //GL.TexParameter(TextureTarget, (TextureParameterName)All.TextureCubeMapSeamless, 1);
             }
                 
 
@@ -213,7 +222,7 @@ namespace OpenTK_PathTracer.Render.Objects
         public void SetSubTexImage2DArray(Bitmap image, int index)
         {
             BitmapData data = image.LockBits(new Rectangle(0, 0, image.Width, image.Height), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-
+            
             Bind();
             GL.TexSubImage3D(TextureTarget.Texture2DArray, 0, 0, 0, index, image.Width, image.Height, 1, PixelFormat.Rgba, PixelType.UnsignedByte, data.Scan0);
             image.UnlockBits(data);
@@ -295,17 +304,19 @@ namespace OpenTK_PathTracer.Render.Objects
 
         public void AttachToUnit(int unit)
         {
-            GL.BindTextureUnit(unit, ID);
+            //GL.BindTextureUnit(unit, ID);
+            GL.ActiveTexture(TextureUnit.Texture0 + unit);
+            GL.BindTexture(TextureTarget, ID);
         }
 
-        public static void AttachToUnit(int unit, int textureID)
-        {
-            GL.BindTextureUnit(unit, textureID);
-        }
-        public static void DetachFromUnit(int unit)
-        {
-            GL.BindTextureUnit(unit, 0);
-        }
+        //public static void AttachToUnit(int unit, int textureID)
+        //{
+        //    GL.BindTextureUnit(unit, textureID);
+        //}
+        //public static void DetachFromUnit(int unit)
+        //{
+        //    GL.BindTextureUnit(unit, 0);
+        //}
 
         public void Dispose()
         {

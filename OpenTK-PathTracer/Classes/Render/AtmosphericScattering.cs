@@ -136,7 +136,7 @@ namespace OpenTK_PathTracer.Render
 
         public override void Run(params object[] viewPos)
         {
-            Query.Start();
+            //Query.Start();
 
             Result.AttachToImageUnit(0, 0, true, 0, TextureAccess.WriteOnly, (SizedInternalFormat)Result.PixelInternalFormat);
             Program.Use();
@@ -147,7 +147,7 @@ namespace OpenTK_PathTracer.Render
             GL.DispatchCompute((int)MathF.Ceiling(Width / 32.0f), (int)MathF.Ceiling(Width / 32.0f), 6);
             GL.MemoryBarrier(MemoryBarrierFlags.ShaderImageAccessBarrierBit);
 
-            Query.StopAndReset();
+            //Query.StopAndReset();
         }
 
         public override void SetSize(int width, int height)

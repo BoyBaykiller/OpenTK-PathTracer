@@ -5,7 +5,7 @@ using OpenTK.Graphics.OpenGL4;
 
 namespace OpenTK_PathTracer.Render.Objects
 {
-    public class BufferObject : IDisposable
+    public class BufferObject
     {
         public static readonly Dictionary<BufferRangeTarget, List<int>> bufferTypeBindingIndexDict = new Dictionary<BufferRangeTarget, List<int>>()
         {
@@ -21,6 +21,13 @@ namespace OpenTK_PathTracer.Render.Objects
         public int BufferOffset;
         public int Size { get; private set; }
 
+
+        /// <summary>
+        /// Creates a <paramref name="BufferObject"/> and allocates the associated memory on the GPU
+        /// </summary>
+        /// <param name="bindingIndex">The index in the shader</param>
+        /// <param name="size"></param>
+        /// <param name="bufferUsageHint"></param>
         public BufferObject(BufferRangeTarget bufferRangeTarget, int bindingIndex, int size, BufferUsageHint bufferUsageHint)
         {
             if (bufferTypeBindingIndexDict[bufferRangeTarget].Contains(bindingIndex))
@@ -31,7 +38,7 @@ namespace OpenTK_PathTracer.Render.Objects
             BufferTarget = (BufferTarget)bufferRangeTarget;
             BufferUsageHint = bufferUsageHint;
             ID = GL.GenBuffer();
-            Bind();
+            GL.BindBuffer(BufferTarget, ID);
             Allocate(size);
             GL.BindBufferBase(bufferRangeTarget, bindingIndex, ID);
         }
@@ -57,59 +64,74 @@ namespace OpenTK_PathTracer.Render.Objects
         public void Reset()
         {
             BufferOffset = 0;
-            GL.NamedBufferSubData(ID, IntPtr.Zero, Size, new byte[Size]);
+            GL.BindBuffer(BufferTarget, ID);
+            GL.BufferSubData(BufferTarget, IntPtr.Zero, Size, new byte[Size]);
+            GL.BindBuffer(BufferTarget, 0);
         }
 
         public void Append<T>(int size, T data) where T : struct
         {
-            GL.NamedBufferSubData(ID, (IntPtr)BufferOffset, size, ref data);
+            GL.BindBuffer(BufferTarget, ID);
+            GL.BufferSubData(BufferTarget, (IntPtr)BufferOffset, size, ref data);
+            GL.BindBuffer(BufferTarget, 0);
             BufferOffset += size;
         }
         public void Append<T2>(int size, T2[] data) where T2 : struct
         {
-            GL.NamedBufferSubData(ID, (IntPtr)BufferOffset, size, data);
+            GL.BindBuffer(BufferTarget, ID);
+            GL.BufferSubData(BufferTarget, (IntPtr)BufferOffset, size, data);
+            GL.BindBuffer(BufferTarget, 0);
             BufferOffset += size;
         }
         public void Append(int size, IntPtr data)
         {
-            GL.NamedBufferSubData(ID, (IntPtr)BufferOffset, size, data);
+            GL.BindBuffer(BufferTarget, ID);
+            GL.BufferSubData(BufferTarget, (IntPtr)BufferOffset, size, data);
+            GL.BindBuffer(BufferTarget, 0);
             BufferOffset += size;
         }
 
         public void SubData<T3>(int offset, int size, T3 data) where T3 : struct
         {
-            GL.NamedBufferSubData(ID, (IntPtr)offset, size, ref data);
+            GL.BindBuffer(BufferTarget, ID);
+            GL.BufferSubData(BufferTarget, (IntPtr)offset, size, ref data);
+            GL.BindBuffer(BufferTarget, 0);
             BufferOffset = offset + size;
         }
         public void SubData<T4>(int offset, int size, T4[] data) where T4 : struct
         {
-            GL.NamedBufferSubData(ID, (IntPtr)offset, size, data);
+            GL.BindBuffer(BufferTarget, ID);
+            GL.BufferSubData(BufferTarget, (IntPtr)offset, size, data);
+            GL.BindBuffer(BufferTarget, 0);
             BufferOffset = offset + size;
         }
         public void SubData(int offset, int size, IntPtr data)
         {
-            GL.NamedBufferSubData(ID, (IntPtr)offset, size, data);
+            GL.BindBuffer(BufferTarget, ID);
+            GL.BufferSubData(BufferTarget, (IntPtr)offset, size, data);
+            GL.BindBuffer(BufferTarget, 0);
             BufferOffset = offset + size;
         }
 
         public void Allocate(int size)
         {
-            GL.NamedBufferData(ID, size, IntPtr.Zero, BufferUsageHint);
+            GL.BindBuffer(BufferTarget, ID);
+            GL.BufferData(BufferTarget, size, IntPtr.Zero, BufferUsageHint);
+            GL.BindBuffer(BufferTarget, 0);
             Size = size;
         }
 
         public void GetSubData<T5>(int offset, int size, T5[] data) where T5 : struct
         {
-            GL.GetNamedBufferSubData(ID, (IntPtr)offset, size, data);
+            GL.BindBuffer(BufferTarget, ID);
+            GL.GetBufferSubData(BufferTarget, (IntPtr)offset, size, data);
+            GL.BindBuffer(BufferTarget, 0);
         }
         public void GetSubData(int offset, int size, IntPtr data)
         {
-            GL.GetNamedBufferSubData(ID, (IntPtr)offset, size, data);
-        }
-
-        public void Dispose()
-        {
-            GL.DeleteBuffer(ID);
+            GL.BindBuffer(BufferTarget, ID);
+            GL.GetBufferSubData(BufferTarget, (IntPtr)offset, size, data);
+            GL.BindBuffer(BufferTarget, 0);
         }
     }
 }

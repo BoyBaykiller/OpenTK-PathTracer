@@ -45,7 +45,7 @@ namespace OpenTK_PathTracer.GUI
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void CreateBuffer(string Name, out int Buffer)
         {
-            GL.CreateBuffers(1, out Buffer);
+            Buffer = GL.GenBuffer();
             LabelObject(ObjectLabelIdentifier.Buffer, Buffer, $"Buffer: {Name}");
         }
 
@@ -58,7 +58,7 @@ namespace OpenTK_PathTracer.GUI
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void CreateVertexArray(string Name, out int VAO)
         {
-            GL.CreateVertexArrays(1, out VAO);
+            VAO = GL.GenVertexArray();
             LabelObject(ObjectLabelIdentifier.VertexArray, VAO, $"VAO: {Name}");
         }
     }
