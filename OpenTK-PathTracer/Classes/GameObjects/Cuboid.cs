@@ -3,7 +3,7 @@ using System;
 
 namespace OpenTK_PathTracer.GameObjects
 {
-    class Cuboid : GameObject, IDisposable
+    class Cuboid : GameObject
     {
         public static readonly int GPUInstanceSize = Vector4.SizeInBytes * 2 + Material.GPUInstanceSize;
         public static int GlobalClassBufferOffset;
@@ -59,13 +59,6 @@ namespace OpenTK_PathTracer.GameObjects
                    this.Max.Y >= aabb.Min.Y &&
                    this.Min.Z <= aabb.Max.Z &&
                    this.Max.Z >= aabb.Min.Z;
-        }
-
-        // Maybe not the best approach
-        public void Dispose()
-        {
-            // TODO: Implement
-            throw new NotImplementedException();
         }
     }
 }

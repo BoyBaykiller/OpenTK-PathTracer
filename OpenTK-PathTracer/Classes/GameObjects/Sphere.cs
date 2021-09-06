@@ -3,7 +3,7 @@ using System;
 
 namespace OpenTK_PathTracer.GameObjects
 {
-    class Sphere : GameObject, IDisposable
+    class Sphere : GameObject
     {
         public static Sphere Zero => new Sphere(position: Vector3.Zero, radius: 0.5f, instance: 0, Material.Zero);
         public static readonly int GPUInstanceSize = Vector4.SizeInBytes + Material.GPUInstanceSize;
@@ -64,11 +64,6 @@ namespace OpenTK_PathTracer.GameObjects
                     (this.Position.Y - this.Radius) < aabb.Max.Y &&
                     (this.Position.Z + this.Radius) > aabb.Min.Z &&
                     (this.Position.Z - this.Radius) < aabb.Max.Z;
-        }
-
-        public void Dispose()
-        {
-            throw new NotImplementedException();
         }
     }
 }
