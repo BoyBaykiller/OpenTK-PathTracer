@@ -2,11 +2,11 @@
 
 ---
 
-This is a working fork of [this repo main branch](https://github.com/JulianStambuk/OpenTK-PathTracer/tree/main) with some differences:
-- It doesn't depend on ARB_bindless_texture, ARB_direct_state_access, GL_ARB_seamless_cubemap_per_texture and some other extensions used in the mentioned repo.
-- Compatible with OpenGL 4.3 and earlier.
-- ImGui not implemented yet.
-- Minor changes.
+This is a working fork of [this repo](https://github.com/JulianStambuk/OpenTK-PathTracer) with some differences:
+- Doesn't depend on ARB_bindless_texture, ARB_direct_state_access and ARB_seamless_cubemap_per_texture
+- Guaranted compatibility with OpenGL 4.3 and above
+- ImGui not implemented yet
+- Minor changes
 
 ---
 
@@ -24,12 +24,11 @@ The atmospheric scattering in this cubemap is calculated in yet an other Compute
 ## **Controls**
 
 ### **KeyBoard:**
-* E => Toggle cursor visibility.
-* F11 => Toggle fullscreen.
-* V => Toggle VSync.
-* Esc => Close.
-
-* W, A, S, D => Movement.
+* E => Toggle cursor visibility
+* F11 => Toggle fullscreen
+* V => Toggle VSync
+* Esc => Close
+* W, A, S, D => Movement
 * LShift => Faster movement speed
 * LControl => Slower movement speed
 
@@ -37,8 +36,8 @@ The atmospheric scattering in this cubemap is calculated in yet an other Compute
 
 ## **Render Samples**
 
-![img1](https://github.com/JulianStambuk/OpenTK-PathTracer/blob/main/Screenshots/img1.png?raw=true)
+![img1](https://github.com/JulianStambuk/OpenTK-PathTracer/blob/master/Screenshots/img1.png?raw=true)
 
-![img2](https://github.com/JulianStambuk/OpenTK-PathTracer/blob/main/Screenshots/img2.png?raw=true)
+![img2](https://github.com/JulianStambuk/OpenTK-PathTracer/blob/master/Screenshots/img2.png?raw=true)
 
-![img3](https://github.com/JulianStambuk/OpenTK-PathTracer/blob/main/Screenshots/img3.png?raw=true)
+![img3](https://github.com/JulianStambuk/OpenTK-PathTracer/blob/master/Screenshots/img3.png?raw=true)
