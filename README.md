@@ -21,22 +21,37 @@ Screenshots taken via the screenshot feature are saved in the local execution fo
 
 ### **KeyBoard:**
 * W, A, S, D => Movment
-* E => make visisble / hide mouse cursor for [ImGui](https://github.com/ocornut/imgui)
-* F11 => Go into / out of fullscreen
-* V => Enable / Disable VSync
+* E => Toggle cursor visibility
+* V => Toggle VSync
+* F11 => Toggle fullscreen
+* LShift => Faster movment speed
+* LControl => Slower movment speed
 * Esc => Close
 
 ### **Mouse:**
 * LButton => Select object if cursor is visible
-* LShift => Faster movment speed
-* LControl => Slower movment speed
 
 ---
 
 ## **Render Samples**
 
-![img1](https://github.com/JulianStambuk/OpenTK-PathTracer/blob/main/Screenshots/img1.png?raw=true)
+![img1](https://github.com/JulianStambuk/OpenTK-PathTracer/blob/master/Screenshots/img1.png?raw=true)
 
-![img2](https://github.com/JulianStambuk/OpenTK-PathTracer/blob/main/Screenshots/img2.png?raw=true)
+![img2](https://github.com/JulianStambuk/OpenTK-PathTracer/blob/master/Screenshots/img2.png?raw=true)
 
-![img3](https://github.com/JulianStambuk/OpenTK-PathTracer/blob/main/Screenshots/img3.png?raw=true)
+![img3](https://github.com/JulianStambuk/OpenTK-PathTracer/blob/master/Screenshots/img3.png?raw=true)
+
+
+## How to contribute
+
+Contributations can be made through the following procedure
+
+1. Do `git clone https://github.com/JulianStambuk/OpenTK-PathTracer.git` to download the project files into your local directory
+
+2. Type `git switch -c <new-branch>` to switch to a new local working branch. To rename a branch run `git branch -m <old> <new>`
+
+3. Make changes to the branch and commit them with `git add .` followed by `git commit -m "Commit Message"` 
+
+4. Do `git push` to finally push the new branch including your commits to the repo. It will give you a GitHub link to open a Pull Request
+
+New branches may or might not be merged to `master` by me.
