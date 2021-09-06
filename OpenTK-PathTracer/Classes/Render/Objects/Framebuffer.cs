@@ -53,10 +53,11 @@ namespace OpenTK_PathTracer.Render.Objects
         /// That means if you have two Rendertargets attached you need to tell OpenGL through this function to actually render to both of them
         /// </summary>
         /// <param name="drawBuffersEnums"></param>
-        //public void DrawRenderTargets(params DrawBuffersEnum[] drawBuffersEnums)
-        //{
-        //    GL.FramebufferDrawBuffers(Target, drawBuffersEnums.Length, drawBuffersEnums);
-        //}
+        public void DrawRenderTargets(params DrawBuffersEnum[] drawBuffersEnums)
+        {
+            Bind();
+            GL.DrawBuffers(drawBuffersEnums.Length, drawBuffersEnums);
+        }
 
         public void Bind(FramebufferTarget framebufferTarget = FramebufferTarget.Framebuffer)
         {

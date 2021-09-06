@@ -14,7 +14,6 @@ namespace OpenTK_PathTracer.Render.Objects
 
         public Shader(ShaderType shaderType, string path)
         {
-            //Console.WriteLine(System.IO.Path.GetFullPath(path));
             if (!System.IO.File.Exists(path))
                 throw new System.IO.FileNotFoundException($"{path} does not exist");
 

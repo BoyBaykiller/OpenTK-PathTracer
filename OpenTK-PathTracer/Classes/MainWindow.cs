@@ -93,7 +93,7 @@ namespace OpenTK_PathTracer
         protected override void OnRenderFrame(FrameEventArgs e)
         {
             //Console.WriteLine("Render");
-            if (Focused || IsRenderInBackground) // wait 100ms after resize
+            if (Focused || IsRenderInBackground)
             {
                 //AtmosphericScatterer.Run(Camera.Position);
                 PathTracer.Run();
@@ -105,7 +105,7 @@ namespace OpenTK_PathTracer
                 PostProcesser.Run(PathTracer.Result, Rasterizer.Result);
 
                 Framebuffer.Clear(0, ClearBufferMask.ColorBufferBit);
-                PostProcesser.Result.AttachToUnit(0); // directly renders path tracing result without post-processing
+                PostProcesser.Result.AttachToUnit(0);
                 finalProgram.Use();
                 GL.DrawArrays(PrimitiveType.Quads, 0, 4);
 
@@ -181,7 +181,6 @@ namespace OpenTK_PathTracer
             GL.Disable(EnableCap.DepthTest);
             GL.Disable(EnableCap.CullFace);
             GL.Disable(EnableCap.Multisample);
-            // DELETE THIS COMMENT: TextureCubeMapSeamless gets enabled in Texture class through GL_ARB_seamless_cubemap_per_texture to be compatible with ARB_bindless_texture
             GL.Enable(EnableCap.TextureCubeMapSeamless);
 
             VSync = VSyncMode.Off;
