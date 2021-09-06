@@ -127,8 +127,9 @@ namespace OpenTK_PathTracer.Render.Objects
             GL.GetBufferSubData(BufferTarget, (IntPtr)offset, size, data);
             GL.BindBuffer(BufferTarget, 0);
         }
-        public void GetSubData(int offset, int size, IntPtr data)
+        public void GetSubData(int offset, int size, out IntPtr data)
         {
+            data = System.Runtime.InteropServices.Marshal.AllocHGlobal(size); // free with System.Runtime.InteropServices.Marshal.FreeHGlobal(IntPtr);
             GL.BindBuffer(BufferTarget, ID);
             GL.GetBufferSubData(BufferTarget, (IntPtr)offset, size, data);
             GL.BindBuffer(BufferTarget, 0);
