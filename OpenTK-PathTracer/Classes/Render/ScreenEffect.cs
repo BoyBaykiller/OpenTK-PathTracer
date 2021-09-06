@@ -23,6 +23,9 @@ namespace OpenTK_PathTracer.Render
 
         public override void Run(params object[] textureArr)
         {
+            if (textureArr == null)
+                throw new System.NullReferenceException("ScreenEffect: null was passed"); // maybe just let him render without throwing exception?
+
             //Query.Start();
 
             GL.Viewport(0, 0, Result.Width, Result.Height);
@@ -31,10 +34,8 @@ namespace OpenTK_PathTracer.Render
             Program.Use();
 
             for (int i = 0; i < textureArr.Length; i++)
-            {
-                if (textureArr != null)
-                    ((Texture)textureArr[i]).AttachToUnit(i);
-            }
+                ((Texture)textureArr[i]).AttachToUnit(i);
+
             GL.DrawArrays(PrimitiveType.Quads, 0, 4);
 
             //Query.StopAndReset();
