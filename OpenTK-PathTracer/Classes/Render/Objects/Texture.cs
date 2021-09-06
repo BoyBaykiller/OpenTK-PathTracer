@@ -30,18 +30,6 @@ namespace OpenTK_PathTracer.Render.Objects
         public int Height { get; private set; }
         public int Depth { get; private set; }
 
-        private long _textureHandle = -1;
-        public long TextureHandle
-        {
-            get
-            {
-                if (_textureHandle == -1)
-                    throw new Exception("Texture: Texture is not made bindless yet. Call MakeBindless()");
-
-                return _textureHandle;
-            }
-        }
-
         public Texture(TextureTarget textureTarget, TextureWrapMode textureWrapMode, PixelInternalFormat pixelInternalFormat, PixelFormat pixelFormat, bool enableMipmap, float[] borderColor = null)
         {
             ID = GL.GenTexture();
@@ -272,20 +260,6 @@ namespace OpenTK_PathTracer.Render.Objects
         public void GenerateMipMap()
         {
             GL.GenerateTextureMipmap(ID);
-        }
-
-        public void MakeBindless()
-        {
-            _textureHandle = GL.Arb.GetTextureHandle(ID);
-        }
-
-        public void MakeResident()
-        {
-            GL.Arb.MakeTextureHandleResident(TextureHandle);
-        }
-        public void UnmakeResident()
-        {
-            GL.Arb.MakeTextureHandleNonResident(TextureHandle);
         }
 
         public void AttachToImageUnit(int unit, int level, bool layered, int layer, TextureAccess textureAccess, SizedInternalFormat sizedInternalFormat)
