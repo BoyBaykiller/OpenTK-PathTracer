@@ -97,9 +97,8 @@ namespace OpenTK_PathTracer.Render.Objects
             Size = size;
         }
 
-        public void GetSubData<T5>(int offset, int size, out T5[] data) where T5 : struct
+        public void GetSubData<T5>(int offset, int size, T5[] data) where T5 : struct
         {
-            data = null;
             GL.GetNamedBufferSubData(ID, (IntPtr)offset, size, data);
         }
         public void GetSubData(int offset, int size, out IntPtr data)
