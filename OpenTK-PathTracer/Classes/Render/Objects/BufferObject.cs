@@ -15,7 +15,7 @@ namespace OpenTK_PathTracer.Render.Objects
         };
 
         public readonly int ID;
-        public readonly BufferTarget BufferTarget;
+        public BufferTarget BufferTarget;
         public readonly BufferUsageHint BufferUsageHint;
         public int BufferOffset;
         public int Size { get; private set; }
@@ -24,7 +24,7 @@ namespace OpenTK_PathTracer.Render.Objects
         {
             if (bufferTypeBindingIndexDict[bufferRangeTarget].Contains(bindingIndex))
             {
-                Console.WriteLine($"BufferObject: BindingIndex {bindingIndex} is already bound to a {bufferRangeTarget}");
+                Console.WriteLine($"BindingIndex {bindingIndex} is already bound to a {bufferRangeTarget}");
                 bufferTypeBindingIndexDict[bufferRangeTarget].Add(bindingIndex);
             }
             BufferTarget = (BufferTarget)bufferRangeTarget;
@@ -50,9 +50,8 @@ namespace OpenTK_PathTracer.Render.Objects
         }
 
         /// <summary>
-        /// Sets <paramref name="BufferOffset"/> to 0 and overrides the content with 0
+        /// Sets <seealso cref="BufferOffset"/> to 0 and overrides the content with 0
         /// </summary>
-        /// <param name="removeData"></param>
         public void Reset()
         {
             BufferOffset = 0;

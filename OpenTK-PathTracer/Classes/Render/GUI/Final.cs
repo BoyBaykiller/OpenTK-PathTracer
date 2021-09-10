@@ -60,7 +60,7 @@ namespace OpenTK_PathTracer.Render.GUI
                 if (ImGui.Button("SpheresRandomMaterial"))
                 {
                     frameChanged = true;
-                    mainWindow.NewRandomBalls(40, 25, 25);
+                    mainWindow.SetGameObjectsRandomMaterial<Sphere>(36);
                 }
                 if (ImGui.Button("Screenshot"))
                 {
@@ -165,6 +165,9 @@ namespace OpenTK_PathTracer.Render.GUI
                 {
                     bool hasInput = false;
                     System.Numerics.Vector3 nVector3;
+
+                    ImGui.Text($"Distance {Vector3.Distance(pickedObject.Position, mainWindow.Camera.Position)}");
+
                     nVector3 = Vector3ToNVector3(pickedObject.Position);
                     if (ImGui.DragFloat3("Position", ref nVector3))
                     {
@@ -192,8 +195,6 @@ namespace OpenTK_PathTracer.Render.GUI
                         pickedObject.Material.RefractionColor = NVector3ToVector3(nVector3);
                         hasInput = true;
                     }
-
-                    ImGui.NewLine();
 
                     if (ImGui.SliderFloat("SpecularChance", ref pickedObject.Material.SpecularChance, 0, 1))
                     {

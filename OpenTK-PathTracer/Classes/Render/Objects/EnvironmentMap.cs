@@ -35,10 +35,10 @@ namespace OpenTK_PathTracer.Render.Objects
         public void SetAllFacesParallel(string[] paths)
         {
             if (paths.Length != 6)
-                throw new ArgumentException("EnvironmentMap: Number of images must be equal to six");
+                throw new ArgumentException($"Number of images must be equal to six");
             
             if (!paths.All(p => System.IO.File.Exists(p)))
-                throw new System.IO.FileNotFoundException("EnvironmentMap: At least on of the specified paths is invalid");
+                throw new System.IO.FileNotFoundException($"At least on of the specified paths is invalid");
 
             Bitmap[] bitmaps = new Bitmap[6];
             Task taskImageLoader = Task.Run(() =>

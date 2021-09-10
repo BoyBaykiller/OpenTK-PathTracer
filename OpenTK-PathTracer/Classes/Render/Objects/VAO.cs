@@ -15,6 +15,7 @@ namespace OpenTK_PathTracer.Render.Objects
 
         public void SetAttribPointer(int index, int floats, VertexAttribPointerType vertexAttribPointerType, int stride, int offset, bool normalize = false)
         {
+            Bind();
             GL.VertexAttribPointer(index, floats, vertexAttribPointerType, normalize, stride, offset);
             GL.EnableVertexAttribArray(index);
         }

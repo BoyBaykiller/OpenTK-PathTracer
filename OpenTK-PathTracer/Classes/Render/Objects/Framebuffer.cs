@@ -12,7 +12,7 @@ namespace OpenTK_PathTracer.Render.Objects
             get
             {
                 if (_rbo == -1)
-                    throw new System.Exception("No RBO was attached to the framebuffer yet");
+                    throw new System.Exception($"No RBO was attached to the framebuffer yet");
 
                 return _rbo;
             }

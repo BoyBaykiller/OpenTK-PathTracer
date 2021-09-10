@@ -17,7 +17,7 @@ namespace OpenTK_PathTracer.Render
             
             Framebuffer.AddRenderTarget(FramebufferAttachment.ColorAttachment0, Result);
 
-            Program = new ShaderProgram(new Shader(ShaderType.VertexShader, @"Src\Shaders\Rasterizer\vertex.vs"), new Shader(ShaderType.FragmentShader, @"Src\Shaders\Rasterizer\fragment.frag"));
+            Program = new ShaderProgram(new Shader(ShaderType.VertexShader, @"Src\Shaders\Rasterisation\vertex.vs"), new Shader(ShaderType.FragmentShader, @"Src\Shaders\Rasterisation\fragment.frag"));
 
             vao = new VAO();
             {
@@ -37,7 +37,7 @@ namespace OpenTK_PathTracer.Render
             Program.Use();
             vao.Bind();
             
-            AABB[] aabbs = aabbArr[0] as AABB[];
+            AABB[] aabbs = (AABB[])aabbArr[0];
             for (int i = 0; i < aabbs.Length; i++)
             {
                 Matrix4 model = Matrix4.CreateScale(aabbs[i].Dimensions) * Matrix4.CreateTranslation(aabbs[i].Position);
@@ -53,7 +53,7 @@ namespace OpenTK_PathTracer.Render
 
         public override void SetSize(int width, int height)
         {
-            Result.Allocate(width, height);
+            base.SetSize(width, height);
         }
 
         private static readonly float[] unitCubeVerts = new float[]

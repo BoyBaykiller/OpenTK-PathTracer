@@ -24,7 +24,7 @@ namespace OpenTK_PathTracer
 
             
             LookXY.Y = MathHelper.RadiansToDegrees(MathF.Asin(viewDir.Y));
-            LookXY.X = 360 - MathHelper.RadiansToDegrees(MathF.Acos(viewDir.X / MathF.Cos(MathHelper.DegreesToRadians(LookXY.Y))));
+            LookXY.X = MathHelper.RadiansToDegrees(MathF.Acos(viewDir.X / MathF.Cos(MathHelper.DegreesToRadians(LookXY.Y))));
         }
 
         private Vector2 LookXY = new Vector2();

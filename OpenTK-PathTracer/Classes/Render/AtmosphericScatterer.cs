@@ -142,7 +142,7 @@ namespace OpenTK_PathTracer.Render
 
             if (viewPos.Length == 1)
                 bufferObject.SubData(Vector4.SizeInBytes * 4 * 7, Vector4.SizeInBytes, new Vector4((Vector3)viewPos[0], 1.0f));
-
+            
             GL.DispatchCompute((int)MathF.Ceiling(Width / 32.0f), (int)MathF.Ceiling(Width / 32.0f), 6);
             GL.MemoryBarrier(MemoryBarrierFlags.ShaderImageAccessBarrierBit);
 
@@ -153,11 +153,11 @@ namespace OpenTK_PathTracer.Render
         {
             if (width != height)
             {
-                Console.WriteLine("AtmosphericScattering: Cubemaps must be squares");
+                Console.WriteLine($"Cubemaps must be squares");
                 return;
             }
 
-            Result.Allocate(width, height);
+            base.SetSize(width, height);
         }
     }
 }

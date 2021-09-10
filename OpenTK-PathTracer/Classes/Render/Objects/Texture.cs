@@ -35,7 +35,7 @@ namespace OpenTK_PathTracer.Render.Objects
             get
             {
                 if (_textureHandle == -1)
-                    throw new Exception("Texture: Texture is not made bindless yet. Call MakeBindless()");
+                    throw new Exception($"Texture is not made bindless yet. Call MakeBindless()");
 
                 return _textureHandle;
             }
@@ -146,7 +146,7 @@ namespace OpenTK_PathTracer.Render.Objects
         public void SetTexImage2D(string path)
         {
             if (!File.Exists(path))
-                throw new FileNotFoundException($"Texture: Could not find the file {path}");
+                throw new FileNotFoundException($"Could not find the file {path}");
             SetTexImage2D(new Bitmap(path));
         }
         public void SetTexImage2D(Bitmap image)
@@ -166,7 +166,7 @@ namespace OpenTK_PathTracer.Render.Objects
         public void SetTexImage2DCubeMap(string path, Face textureTarget)
         {
             if (!File.Exists(path))
-                throw new FileNotFoundException($"Texture: Could not find the file {path}");
+                throw new FileNotFoundException($"Could not find the file {path}");
             SetTexImage2DCubeMap(new Bitmap(path), textureTarget);
         }
         public void SetTexImage2DCubeMap(Bitmap image, Face textureTarget)
@@ -186,7 +186,7 @@ namespace OpenTK_PathTracer.Render.Objects
         {
             for (int i = 0; i < paths.Length; i++)
                 if (!File.Exists(paths[i]))
-                    throw new FileNotFoundException($"Texture: Could not find the file {paths[i]}");
+                    throw new FileNotFoundException($"Could not find the file {paths[i]}");
             SetTexImage2DCubeMap(paths.Select(b => new Bitmap(b)).ToArray());
         }
         public void SetTexImage2DCubeMap(Bitmap[] images)
@@ -195,7 +195,7 @@ namespace OpenTK_PathTracer.Render.Objects
                 throw new ArgumentException("EnvironmentMap: Number of images must be equal to six");
 
             if (!images.All(i => i.Width == images[0].Width && i.Height == images[0].Height))
-                throw new ArgumentException("Texture: Cubemap textures have different size");
+                throw new ArgumentException($"Cubemap textures have different size");
 
             for (int i = 0; i < 6; i++)
                 SetTexImage2DCubeMap(images[i], Face.PositiveX + i);
@@ -205,7 +205,7 @@ namespace OpenTK_PathTracer.Render.Objects
         public void SetSubTexImage2DArray(string path, int index)
         {
             if (!File.Exists(path))
-                throw new FileNotFoundException($"Texture: Could not find the file {path}");
+                throw new FileNotFoundException($"Could not find the file {path}");
 
             SetSubTexImage2DArray(new Bitmap(path), index);
         }
@@ -222,7 +222,7 @@ namespace OpenTK_PathTracer.Render.Objects
         {
             for (int i = 0; i < paths.Length; i++)
                 if (!File.Exists(paths[i]))
-                    throw new FileNotFoundException($"Texture: Could not find the file {paths[i]}");
+                    throw new FileNotFoundException($"Could not find the file {paths[i]}");
 
             SetSubTexImage2DArray(paths.Select(b => new Bitmap(b)).ToArray(), offset);
         }
@@ -252,7 +252,7 @@ namespace OpenTK_PathTracer.Render.Objects
                     break;
 
                 default:
-                    Console.WriteLine($"Texture: {TextureTarget} is unsupported by this layer of abstraction");
+                    Console.WriteLine($"{TextureTarget} is unsupported by this layer of abstraction");
                     break;
             }
 

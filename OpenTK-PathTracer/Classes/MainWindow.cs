@@ -26,7 +26,7 @@ namespace OpenTK_PathTracer
         public int FPS, UPS;
         private int fps, ups;
 
-        public readonly Camera Camera = new Camera(new Vector3(-9, 12, 4), Vector3.Normalize(new Vector3(0.3f, -0.3f, -0.5f)), new Vector3(0, 1, 0)); // new Vector3(-9, 12, 4) || new Vector3(-11, 9.3f, -9.7f)
+        public readonly Camera Camera = new Camera(new Vector3(-18.93f, -5.07f, -17.75f), Vector3.Normalize(new Vector3(0.98491096f, 0.06783889f, 0.1592114f)), new Vector3(0, 1, 0)); // new Vector3(-9, 12, 4) || new Vector3(-11, 9.3f, -9.7f)
 
 
         public bool IsRenderInBackground = true;
@@ -54,7 +54,7 @@ namespace OpenTK_PathTracer
                 SwapBuffers();
                 fps++;
             }
-            
+
             base.OnRenderFrame(e);
         }
 
@@ -128,11 +128,10 @@ namespace OpenTK_PathTracer
         public readonly List<GameObjectBase> GameObjects = new List<GameObjectBase>();
         ShaderProgram finalProgram;
         public BufferObject BasicDataUBO, GameObjectsUBO;
-        public PathTracing PathTracer;
+        public PathTracer PathTracer;
         public Rasterizer Rasterizer;
         public ScreenEffect PostProcesser;
         public AtmosphericScattering AtmosphericScatterer;
-        Grid grid = new Grid(4, 4, 3);
         protected override void OnLoad(EventArgs e)
         {
             Console.WriteLine($"GPU: {GL.GetString(StringName.Renderer)}");
@@ -146,7 +145,7 @@ namespace OpenTK_PathTracer
             GL.Disable(EnableCap.DepthTest);
             GL.Disable(EnableCap.CullFace);
             GL.Disable(EnableCap.Multisample);
-            // TextureCubeMapSeamless gets enabled in Texture class through GL_ARB_seamless_cubemap_per_texture to be compatible with ARB_bindless_texture
+            // TextureCubeMapSeamless gets enabled in Texture class through ARB_seamless_cubemap_per_texture to be compatible with ARB_bindless_texture
             //GL.Enable(EnableCap.TextureCubeMapSeamless);
 
             VSync = VSyncMode.Off;
@@ -171,23 +170,19 @@ namespace OpenTK_PathTracer
             GameObjectsUBO = new BufferObject(BufferRangeTarget.UniformBuffer, 1, Sphere.GPU_INSTANCE_SIZE * MAX_GAMEOBJECTS_SPHERES + Cuboid.GPU_INSTANCE_SIZE * MAX_GAMEOBJECTS_CUBOIDS, BufferUsageHint.StreamRead);
             UBOCompatibleBase.BufferObject = GameObjectsUBO;
 
-            PathTracer = new PathTracing(new EnvironmentMap(AtmosphericScatterer.Result), Width, Height, 8, 1, 20f, 0.14f);
+            PathTracer = new PathTracer(new EnvironmentMap(AtmosphericScatterer.Result), Width, Height, 13, 1, 20f, 0.14f);
             //PathTracer = new PathTracing(skyBox, Width, Height, 8, 1, 20f, 0.07f);
             Rasterizer = new Rasterizer(Width, Height);
             PostProcesser = new ScreenEffect(new Shader(ShaderType.FragmentShader, @"Src\Shaders\PostProcessing\fragment.frag"), Width, Height);
             float width = 40, height = 25, depth = 25;
-            
+
             {
                 int balls = 6;
                 float radius = 1.3f;
                 Vector3 dimensions = new Vector3(width * 0.6f, height, depth);
                 for (float x = 0; x < balls; x++)
-                {
                     for (float y = 0; y < balls; y++)
-                    {
-                        GameObjects.Add(new Sphere(new Vector3(dimensions.X / balls * x * 1.1f - dimensions.X / 2, (dimensions.Y / balls) * y - dimensions.Y / 2 + radius, -17), radius, PathTracer.NumSpheres++, new Material(albedo: new Vector3(0.59f, 0.59f, 0.99f), emissiv: new Vector3(0), refractionColor: Vector3.Zero, specularChance: x / (balls - 1), specularRoughness: y / (balls - 1), indexOfRefraction: 1f, refractionChance: 0.0f, refractionRoughnes: 0.1f)));
-                    }
-                }
+                        GameObjects.Add(new Sphere(new Vector3(dimensions.X / balls * x * 1.1f - dimensions.X / 2, (dimensions.Y / balls) * y - dimensions.Y / 2 + radius, -5), radius, PathTracer.NumSpheres++, new Material(albedo: new Vector3(0.59f, 0.59f, 0.99f), emissiv: new Vector3(0), refractionColor: Vector3.Zero, specularChance: x / (balls - 1), specularRoughness: y / (balls - 1), indexOfRefraction: 1f, refractionChance: 0.0f, refractionRoughnes: 0.1f)));
 
                 Vector3 delta = dimensions / balls;
                 for (float x = 0; x < balls; x++)
@@ -195,10 +190,10 @@ namespace OpenTK_PathTracer
                     Material material = Material.Zero;
                     material.Albedo = new Vector3(0.9f, 0.25f, 0.25f);
                     material.SpecularChance = 0.02f;
-                    material.IOR = 1.1f;
+                    material.IOR = 1.05f;
                     material.RefractionChance = 0.98f;
                     material.RefractionColor = new Vector3(1, 2, 3) * (x / balls);
-                    Vector3 position = new Vector3(-dimensions.X / 2 + radius + delta.X * x, 0f, -5f);
+                    Vector3 position = new Vector3(-dimensions.X / 2 + radius + delta.X * x, 3f, -20f);
                     GameObjects.Add(new Sphere(position, radius, PathTracer.NumSpheres++, material));
 
 
@@ -209,44 +204,30 @@ namespace OpenTK_PathTracer
                     material1.RefractionChance = 0.98f;
                     material1.RefractionRoughnes = x / balls;
                     material1.RefractionColor = Vector3.Zero;
-                    position = new Vector3(-dimensions.X / 2 + radius + delta.X * x, -10f, -5f);
+                    position = new Vector3(-dimensions.X / 2 + radius + delta.X * x, -6f, -20f);
                     GameObjects.Add(new Sphere(position, radius, PathTracer.NumSpheres++, material1));
                 }
             }
 
             {
-                Cuboid down = new Cuboid(new Vector3(0, -height / 2, -10), new Vector3(width, EPSILON, depth), PathTracer.NumCuboids++, new Material(albedo: new Vector3(1, 0.4f, 0.04f), emissiv: new Vector3(0), refractionColor: Vector3.Zero, specularChance: 0.11f, specularRoughness: 0.051f, indexOfRefraction: 1f, refractionChance: 0, refractionRoughnes: 0));
+                Cuboid down = new Cuboid(new Vector3(0, -height / 2, -10), new Vector3(width, EPSILON, depth), PathTracer.NumCuboids++, new Material(albedo: new Vector3(0.2f, 0.04f, 0.04f), emissiv: new Vector3(0.0f), refractionColor: Vector3.Zero, specularChance: 0.0f, specularRoughness: 0.051f, indexOfRefraction: 1.0f, refractionChance: 0.0f, refractionRoughnes: 0.0f));
 
-                Cuboid up = new Cuboid(new Vector3(down.Position.X, down.Position.Y + height, down.Position.Z), new Vector3(down.Dimensions.X, EPSILON, down.Dimensions.Z), PathTracer.NumCuboids++, new Material(albedo: new Vector3(0.6f), emissiv: new Vector3(0), refractionColor: Vector3.Zero, specularChance: 0.023f, specularRoughness: 0.051f, indexOfRefraction: 1f, refractionChance: 0, refractionRoughnes: 0));
-                Cuboid upLight0 = new Cuboid(new Vector3(up.Position.X, down.Position.Y + height - EPSILON, down.Position.Z), new Vector3(down.Dimensions.X / 3, EPSILON, down.Dimensions.Z / 3), PathTracer.NumCuboids++, new Material(albedo: new Vector3(0.04f), emissiv: new Vector3(0.917f, 0.945f, 0.513f) * 1.5f, refractionColor: Vector3.Zero, specularChance: 0.0f, specularRoughness: 1f, indexOfRefraction: 1f, refractionChance: 0, refractionRoughnes: 0));
+                //Cuboid up = new Cuboid(new Vector3(down.Position.X, down.Position.Y + height, down.Position.Z - down.Dimensions.Z / 4f), new Vector3(down.Dimensions.X, EPSILON, down.Dimensions.Z / 2), PathTracer.NumCuboids++, new Material(albedo: new Vector3(0.6f), emissiv: new Vector3(0.0f), refractionColor: Vector3.Zero, specularChance: 0.023f, specularRoughness: 0.051f, indexOfRefraction: 1f, refractionChance: 0.0f, refractionRoughnes: 0));
+                Cuboid upLight0 = new Cuboid(new Vector3(0, 20.5f - EPSILON, 6), new Vector3(down.Dimensions.X * 0.3f, EPSILON, down.Dimensions.Z * 0.3f), PathTracer.NumCuboids++, new Material(albedo: new Vector3(0.04f), emissiv: new Vector3(0.917f, 0.945f, 0.513f) * 5f, refractionColor: Vector3.Zero, specularChance: 0.0f, specularRoughness: 1.0f, indexOfRefraction: 1.0f, refractionChance: 0.0f, refractionRoughnes: 0.0f));
 
-                Cuboid back = new Cuboid(new Vector3(down.Position.X, down.Position.Y + height / 2, down.Position.Z - depth / 2), new Vector3(width, height, EPSILON), PathTracer.NumCuboids++, new Material(albedo: new Vector3(0.6f), emissiv: new Vector3(0), refractionColor: Vector3.Zero, specularChance: 0.0f, specularRoughness: 0f, indexOfRefraction: 1f, refractionChance: 0, refractionRoughnes: 0));
+                Cuboid back = new Cuboid(new Vector3(down.Position.X, down.Position.Y + height / 2, down.Position.Z - depth / 2), new Vector3(width, height, EPSILON), PathTracer.NumCuboids++, new Material(albedo: new Vector3(1.0f), emissiv: new Vector3(0.0f), refractionColor: Vector3.Zero, specularChance: 0.0f, specularRoughness: 0.0f, indexOfRefraction: 1.0f, refractionChance: 0.0f, refractionRoughnes: 0.0f));
                 //Cuboid front = new Cuboid(new Vector3(down.Position.X, down.Position.Y + height / 2 + Epsilon, down.Position.Z + depth / 2 - 0.3f / 2), new Vector3(width, height - Epsilon * 2, 0.3f), instancesCuboids++, new Material(albedo: new Vector3(1f), emissiv: new Vector3(0), refractionColor: new Vector3(0.01f), specularChance: 0.04f, specularRoughness: 0f, indexOfRefraction: 1f, refractionChance: 0.954f, refractionRoughnes: 0));
 
-                Cuboid right = new Cuboid(new Vector3(down.Position.X + width / 2, down.Position.Y + height / 2, down.Position.Z), new Vector3(EPSILON, height, depth), PathTracer.NumCuboids++, new Material(albedo: new Vector3(1, 0.4f, 0.4f), emissiv: new Vector3(0), refractionColor: Vector3.Zero, specularChance: 0.5f, specularRoughness: 0, indexOfRefraction: 1f, refractionChance: 0, refractionRoughnes: 0));
-                Cuboid left = new Cuboid(new Vector3(down.Position.X - width / 2, down.Position.Y + height / 2, down.Position.Z), new Vector3(EPSILON, height, depth), PathTracer.NumCuboids++, new Material(albedo: new Vector3(0.24f, 0.6f, 0.24f), emissiv: new Vector3(0), refractionColor: Vector3.Zero, specularChance: 0.0f, specularRoughness: 0f, indexOfRefraction: 1f, refractionChance: 0, refractionRoughnes: 0));
+                Cuboid right = new Cuboid(new Vector3(down.Position.X + width / 2, down.Position.Y + height / 2, down.Position.Z), new Vector3(EPSILON, height, depth), PathTracer.NumCuboids++, new Material(albedo: new Vector3(0.8f, 0.8f, 0.4f), emissiv: new Vector3(0.0f), refractionColor: Vector3.Zero, specularChance: 1.0f, specularRoughness: 0.0f, indexOfRefraction: 1.0f, refractionChance: 0.0f, refractionRoughnes: 0.0f));
+                Cuboid left = new Cuboid(new Vector3(down.Position.X - width / 2, down.Position.Y + height / 2, down.Position.Z), new Vector3(EPSILON, height, depth), PathTracer.NumCuboids++, new Material(albedo: new Vector3(0.24f, 0.6f, 0.24f), emissiv: new Vector3(0.0f), refractionColor: Vector3.Zero, specularChance: 0.0f, specularRoughness: 0.0f, indexOfRefraction: 1.0f, refractionChance: 0.0f, refractionRoughnes: 0.0f));
 
-                Cuboid middle = new Cuboid(new Vector3(right.Position.X * 0.55f, down.Position.Y + 12f / 2 + EPSILON, back.Position.Z * 0.4f), new Vector3(3f, 12, 3f), PathTracer.NumCuboids++, new Material(albedo: new Vector3(0.917f, 0.945f, 0.513f), emissiv: new Vector3(0), refractionColor: Vector3.Zero, specularChance: 1.0f, specularRoughness: 0f, indexOfRefraction: 1f, refractionChance: 0, refractionRoughnes: 0));
+                Cuboid middle = new Cuboid(new Vector3(-15f, -10.5f + EPSILON, -15), new Vector3(3f, 6, 3f), PathTracer.NumCuboids++, new Material(albedo: new Vector3(1.0f), emissiv: new Vector3(0.0f), refractionColor: Vector3.Zero, specularChance: 0.0f, specularRoughness: 0.0f, indexOfRefraction: 1.0f, refractionChance: 0.0f, refractionRoughnes: 0));
 
-                GameObjects.AddRange(new Cuboid[] { down, upLight0, up, back, right, left, middle });
+                GameObjects.AddRange(new Cuboid[] { down, upLight0, back, right, left, middle });
             }
-            
+
             for (int i = 0; i < GameObjects.Count; i++)
                 GameObjects[i].Upload();
-
-            {
-                //int ssboCellsSize = 8 * 8 * 8;
-                //GridCellsSSBO = new BufferObject(BufferRangeTarget.ShaderStorageBuffer, 0, ssboCellsSize * Grid.Cell.GPUInstanceSize + 1000 * sizeof(int), BufferUsageHint.StreamRead);
-
-                grid.Update(GameObjects);
-
-                //Vector4[] gridGPUData = grid.GetGPUFriendlyGridData();
-                //GridCellsSSBO.SubData(0, Vector4.SizeInBytes * gridGPUData.Length, gridGPUData);
-
-                //int[] indecisData = grid.GetGPUFriendlyIndecisData();
-                //GridCellsSSBO.SubData(ssboCellsSize * Grid.Cell.GPUInstanceSize, indecisData.Length * sizeof(int), indecisData);
-                //PathTracing.program.Upload("ssboCellsSize", grid.Cells.Count);
-            }
         }
 
         int lastWidth = -1, lastHeight = -1;
@@ -303,46 +284,18 @@ namespace OpenTK_PathTracer
 
             return tMin != float.MaxValue;
         }
-        public bool RayTrace(Grid grid, Ray ray, out GameObjectBase gameObject)
-        {
-            gameObject = null;
-            float tMin = float.MaxValue, cellMin = float.MaxValue;
-            float t1, t2;
-
-            //TODO: Use DDA algorithm for traversal
-            for (int i = 0; i < grid.Cells.Count; i++)
-            {
-                if (ray.IntersectsAABB(grid.Cells[i].AABB, out float cellT1, out float cellT2) && cellT2 > 0 && cellT1 <= cellMin)
-                {
-                    for (int j = grid.Cells[i].Start; j < grid.Cells[i].End; j++)
-                    {
-                        if (GameObjects[grid.Indecis[j]].IntersectsRay(ray, out t1, out t2) && t1 <= cellT2 && t2 > 0 && t1 < tMin)
-                        {
-                            gameObject = GameObjects[grid.Indecis[j]];
-                            tMin = GetSmallestPositive(t1, t2);
-                            cellMin = cellT1;
-                        }
-                    }
-                }
-            }
-
-            return tMin != float.MaxValue;
-        }
         public static float GetSmallestPositive(float t1, float t2) => t1 < 0 ? t2 : t1;
         
-        public void NewRandomBalls(float xRange, float yRange, float zRange)
+        public void SetGameObjectsRandomMaterial<T>(int maxNum) where T : GameObjectBase
         {
-            int balls = 6;
-            float radius = 1.3f;
-            Vector3 dimensions = new Vector3(xRange * 0.6f, yRange, zRange);
-
-            int instance = 0;
-            for (float x = 0; x < balls; x++)
+            int changed = 0;
+            for (int i = 0; i < GameObjects.Count && changed < maxNum; i++)
             {
-                for (float y = 0; y < balls; y++)
+                if (GameObjects[i] is T)
                 {
-                    GameObjects[instance] = new Sphere(new Vector3(dimensions.X / balls * x * 1.1f - dimensions.X / 2, (dimensions.Y / balls) * y - dimensions.Y / 2 + radius, -17), radius, instance, Material.GetRndMaterial());
-                    GameObjects[instance++].Upload();
+                    GameObjects[i].Material = Material.GetRndMaterial();
+                    GameObjects[i].Upload();
+                    changed++;
                 }
             }
         }

@@ -49,15 +49,5 @@ namespace OpenTK_PathTracer.GameObjects
             t2 = Math.Min(t2, Math.Min(tbigger.X, Math.Min(tbigger.Y, tbigger.Z)));
             return t1 <= t2;
         }
-        
-        public override bool IntersectsAABB(AABB aabb)
-        {
-            return this.Min.X <= aabb.Max.X &&
-                   this.Max.X >= aabb.Min.X &&
-                   this.Min.Y <= aabb.Max.Y &&
-                   this.Max.Y >= aabb.Min.Y &&
-                   this.Min.Z <= aabb.Max.Z &&
-                   this.Max.Z >= aabb.Min.Z;
-        }
     }
 }

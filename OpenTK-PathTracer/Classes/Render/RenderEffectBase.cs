@@ -4,8 +4,8 @@ namespace OpenTK_PathTracer.Render
 {
     abstract class RenderEffectBase
     {
-        public Texture Result { get; protected set; }
         public readonly Query Query = new Query(600);
+        public Texture Result { get; protected set; }
         public  ShaderProgram Program { get; protected set; }
         public Framebuffer Framebuffer { get; protected set; }
 
@@ -13,6 +13,16 @@ namespace OpenTK_PathTracer.Render
         public int Height => Result.Height;
 
         public abstract void Run(params object[] param);
-        public abstract void SetSize(int width, int height);
+
+
+        /// <summary>
+        /// Resizes <seealso cref="Result"/> accordingly
+        /// </summary>
+        /// <param name="width"></param>
+        /// <param name="height"></param>
+        public virtual void SetSize(int width, int height)
+        {
+            Result.Allocate(width, height);
+        }
     }
 }

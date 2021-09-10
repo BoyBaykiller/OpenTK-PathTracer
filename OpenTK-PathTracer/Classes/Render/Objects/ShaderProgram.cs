@@ -34,7 +34,7 @@ namespace OpenTK_PathTracer.Render.Objects
         }
     }
 
-    struct ShaderProgram : IDisposable
+    class ShaderProgram : IDisposable
     {
         public readonly int ID;
 
@@ -42,10 +42,10 @@ namespace OpenTK_PathTracer.Render.Objects
         public ShaderProgram(params Shader[] shaders)
         {
             if (shaders == null || shaders.Length == 0)
-                throw new IndexOutOfRangeException("ShaderProgram: Shader array is empty or null");
+                throw new IndexOutOfRangeException($"{GetType().Name}: Shader array is empty or null");
 
             if(!shaders.All(s => shaders.All(s1 => s.ID == s1.ID || s1.ShaderType != s.ShaderType)))
-                throw new Exception("ShaderProgram: A ShaderProgram can only hold one instance of every ShaderType. Validate the shader array. ");
+                throw new Exception($"{GetType().Name}: A ShaderProgram can only hold one instance of every ShaderType. Validate the shader array. ");
 
             ID = GL.CreateProgram();
             

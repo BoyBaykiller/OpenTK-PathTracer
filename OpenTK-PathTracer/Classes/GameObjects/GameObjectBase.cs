@@ -2,7 +2,7 @@
 
 namespace OpenTK_PathTracer.GameObjects
 {
-    abstract class GameObjectBase : UBOCompatibleBase, Grid.IGridCompatible
+    abstract class GameObjectBase : UBOCompatibleBase
     {
         public Material Material;
         public Vector3 Position;
@@ -11,6 +11,5 @@ namespace OpenTK_PathTracer.GameObjects
 
         public abstract Vector3 Min { get; }
         public abstract Vector3 Max { get; }
-        public abstract bool IntersectsAABB(AABB aabb);
     }
 }

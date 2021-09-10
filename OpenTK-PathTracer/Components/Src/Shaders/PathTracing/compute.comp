@@ -10,20 +10,17 @@ layout(local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
 layout(binding = 0, rgba32f) restrict uniform image2D ImgResult;
 
 struct Material {
-    // Note: diffuse chance is 1.0f - (SpecularChance + RefractionChance)
-
-    vec3 Albedo; // the color used for diffuse lighting
-    float SpecularChance; // percentage chance of doing a specular reflection
+    vec3 Albedo; // Base color
+    float SpecularChance; // How reflective
     
-    vec3 Emissiv; // how much the surface glows
-    float SpecularRoughness; // how rough the specular reflections are
+    vec3 Emissiv; // How much light is emitted
+    float SpecularRoughness; // How rough reflections are
 
-    vec3 RefractionColor;
-    float RefractionChance; // percent chance of doing a refractive transmission
+    vec3 RefractionColor; // How strongly light is absorbed
+    float RefractionChance; // How transparent
 
-    float RefractionRoughness;// how rough the refractive transmissions are
-    float IOR; // LastHitIndex of refraction. used by fresnel and refraction
-    
+    float RefractionRoughness; // How rough refractions are
+    float IOR; // How strongly light gets refracted and the amout of light that is reflected
 };
 
 struct Cuboid {
@@ -113,8 +110,6 @@ void main()
     ivec2 imgResultSize = imageSize(ImgResult);
     ivec2 imgCoord = ivec2(gl_GlobalInvocationID.x / imgResultSize.y, gl_GlobalInvocationID.x % imgResultSize.y);
     //ivec2 imgCoord = ivec2(gl_GlobalInvocationID.xy);
-    //if (!IsInside(imgCoord, imgResultSize))
-        //return;
 
     rndSeed = gl_GlobalInvocationID.x * 1973 + gl_GlobalInvocationID.y * 9277 + thisRendererFrame * 2699 | 1;
     vec3 color = vec3(0);
@@ -165,7 +160,7 @@ vec3 PathTrace(Ray ray)
                 hitInfo.Normal, 
                 specularChance);
 
-                float chanceMultiplier = (1.0 - specularChance) / (1.0 - specularChance);
+                float chanceMultiplier = (1.0 - specularChance) / (1.0 - hitInfo.Material.SpecularChance);
                 refractionChance *= chanceMultiplier;
             }
             
@@ -191,9 +186,9 @@ vec3 PathTrace(Ray ray)
             
 
             vec3 diffuseRayDir = GetCosWeightedHemissphereDir(rndSeed, hitInfo.Normal);
-            vec3 specularRayDir = normalize(mix(reflect(ray.Direction, hitInfo.Normal), diffuseRayDir, hitInfo.Material.SpecularRoughness));
+            vec3 specularRayDir = normalize(mix(reflect(ray.Direction, hitInfo.Normal), diffuseRayDir, hitInfo.Material.SpecularRoughness * hitInfo.Material.SpecularRoughness));
             vec3 refractionRayDir = refract(ray.Direction, hitInfo.Normal, hitInfo.FromInside ? hitInfo.Material.IOR / 1.0 : 1.0 / hitInfo.Material.IOR);
-            refractionRayDir = normalize(mix(refractionRayDir, GetCosWeightedHemissphereDir(rndSeed, -hitInfo.Normal), hitInfo.Material.RefractionRoughness));
+            refractionRayDir = normalize(mix(refractionRayDir, GetCosWeightedHemissphereDir(rndSeed, -hitInfo.Normal), hitInfo.Material.RefractionRoughness * hitInfo.Material.RefractionRoughness));
             
 
             ray.Origin = hitInfo.NearHitPos + hitInfo.Normal * EPSILON * (doRefraction == 1.0 ? -1 : 1);
@@ -376,7 +371,6 @@ float FresnelReflectAmount(float n1, float n2, vec3 normal, vec3 incident, float
     float x = 1.0 - cosX;
     float ret = r0 + (1.0 - r0) * x * x * x * x * x;
 
-    // adjust reflect multiplier for object reflectivity
     return mix(f0, 1.0, ret);
 }
 
@@ -404,9 +398,4 @@ Ray GetWorldSpaceRay(mat4 inverseProj, mat4 inverseView, vec3 viewPos, vec2 norm
     vec4 rayEye = inverseProj * vec4(normalizedDeviceCoords.xy, -1.0, 0.0);
     rayEye.zw = vec2(-1.0, 0.0);
     return Ray(viewPos, normalize((inverseView * rayEye).xyz));
-}
-
-bool IsInside(vec2 pos, vec2 size)
-{
-    return pos.x < size.x && pos.y < size.y;
 }

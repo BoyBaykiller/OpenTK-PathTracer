@@ -50,18 +50,5 @@ namespace OpenTK_PathTracer.GameObjects
 
             return true;
         }
-        
-        public override bool IntersectsAABB(AABB aabb)
-        {
-            //Vector3 point = new Vector3(MathF.Max(aabb.Min.X, Math.Min(this.Position.X, aabb.Max.X)), MathF.Max(aabb.Min.Y, Math.Min(this.Position.Y, aabb.Max.Y)), MathF.Max(aabb.Min.Z, Math.Min(this.Position.Z, aabb.Max.Z)));
-            //return Vector3.DistanceSquared(point, this.Position) <= this.Radius * this.Radius;
-
-            return (this.Position.X + this.Radius) > aabb.Min.X &&
-                    (this.Position.X - this.Radius) < aabb.Max.X &&
-                    (this.Position.Y + this.Radius) > aabb.Min.Y &&
-                    (this.Position.Y - this.Radius) < aabb.Max.Y &&
-                    (this.Position.Z + this.Radius) > aabb.Min.Z &&
-                    (this.Position.Z - this.Radius) < aabb.Max.Z;
-        }
     }
 }

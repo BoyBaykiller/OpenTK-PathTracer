@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 using OpenTK;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK_PathTracer.Render;
@@ -6,7 +7,7 @@ using OpenTK_PathTracer.Render.Objects;
 
 namespace OpenTK_PathTracer
 {
-    class PathTracing : RenderEffectBase
+    class PathTracer : RenderEffectBase
     {
         private int _numSpheres;
         public int NumSpheres
@@ -83,7 +84,7 @@ namespace OpenTK_PathTracer
         }
 
         public readonly EnvironmentMap EnvironmentMap;
-        public PathTracing(EnvironmentMap environmentMap, int width, int height, int rayDepth, int ssp, float focalLength, float apertureRadius)
+        public PathTracer(EnvironmentMap environmentMap, int width, int height, int rayDepth, int ssp, float focalLength, float apertureRadius)
         {
             Result = new Texture(TextureTarget.Texture2D, TextureWrapMode.ClampToBorder, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, false);
             Result.Allocate(width, height);
@@ -114,7 +115,7 @@ namespace OpenTK_PathTracer
             Program.Upload(0, ThisRenderNumFrame++);
             
             Result.AttachToImageUnit(0, 0, false, 0, TextureAccess.ReadWrite, (SizedInternalFormat)Result.PixelInternalFormat);
-            
+
             GL.DispatchCompute((int)MathF.Ceiling(Width * Height / 32.0f), 1, 1);
             GL.MemoryBarrier(MemoryBarrierFlags.ShaderImageAccessBarrierBit);
 
@@ -124,7 +125,7 @@ namespace OpenTK_PathTracer
         public override void SetSize(int width, int height)
         {
             ThisRenderNumFrame = 0;
-            Result.Allocate(width, height);
+            base.SetSize(width, height);
         }
     }
 }
