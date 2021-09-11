@@ -17,7 +17,7 @@ namespace OpenTK_PathTracer
             set
             {
                 _numSpheres = value;
-                Program.Upload("uboGameObjectsSize", new Vector2(value, NumCuboids));
+                base.Program.Upload("uboGameObjectsSize", new Vector2(value, NumCuboids));
             }
         }
 
@@ -30,7 +30,7 @@ namespace OpenTK_PathTracer
             set
             {
                 _numCuboids = value;
-                Program.Upload("uboGameObjectsSize", new Vector2(NumSpheres, value));
+                base.Program.Upload("uboGameObjectsSize", new Vector2(NumSpheres, value));
             }
         }
 
@@ -43,7 +43,7 @@ namespace OpenTK_PathTracer
             set
             {
                 _rayDepth = value;
-                Program.Upload("rayDepth", value);
+                base.Program.Upload("rayDepth", value);
             }
         }
 
@@ -55,7 +55,7 @@ namespace OpenTK_PathTracer
             set
             {
                 _ssp = value;
-                Program.Upload("SSP", value);
+                base.Program.Upload("SSP", value);
             }
         }
 
@@ -67,7 +67,7 @@ namespace OpenTK_PathTracer
             set
             {
                 _focalLength = value;
-                Program.Upload("focalLength", value);
+                base.Program.Upload("focalLength", value);
             }
         }
 
@@ -79,23 +79,35 @@ namespace OpenTK_PathTracer
             set
             {
                 _apertureRadius = value;
-                Program.Upload("apertureDiameter", value);
+                base.Program.Upload("apertureDiameter", value);
             }
         }
 
         public readonly EnvironmentMap EnvironmentMap;
+
+
+        private const bool PRE_USE_COMPUTE = true;
         public PathTracer(EnvironmentMap environmentMap, int width, int height, int rayDepth, int ssp, float focalLength, float apertureRadius)
         {
             Result = new Texture(TextureTarget.Texture2D, TextureWrapMode.ClampToBorder, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, false);
             Result.Allocate(width, height);
 
-            Program = new ShaderProgram(new Shader(ShaderType.ComputeShader, @"Src\Shaders\PathTracing\compute.comp"));
+            /// OPTION TO USE FRAGMENT SHADER FOR PATH TRACING IS EXPERIMENTAL
+            if (PRE_USE_COMPUTE)
+            {
+                Program = new ShaderProgram(new Shader(ShaderType.ComputeShader, @"Src\Shaders\PathTracing\compute.comp"));
+            }
+            else
+            {
+                Framebuffer = new Framebuffer();
+                Framebuffer.AddRenderTarget(FramebufferAttachment.ColorAttachment0, Result);
+                Program = new ShaderProgram(new Shader(ShaderType.VertexShader, @"Src\Shaders\screenQuad.vs"), new Shader(ShaderType.FragmentShader, @"Src\Shaders\PathTracing\compute.frag"));
+            }
 
-            // Testing ARB_bindless_texture
+            // Uses ARB_bindless_texture
             BufferObject bufferObject = new BufferObject(BufferRangeTarget.UniformBuffer, 2, 1 * Vector4.SizeInBytes, BufferUsageHint.StaticDraw);
             environmentMap.CubemapTexture.MakeBindless();
             environmentMap.CubemapTexture.MakeResident();
-
             bufferObject.Append(Vector4.SizeInBytes, environmentMap.CubemapTexture.TextureHandle);
 
             RayDepth = rayDepth;
@@ -109,17 +121,27 @@ namespace OpenTK_PathTracer
         public int ThisRenderNumFrame;
         public override void Run(params object[] _)
         {
-            //Query.Start();
+            Query.Start();
 
             Program.Use();
             Program.Upload(0, ThisRenderNumFrame++);
-            
-            Result.AttachToImageUnit(0, 0, false, 0, TextureAccess.ReadWrite, (SizedInternalFormat)Result.PixelInternalFormat);
 
-            GL.DispatchCompute((int)MathF.Ceiling(Width * Height / 32.0f), 1, 1);
-            GL.MemoryBarrier(MemoryBarrierFlags.ShaderImageAccessBarrierBit);
+            if (PRE_USE_COMPUTE)
+            {
+                Result.AttachToImageUnit(0, 0, false, 0, TextureAccess.ReadWrite, (SizedInternalFormat)Result.PixelInternalFormat);
+                GL.DispatchCompute((int)MathF.Ceiling(Width * Height / 32.0f), 1, 1);
+                GL.MemoryBarrier(MemoryBarrierFlags.ShaderImageAccessBarrierBit);
+            }
+            else
+            {
+                Framebuffer.Bind();
+                Result.AttachToUnit(0);
+                GL.DrawArrays(PrimitiveType.Quads, 0, 4);
+            }
 
-            //Query.StopAndReset();
+            Query.StopAndReset();
+
+            // Put this "Console.WriteLine(PathTracer.Query.ElapsedMilliseconds);" inside the first if clause in MainWindow.OnUpdateFrame(FrameEventArgs args) to print render time.
         }
 
         public override void SetSize(int width, int height)

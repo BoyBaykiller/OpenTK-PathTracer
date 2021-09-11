@@ -49,6 +49,16 @@ namespace OpenTK_PathTracer.Render.Objects
             GL.BindBuffer(BufferTarget, ID);
         }
 
+
+        /// <summary>
+        /// Makes it possible to bind this buffer to an other <seealso cref="OpenTK.Graphics.OpenGL4.BufferTarget"/> without modifying <seealso cref="BufferTarget"/> 
+        /// </summary>
+        /// <param name="bufferTarget"></param>
+        public void Bind(BufferTarget bufferTarget)
+        {
+            GL.BindBuffer(bufferTarget, ID);
+        }
+
         /// <summary>
         /// Sets <seealso cref="BufferOffset"/> to 0 and overrides the content with 0
         /// </summary>

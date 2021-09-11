@@ -41,14 +41,14 @@ namespace OpenTK_PathTracer.Render.Objects
         private static int lastBindedID = -1;
         public ShaderProgram(params Shader[] shaders)
         {
-            if (shaders == null || shaders.Length == 0)
-                throw new IndexOutOfRangeException($"{GetType().Name}: Shader array is empty or null");
+            if (shaders == null || shaders.Length == 0 || !shaders.All(s => s.ID != 0))
+                throw new IndexOutOfRangeException($"{GetType().Name}: Shader array is empty or null. Or one shader has ID 0");
 
             if(!shaders.All(s => shaders.All(s1 => s.ID == s1.ID || s1.ShaderType != s.ShaderType)))
                 throw new Exception($"{GetType().Name}: A ShaderProgram can only hold one instance of every ShaderType. Validate the shader array. ");
 
             ID = GL.CreateProgram();
-            
+
             for (int i = 0; i < shaders.Length; i++)
                 GL.AttachShader(ID, shaders[i].ID);
 

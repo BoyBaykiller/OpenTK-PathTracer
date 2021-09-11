@@ -16,20 +16,20 @@ namespace OpenTK_PathTracer.Render.Objects
         private bool doStopAndReset = false;
 
 
-        public uint UpdatePeriod;
+        public uint UpdateRate;
         public Query(uint updatePeriodInMs)
         {
             GL.CreateQueries(QueryTarget.TimeElapsed, 1, out ID);
-            UpdatePeriod = updatePeriodInMs;
+            UpdateRate = updatePeriodInMs;
         }
 
 
         /// <summary>
-        /// If <paramref name="UpdateQueryRate"/> milliseconds are elapsed since the last Query, a new Query on the GPU, which captures all render commands from now until StopAndReset, is started.
+        /// If <seealso cref="UpdateRate"/> milliseconds are elapsed since the last Query, a new Query on the GPU, which captures all render commands from now until StopAndReset, is started.
         /// </summary>
         public void Start()
         {
-            if (!timer.IsRunning || timer.ElapsedMilliseconds >= UpdatePeriod)
+            if (!timer.IsRunning || timer.ElapsedMilliseconds >= UpdateRate)
             {
                 GL.BeginQuery(QueryTarget.TimeElapsed, ID);
                 doStopAndReset = true;
@@ -38,7 +38,7 @@ namespace OpenTK_PathTracer.Render.Objects
         }
 
         /// <summary>
-        /// Resets the Query on the GPU and stores the result in <paramref name="ElapsedMilliseconds"/>
+        /// Resets the Query on the GPU and stores the result in <seealso cref="ElapsedMilliseconds"/>
         /// </summary>
         public void StopAndReset()
         {

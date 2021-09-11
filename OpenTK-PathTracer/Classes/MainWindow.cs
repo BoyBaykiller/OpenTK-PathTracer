@@ -36,8 +36,8 @@ namespace OpenTK_PathTracer
             {
                 //AtmosphericScatterer.Run(Camera.Position);
                 PathTracer.Run();
-                
-                //Rasterizer.Run((from c in grid.Cells select c.AABB).ToArray()); // new AABB[] { new AABB(Vector3.One, Vector3.One) } (from c in grid.Cells select c.AABB).ToArray()
+
+                //Rasterizer.Run(new AABB[] { new AABB(Vector3.One, Vector3.One) } );
                 PostProcesser.Run(PathTracer.Result, Rasterizer.Result);
 
                 Framebuffer.Clear(0, ClearBufferMask.ColorBufferBit);
@@ -69,7 +69,6 @@ namespace OpenTK_PathTracer
                 UPS = ups;
                 fps = 0;
                 ups = 0;
-
                 fpsTimer.Restart();
             }
             ThreadManager.InvokeQueuedActions();
@@ -233,7 +232,7 @@ namespace OpenTK_PathTracer
         int lastWidth = -1, lastHeight = -1;
         protected override void OnResize(EventArgs e)
         {
-            if (lastWidth != Width && lastHeight != Height && Width != 0 && Height != 0) // dont resize when minimizing and maximizing
+            if ((lastWidth != Width || lastHeight != Height) && Width != 0 && Height != 0) // dont resize when minimizing and maximizing
             {
                 PathTracer.SetSize(Width, Height);
                 Rasterizer.SetSize(Width, Height);

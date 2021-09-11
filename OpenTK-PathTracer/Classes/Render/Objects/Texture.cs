@@ -135,6 +135,7 @@ namespace OpenTK_PathTracer.Render.Objects
             if (TextureTarget == TextureTarget.TextureCubeMap)
             {
                 GL.TexParameter(TextureTarget, TextureParameterName.TextureWrapR, (int)textureWrapMode);
+                // Uses ARB_seamless_cubemap_per_texture
                 GL.TexParameter(TextureTarget, (TextureParameterName)All.TextureCubeMapSeamless, 1);
             }
                 
