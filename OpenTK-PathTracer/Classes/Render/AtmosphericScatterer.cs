@@ -102,8 +102,8 @@ namespace OpenTK_PathTracer.Render
             Result = new Texture(TextureTarget.TextureCubeMap, TextureWrapMode.ClampToBorder, PixelInternalFormat.Rgba32f, PixelFormat.Rgba, false);
             Result.Allocate(size, size);
 
-            Program = new ShaderProgram(new Shader(ShaderType.ComputeShader, @"Src\Shaders\AtmosphericScattering\compute.comp"));
-            bufferObject = new BufferObject(BufferRangeTarget.UniformBuffer, 3, Vector4.SizeInBytes * 4 * 7 + Vector4.SizeInBytes, BufferUsageHint.StreamRead);
+            Program = new ShaderProgram(new Shader(ShaderType.ComputeShader, "Src/Shaders/AtmosphericScattering/compute.comp".GetPathContent()));
+            bufferObject = new BufferObject(BufferRangeTarget.UniformBuffer, 3, Vector4.SizeInBytes * 4 * 7 + Vector4.SizeInBytes, BufferStorageFlags.DynamicStorageBit);
 
             Matrix4 invProjection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(90), 1, 0.1f, 10f).Inverted();
             Matrix4[] invViews = new Matrix4[]

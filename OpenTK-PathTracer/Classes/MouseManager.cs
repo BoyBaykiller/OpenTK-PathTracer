@@ -7,13 +7,26 @@ namespace OpenTK_PathTracer
     {
         private static MouseState lastMouseState;
         private static MouseState thisMouseState;
-        public static void Update(MouseState mouseState)
+        private static MouseState thisMouseCursorState;
+        public static void Update()
         {
             lastMouseState = thisMouseState;
-            thisMouseState = mouseState;
+            thisMouseState = Mouse.GetState();
+            thisMouseCursorState = Mouse.GetCursorState();
         }
 
+
+        public static int WindowPositionX => thisMouseCursorState.X;
+        public static int WindowPositionY => thisMouseCursorState.Y;
+        public static int PositionX => thisMouseState.X;
+        public static int PositionY => thisMouseState.Y;
         public static Vector2 DeltaPosition => new Vector2(thisMouseState.X - lastMouseState.X, thisMouseState.Y - lastMouseState.Y);
+        public static float DeltaScrollX => thisMouseState.Scroll.X - lastMouseState.Scroll.X;
+        public static float DeltaScrollY => thisMouseState.Scroll.Y - lastMouseState.Scroll.Y;
+
+        public static ButtonState LeftButton => thisMouseState.LeftButton;
+        public static ButtonState RightButton => thisMouseState.RightButton;
+        public static ButtonState MiddleButton => thisMouseState.MiddleButton;
 
         /// <summary>
         /// 

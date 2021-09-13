@@ -19,10 +19,7 @@ namespace OpenTK_PathTracer.Render.Objects
         public EnvironmentMap(Texture texture)
         {
             if (texture.TextureTarget != TextureTarget.TextureCubeMap)
-            {
-                Console.WriteLine($"EnvironmentMap: Specified texture is not of type {TextureTarget.TextureCubeMap}");
-                return;
-            }
+                throw new ArgumentException($"Specified texture is not of type {TextureTarget.TextureCubeMap}");
             CubemapTexture = texture;
         }
 

@@ -7,10 +7,10 @@ namespace OpenTK_PathTracer
     {
         private static KeyboardState lastKeyboardState;
         private static KeyboardState thisKeyboardState;
-        public static void Update(KeyboardState keyboardState)
+        public static void Update()
         {
             lastKeyboardState = thisKeyboardState;
-            thisKeyboardState = keyboardState;
+            thisKeyboardState = Keyboard.GetState();
         }
 
         /// <summary>

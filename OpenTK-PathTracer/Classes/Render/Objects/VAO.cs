@@ -1,23 +1,36 @@
-﻿using OpenTK.Graphics.OpenGL4;
+﻿using System;
+using OpenTK.Graphics.OpenGL4;
+
 
 namespace OpenTK_PathTracer.Render.Objects
 {
-    class VAO
+    class VAO : IDisposable
     {
         private static int lastBindedID = -1;
 
+        public int VertexSize;
         public readonly int ID;
-        public VAO()
+        public VAO(BufferObject arrayBuffer, int vertexSize)
         {
-            ID = GL.GenVertexArray();
-            GL.BindVertexArray(ID);
+            VertexSize = vertexSize;
+            GL.CreateVertexArrays(1, out ID);
+            GL.VertexArrayVertexBuffer(ID, 0, arrayBuffer.ID, IntPtr.Zero, vertexSize);
         }
 
-        public void SetAttribPointer(int index, int floats, VertexAttribPointerType vertexAttribPointerType, int stride, int offset, bool normalize = false)
+        public VAO(BufferObject arrayBuffer, BufferObject elementBuffer, int stride)
         {
-            Bind();
-            GL.VertexAttribPointer(index, floats, vertexAttribPointerType, normalize, stride, offset);
-            GL.EnableVertexAttribArray(index);
+            VertexSize = stride;
+            GL.CreateVertexArrays(1, out ID);
+            GL.VertexArrayVertexBuffer(ID, 0, arrayBuffer.ID, IntPtr.Zero, stride);
+            GL.VertexArrayElementBuffer(ID, elementBuffer.ID);
+            
+        }
+
+        public void SetAttribFormat(int index, int attribTypeElements, VertexAttribType vertexAttribType, int offset, bool normalize = false)
+        {
+            GL.EnableVertexArrayAttrib(ID, index);
+            GL.VertexArrayAttribFormat(ID, index, attribTypeElements, vertexAttribType, normalize, offset);
+            GL.VertexArrayAttribBinding(ID, index, 0);
         }
 
         public void Bind()
@@ -29,13 +42,18 @@ namespace OpenTK_PathTracer.Render.Objects
             }
         }
 
-        public static void Bind(int iD)
+        public static void Bind(int id)
         {
-            if (lastBindedID != iD)
+            if (lastBindedID != id)
             {
-                GL.BindVertexArray(iD);
-                lastBindedID = iD;
+                GL.BindVertexArray(id);
+                lastBindedID = id;
             }
+        }
+
+        public void Dispose()
+        {
+            GL.DeleteVertexArray(ID);
         }
     }
 }

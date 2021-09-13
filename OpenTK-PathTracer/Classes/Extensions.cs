@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 
 namespace OpenTK_PathTracer
 {
@@ -12,6 +13,14 @@ namespace OpenTK_PathTracer
                 arr0[i + oldLength] = arr1[i];
 
             return arr0;
+        }
+
+        public static string GetPathContent(this string path)
+        {
+            if (!File.Exists(path))
+                throw new FileNotFoundException($"{path} does not exist");
+
+            return File.ReadAllText(path);
         }
     }
 }

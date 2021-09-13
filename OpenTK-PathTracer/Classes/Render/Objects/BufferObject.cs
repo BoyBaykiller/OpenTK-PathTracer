@@ -15,45 +15,27 @@ namespace OpenTK_PathTracer.Render.Objects
         };
 
         public readonly int ID;
-        public BufferTarget BufferTarget;
-        public readonly BufferUsageHint BufferUsageHint;
         public int BufferOffset;
         public int Size { get; private set; }
 
-        public BufferObject(BufferRangeTarget bufferRangeTarget, int bindingIndex, int size, BufferUsageHint bufferUsageHint)
+        public BufferObject(BufferRangeTarget bufferRangeTarget, int bindingIndex, int size, BufferStorageFlags bufferStorageFlags)
         {
             if (bufferTypeBindingIndexDict[bufferRangeTarget].Contains(bindingIndex))
             {
                 Console.WriteLine($"BindingIndex {bindingIndex} is already bound to a {bufferRangeTarget}");
                 bufferTypeBindingIndexDict[bufferRangeTarget].Add(bindingIndex);
             }
-            BufferTarget = (BufferTarget)bufferRangeTarget;
-            BufferUsageHint = bufferUsageHint;
-            ID = GL.GenBuffer();
-            Bind();
-            Allocate(size);
+            GL.CreateBuffers(1, out ID);
+            Allocate(size, bufferStorageFlags);
             GL.BindBufferBase(bufferRangeTarget, bindingIndex, ID);
         }
 
-        public BufferObject(BufferTarget bufferTarget, int size, BufferUsageHint bufferUsageHint)
+        public BufferObject(int size, BufferStorageFlags bufferStorageFlags)
         {
-            BufferTarget = bufferTarget;
-            BufferUsageHint = bufferUsageHint;
-            ID = GL.GenBuffer();
-            Bind();
-            Allocate(size);
+            GL.CreateBuffers(1, out ID);
+            Allocate(size, bufferStorageFlags);
         }
 
-        public void Bind()
-        {
-            GL.BindBuffer(BufferTarget, ID);
-        }
-
-
-        /// <summary>
-        /// Makes it possible to bind this buffer to an other <seealso cref="OpenTK.Graphics.OpenGL4.BufferTarget"/> without modifying <seealso cref="BufferTarget"/> 
-        /// </summary>
-        /// <param name="bufferTarget"></param>
         public void Bind(BufferTarget bufferTarget)
         {
             GL.BindBuffer(bufferTarget, ID);
@@ -100,9 +82,9 @@ namespace OpenTK_PathTracer.Render.Objects
             BufferOffset = offset + size;
         }
 
-        public void Allocate(int size)
+        private void Allocate(int size, BufferStorageFlags bufferStorageFlags)
         {
-            GL.NamedBufferData(ID, size, IntPtr.Zero, BufferUsageHint);
+            GL.NamedBufferStorage(ID, size, IntPtr.Zero, bufferStorageFlags);
             Size = size;
         }
 

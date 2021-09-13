@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Runtime.InteropServices;
 using OpenTK;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK_PathTracer.Render;
@@ -17,7 +16,7 @@ namespace OpenTK_PathTracer
             set
             {
                 _numSpheres = value;
-                base.Program.Upload("uboGameObjectsSize", new Vector2(value, NumCuboids));
+                Program.Upload("uboGameObjectsSize", new Vector2(value, NumCuboids));
             }
         }
 
@@ -30,7 +29,7 @@ namespace OpenTK_PathTracer
             set
             {
                 _numCuboids = value;
-                base.Program.Upload("uboGameObjectsSize", new Vector2(NumSpheres, value));
+                Program.Upload("uboGameObjectsSize", new Vector2(NumSpheres, value));
             }
         }
 
@@ -43,7 +42,7 @@ namespace OpenTK_PathTracer
             set
             {
                 _rayDepth = value;
-                base.Program.Upload("rayDepth", value);
+                Program.Upload("rayDepth", value);
             }
         }
 
@@ -55,7 +54,7 @@ namespace OpenTK_PathTracer
             set
             {
                 _ssp = value;
-                base.Program.Upload("SSP", value);
+                Program.Upload("SSP", value);
             }
         }
 
@@ -67,7 +66,7 @@ namespace OpenTK_PathTracer
             set
             {
                 _focalLength = value;
-                base.Program.Upload("focalLength", value);
+                Program.Upload("focalLength", value);
             }
         }
 
@@ -79,7 +78,7 @@ namespace OpenTK_PathTracer
             set
             {
                 _apertureRadius = value;
-                base.Program.Upload("apertureDiameter", value);
+                Program.Upload("apertureDiameter", value);
             }
         }
 
@@ -95,17 +94,17 @@ namespace OpenTK_PathTracer
             /// OPTION TO USE FRAGMENT SHADER FOR PATH TRACING IS EXPERIMENTAL
             if (PRE_USE_COMPUTE)
             {
-                Program = new ShaderProgram(new Shader(ShaderType.ComputeShader, @"Src\Shaders\PathTracing\compute.comp"));
+                Program = new ShaderProgram(new Shader(ShaderType.ComputeShader, "Src/Shaders/PathTracing/compute.comp".GetPathContent()));
             }
             else
             {
                 Framebuffer = new Framebuffer();
                 Framebuffer.AddRenderTarget(FramebufferAttachment.ColorAttachment0, Result);
-                Program = new ShaderProgram(new Shader(ShaderType.VertexShader, @"Src\Shaders\screenQuad.vs"), new Shader(ShaderType.FragmentShader, @"Src\Shaders\PathTracing\compute.frag"));
+                Program = new ShaderProgram(new Shader(ShaderType.VertexShader, "Src/Shaders/screenQuad.vs".GetPathContent()), new Shader(ShaderType.FragmentShader, @"Src\Shaders/PathTracing/compute.frag".GetPathContent()));
             }
 
             // Uses ARB_bindless_texture
-            BufferObject bufferObject = new BufferObject(BufferRangeTarget.UniformBuffer, 2, 1 * Vector4.SizeInBytes, BufferUsageHint.StaticDraw);
+            BufferObject bufferObject = new BufferObject(BufferRangeTarget.UniformBuffer, 2, 1 * Vector4.SizeInBytes, BufferStorageFlags.DynamicStorageBit);
             environmentMap.CubemapTexture.MakeBindless();
             environmentMap.CubemapTexture.MakeResident();
             bufferObject.Append(Vector4.SizeInBytes, environmentMap.CubemapTexture.TextureHandle);

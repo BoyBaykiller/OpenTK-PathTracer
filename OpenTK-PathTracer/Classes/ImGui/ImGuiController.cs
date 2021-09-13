@@ -1,50 +1,41 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using ImGuiNET;
 using OpenTK;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Input;
-
+using OpenTK_PathTracer.Render.Objects;
+using ImGuiNET;
 
 namespace OpenTK_PathTracer.GUI
 {
     /// <summary>
-    /// A modified version of Veldrid.ImGui's ImGuiRenderer.
-    /// Manages input for ImGui and handles rendering ImGui's DrawLists with Veldrid.
+    /// This ImGui wrapper is from <see href="https://github.com/mellinoe/ImGui.NET">here</see>.
+    /// I modified it to make it work tighter with my project
     /// </summary>
     public class ImGuiController : IDisposable
     {
-        private bool _frameBegun;
+        private bool frameBegun;
 
-        // Veldrid objects
-        private int _vertexArray;
-        private int _vertexBuffer;
-        private int _vertexBufferSize;
-        private int _indexBuffer;
-        private int _indexBufferSize;
-
-        private GUI.Objects.Texture _fontTexture;
-        private GUI.Objects.Shader _shader;
+        private VAO vao;
+        private ShaderProgram shaderProgram;
+        private Texture fontTexture;
+        private BufferObject vbo;
+        private BufferObject ebo;
         
-        private int _windowWidth;
-        private int _windowHeight;
+        private int Width;
+        private int Height;
 
-        private System.Numerics.Vector2 _scaleFactor = System.Numerics.Vector2.One;
-
-        /// <summary>
-        /// Constructs a new ImGuiController.
-        /// </summary>
+        private System.Numerics.Vector2 scaleFactor = System.Numerics.Vector2.One;
         public ImGuiController(int width, int height)
         {
-            _windowWidth = width;
-            _windowHeight = height;
+            Width = width;
+            Height = height;
 
-            IntPtr context = ImGuiNET.ImGui.CreateContext();
-            ImGuiNET.ImGui.SetCurrentContext(context);
-            var io = ImGuiNET.ImGui.GetIO();
+            IntPtr context = ImGui.CreateContext();
+            ImGui.SetCurrentContext(context);
+            ImGuiIOPtr io = ImGui.GetIO();
             io.Fonts.AddFontDefault();
-
             io.BackendFlags |= ImGuiBackendFlags.RendererHasVtxOffset;
 
             CreateDeviceResources();
@@ -52,36 +43,24 @@ namespace OpenTK_PathTracer.GUI
 
             SetPerFrameImGuiData(1f / 60f);
 
-            ImGuiNET.ImGui.NewFrame();
-            _frameBegun = true;
+            ImGui.NewFrame();
+            frameBegun = true;
         }
 
         public void WindowResized(int width, int height)
         {
-            _windowWidth = width;
-            _windowHeight = height;
-        }
-
-        public void DestroyDeviceObjects()
-        {
-            Dispose();
+            Width = width;
+            Height = height;
         }
 
         public void CreateDeviceResources()
         {
-            Util.CreateVertexArray("ImGuiNET.ImGui", out _vertexArray);
-
-            _vertexBufferSize = 10000;
-            _indexBufferSize = 2000;
-
-            Util.CreateVertexBuffer("ImGuiNET.ImGui", out _vertexBuffer);
-            Util.CreateElementBuffer("ImGuiNET.ImGui", out _indexBuffer);
-            GL.NamedBufferData(_vertexBuffer, _vertexBufferSize, IntPtr.Zero, BufferUsageHint.DynamicDraw);
-            GL.NamedBufferData(_indexBuffer, _indexBufferSize, IntPtr.Zero, BufferUsageHint.DynamicDraw);
+            vbo = new BufferObject(50000, BufferStorageFlags.DynamicStorageBit);
+            ebo = new BufferObject(6000, BufferStorageFlags.DynamicStorageBit);
 
             RecreateFontDeviceTexture();
 
-            string VertexSource = @"#version 330 core
+            string vertexSource = @"#version 330 core
 
                 uniform mat4 projection_matrix;
 
@@ -97,9 +76,8 @@ namespace OpenTK_PathTracer.GUI
                     gl_Position = projection_matrix * vec4(in_position, 0, 1);
                     color = in_color;
                     texCoord = in_texCoord;
-                }"
-            ;
-            string FragmentSource = @"#version 330 core
+                }";
+            string fragmentSource = @"#version 330 core
 
                 uniform sampler2D in_fontTexture;
 
@@ -111,75 +89,59 @@ namespace OpenTK_PathTracer.GUI
                 void main()
                 {
                     outputColor = color * texture(in_fontTexture, texCoord);
-                }"
-            ;
+                }";
 
-            _shader = new Objects.Shader("ImGuiNET.ImGui", VertexSource, FragmentSource);
+            shaderProgram = new ShaderProgram(new Shader(ShaderType.VertexShader, vertexSource), new Shader(ShaderType.FragmentShader, fragmentSource));
 
-            GL.VertexArrayVertexBuffer(_vertexArray, 0, _vertexBuffer, IntPtr.Zero, Unsafe.SizeOf<ImDrawVert>());
-            GL.VertexArrayElementBuffer(_vertexArray, _indexBuffer);
-
-            GL.EnableVertexArrayAttrib(_vertexArray, 0);
-            GL.VertexArrayAttribBinding(_vertexArray, 0, 0);
-            GL.VertexArrayAttribFormat(_vertexArray, 0, 2, VertexAttribType.Float, false, 0);
-
-            GL.EnableVertexArrayAttrib(_vertexArray, 1);
-            GL.VertexArrayAttribBinding(_vertexArray, 1, 0);
-            GL.VertexArrayAttribFormat(_vertexArray, 1, 2, VertexAttribType.Float, false, 8);
-
-            GL.EnableVertexArrayAttrib(_vertexArray, 2);
-            GL.VertexArrayAttribBinding(_vertexArray, 2, 0);
-            GL.VertexArrayAttribFormat(_vertexArray, 2, 4, VertexAttribType.UnsignedByte, true, 16);
+            vao = new VAO(vbo, ebo, Unsafe.SizeOf<ImDrawVert>());
+            vao.SetAttribFormat(0, 2, VertexAttribType.Float, 0 * sizeof(float));
+            vao.SetAttribFormat(1, 2, VertexAttribType.Float, 2 * sizeof(float));
+            vao.SetAttribFormat(2, 4, VertexAttribType.UnsignedByte, 4 * sizeof(float), true);
         }
 
-        /// <summary>
-        /// Recreates the device texture used to render text.
-        /// </summary>
         public void RecreateFontDeviceTexture()
         {
-            ImGuiNET.ImGuiIOPtr io = ImGuiNET.ImGui.GetIO();
-            io.Fonts.GetTexDataAsRGBA32(out IntPtr pixels, out int width, out int height, out int bytesPerPixel);
+            ImGuiIOPtr io = ImGui.GetIO();
+            io.Fonts.GetTexDataAsRGBA32(out IntPtr pixels, out int width, out int height, out _);
 
-            _fontTexture = new GUI.Objects.Texture("ImGuiNET.ImGui Text Atlas", width, height, pixels);
-            _fontTexture.SetMagFilter(TextureMagFilter.Linear);
-            _fontTexture.SetMinFilter(TextureMinFilter.Linear);
+            fontTexture = new Texture(TextureTarget.Texture2D, TextureWrapMode.ClampToBorder, PixelInternalFormat.Rgba, PixelFormat.Bgra, false);
+            fontTexture.Allocate(width, height, 1, PixelType.UnsignedByte);
+            fontTexture.SetSubData2D(pixels);
 
-            io.Fonts.SetTexID((IntPtr)_fontTexture.GLTexture);
+            io.Fonts.SetTexID((IntPtr)fontTexture.ID);
 
             io.Fonts.ClearTexData();
         }
 
         /// <summary>
-        /// Renders the ImGuiNET.ImGui draw list data.
+        /// Renders the ImGui draw list data.
         /// This method requires a <see cref="GraphicsDevice"/> because it may create new DeviceBuffers if the size of vertex
         /// or index data has increased beyond the capacity of the existing buffers.
         /// A <see cref="CommandList"/> is needed to submit drawing and resource update commands.
         /// </summary>
         public void Render()
         {
-            if (_frameBegun)
+            if (frameBegun)
             {
-                _frameBegun = false;
-                ImGuiNET.ImGui.Render();
-                RenderImDrawData(ImGuiNET.ImGui.GetDrawData());
+                frameBegun = false;
+                ImGui.Render();
+                RenderImDrawData(ImGui.GetDrawData());
             }
         }
 
         /// <summary>
-        /// Updates ImGuiNET.ImGui input and IO configuration state.
+        /// Updates ImGui input and IO configuration state.
         /// </summary>
         public void Update(GameWindow wnd, float deltaSeconds)
         {
-            if (_frameBegun)
-            {
-                ImGuiNET.ImGui.Render();
-            }
+            if (frameBegun)
+                ImGui.Render();
 
             SetPerFrameImGuiData(deltaSeconds);
             UpdateImGuiInput(wnd);
 
-            _frameBegun = true;
-            ImGuiNET.ImGui.NewFrame();
+            frameBegun = true;
+            ImGui.NewFrame();
         }
 
         /// <summary>
@@ -188,155 +150,112 @@ namespace OpenTK_PathTracer.GUI
         /// </summary>
         private void SetPerFrameImGuiData(float deltaSeconds)
         {
-            ImGuiNET.ImGuiIOPtr io = ImGuiNET.ImGui.GetIO();
-            io.DisplaySize = new System.Numerics.Vector2(
-                _windowWidth / _scaleFactor.X,
-                _windowHeight / _scaleFactor.Y);
-            io.DisplayFramebufferScale = _scaleFactor;
-            io.DeltaTime = deltaSeconds; // DeltaTime is in seconds.
+            ImGuiIOPtr io = ImGui.GetIO();
+            io.DisplaySize = new System.Numerics.Vector2(Width / scaleFactor.X, Height / scaleFactor.Y);
+            io.DisplayFramebufferScale = scaleFactor;
+            io.DeltaTime = deltaSeconds;
         }
 
-        MouseState PrevMouseState;
-        KeyboardState PrevKeyboardState;
-        readonly List<char> PressedChars = new List<char>();
-
+        private readonly List<char> pressedChars = new List<char>();
         private void UpdateImGuiInput(GameWindow wnd)
         {
-            ImGuiNET.ImGuiIOPtr io = ImGuiNET.ImGui.GetIO();
+            ImGuiIOPtr io = ImGui.GetIO();
 
-            MouseState MouseState = Mouse.GetCursorState();
-            KeyboardState KeyboardState = Keyboard.GetState();
+            io.MouseDown[0] = MouseManager.LeftButton == ButtonState.Pressed;
+            io.MouseDown[1] = MouseManager.RightButton == ButtonState.Pressed;
+            io.MouseDown[2] = MouseManager.MiddleButton == ButtonState.Pressed;
 
-            io.MouseDown[0] = MouseState.LeftButton == ButtonState.Pressed;
-            io.MouseDown[1] = MouseState.RightButton == ButtonState.Pressed;
-            io.MouseDown[2] = MouseState.MiddleButton == ButtonState.Pressed;
-
-            var screenPoint = new System.Drawing.Point(MouseState.X, MouseState.Y);
-            var point = wnd.PointToClient(screenPoint);
+            System.Drawing.Point screenPoint = new System.Drawing.Point(MouseManager.WindowPositionX, MouseManager.WindowPositionY);
+            System.Drawing.Point point = wnd.PointToClient(screenPoint);
             io.MousePos = new System.Numerics.Vector2(point.X, point.Y);
 
-            io.MouseWheel = MouseState.Scroll.Y - PrevMouseState.Scroll.Y;
-            io.MouseWheelH = MouseState.Scroll.X - PrevMouseState.Scroll.X;
+            io.MouseWheel = MouseManager.DeltaScrollY;
+            io.MouseWheelH = MouseManager.DeltaScrollY;
             
             foreach (Key key in Enum.GetValues(typeof(Key)))
-            {
-                io.KeysDown[(int)key] = KeyboardState.IsKeyDown(key);
-            }
+                io.KeysDown[(int)key] = KeyboardManager.IsKeyDown(key);
 
-            foreach (var c in PressedChars)
-            {
-                io.AddInputCharacter(c);
-            }
-            PressedChars.Clear();
+            for (int i = 0; i < pressedChars.Count; i++)
+                io.AddInputCharacter(pressedChars[i]);
 
-            io.KeyCtrl = KeyboardState.IsKeyDown(Key.ControlLeft) || KeyboardState.IsKeyDown(Key.ControlRight);
-            io.KeyAlt = KeyboardState.IsKeyDown(Key.AltLeft) || KeyboardState.IsKeyDown(Key.AltRight);
-            io.KeyShift = KeyboardState.IsKeyDown(Key.ShiftLeft) || KeyboardState.IsKeyDown(Key.ShiftRight);
-            io.KeySuper = KeyboardState.IsKeyDown(Key.WinLeft) || KeyboardState.IsKeyDown(Key.WinRight);
+            pressedChars.Clear();
 
-            PrevMouseState = MouseState;
-            PrevKeyboardState = KeyboardState;
+            io.KeyCtrl = KeyboardManager.IsKeyDown(Key.ControlLeft) || KeyboardManager.IsKeyDown(Key.ControlRight);
+            io.KeyAlt = KeyboardManager.IsKeyDown(Key.AltLeft) || KeyboardManager.IsKeyDown(Key.AltRight);
+            io.KeyShift = KeyboardManager.IsKeyDown(Key.ShiftLeft) || KeyboardManager.IsKeyDown(Key.ShiftRight);
+            io.KeySuper = KeyboardManager.IsKeyDown(Key.WinLeft) || KeyboardManager.IsKeyDown(Key.WinRight);
         }
 
-        internal void PressChar(char keyChar)
+        public void PressChar(char keyChar)
         {
-            PressedChars.Add(keyChar);
+            pressedChars.Add(keyChar);
         }
 
         private static void SetKeyMappings()
         {
-            ImGuiNET.ImGuiIOPtr io = ImGuiNET.ImGui.GetIO();
-            io.KeyMap[(int)ImGuiNET.ImGuiKey.Tab] = (int)Key.Tab;
-            io.KeyMap[(int)ImGuiNET.ImGuiKey.LeftArrow] = (int)Key.Left;
-            io.KeyMap[(int)ImGuiNET.ImGuiKey.RightArrow] = (int)Key.Right;
-            io.KeyMap[(int)ImGuiNET.ImGuiKey.UpArrow] = (int)Key.Up;
-            io.KeyMap[(int)ImGuiNET.ImGuiKey.DownArrow] = (int)Key.Down;
-            io.KeyMap[(int)ImGuiNET.ImGuiKey.PageUp] = (int)Key.PageUp;
-            io.KeyMap[(int)ImGuiNET.ImGuiKey.PageDown] = (int)Key.PageDown;
-            io.KeyMap[(int)ImGuiNET.ImGuiKey.Home] = (int)Key.Home;
-            io.KeyMap[(int)ImGuiNET.ImGuiKey.End] = (int)Key.End;
-            io.KeyMap[(int)ImGuiNET.ImGuiKey.Delete] = (int)Key.Delete;
-            io.KeyMap[(int)ImGuiNET.ImGuiKey.Backspace] = (int)Key.BackSpace;
-            io.KeyMap[(int)ImGuiNET.ImGuiKey.Enter] = (int)Key.Enter;
-            io.KeyMap[(int)ImGuiNET.ImGuiKey.Escape] = (int)Key.Escape;
-            io.KeyMap[(int)ImGuiNET.ImGuiKey.A] = (int)Key.A;
-            io.KeyMap[(int)ImGuiNET.ImGuiKey.C] = (int)Key.C;
-            io.KeyMap[(int)ImGuiNET.ImGuiKey.V] = (int)Key.V;
-            io.KeyMap[(int)ImGuiNET.ImGuiKey.X] = (int)Key.X;
-            io.KeyMap[(int)ImGuiNET.ImGuiKey.Y] = (int)Key.Y;
-            io.KeyMap[(int)ImGuiNET.ImGuiKey.Z] = (int)Key.Z;
+            ImGuiIOPtr io = ImGui.GetIO();
+            io.KeyMap[(int)ImGuiKey.Tab] = (int)Key.Tab;
+            io.KeyMap[(int)ImGuiKey.LeftArrow] = (int)Key.Left;
+            io.KeyMap[(int)ImGuiKey.RightArrow] = (int)Key.Right;
+            io.KeyMap[(int)ImGuiKey.UpArrow] = (int)Key.Up;
+            io.KeyMap[(int)ImGuiKey.DownArrow] = (int)Key.Down;
+            io.KeyMap[(int)ImGuiKey.PageUp] = (int)Key.PageUp;
+            io.KeyMap[(int)ImGuiKey.PageDown] = (int)Key.PageDown;
+            io.KeyMap[(int)ImGuiKey.Home] = (int)Key.Home;
+            io.KeyMap[(int)ImGuiKey.End] = (int)Key.End;
+            io.KeyMap[(int)ImGuiKey.Delete] = (int)Key.Delete;
+            io.KeyMap[(int)ImGuiKey.Backspace] = (int)Key.BackSpace;
+            io.KeyMap[(int)ImGuiKey.Enter] = (int)Key.Enter;
+            io.KeyMap[(int)ImGuiKey.Escape] = (int)Key.Escape;
+            io.KeyMap[(int)ImGuiKey.A] = (int)Key.A;
+            io.KeyMap[(int)ImGuiKey.C] = (int)Key.C;
+            io.KeyMap[(int)ImGuiKey.V] = (int)Key.V;
+            io.KeyMap[(int)ImGuiKey.X] = (int)Key.X;
+            io.KeyMap[(int)ImGuiKey.Y] = (int)Key.Y;
+            io.KeyMap[(int)ImGuiKey.Z] = (int)Key.Z;
         }
 
-        private void RenderImDrawData(ImDrawDataPtr draw_data)
+        private void RenderImDrawData(ImDrawDataPtr drawData)
         {
-            if (draw_data.CmdListsCount == 0)
-            {
+            if (drawData.CmdListsCount == 0)
                 return;
-            }
 
-            
-            for (int i = 0; i < draw_data.CmdListsCount; i++)
+            for (int i = 0; i < drawData.CmdListsCount; i++)
             {
-                ImDrawListPtr cmd_list = draw_data.CmdListsRange[i];
+                ImDrawListPtr cmdList = drawData.CmdListsRange[i];
+                int vertexSize = cmdList.VtxBuffer.Size * vao.VertexSize;
+                if (vertexSize > vbo.Size)
+                    throw new OutOfMemoryException($"Buffer size is {vbo.Size}, but needs to be at least {vertexSize}");
 
-                int vertexSize = cmd_list.VtxBuffer.Size * Unsafe.SizeOf<ImDrawVert>();
-                if (vertexSize > _vertexBufferSize)
-                {
-                    int newSize = (int)Math.Max(_vertexBufferSize * 1.5f, vertexSize);
-                    GL.NamedBufferData(_vertexBuffer, newSize, IntPtr.Zero, BufferUsageHint.DynamicDraw);
-                    _vertexBufferSize = newSize;
-
-                    //Console.WriteLine($"Resized dear ImGuiNET.ImGui vertex buffer to new size {_vertexBufferSize}");
-                }
-
-                int indexSize = cmd_list.IdxBuffer.Size * sizeof(ushort);
-                if (indexSize > _indexBufferSize)
-                {
-                    int newSize = (int)Math.Max(_indexBufferSize * 1.5f, indexSize);
-                    GL.NamedBufferData(_indexBuffer, newSize, IntPtr.Zero, BufferUsageHint.DynamicDraw);
-                    _indexBufferSize = newSize;
-
-                    //Console.WriteLine($"Resized dear ImGuiNET.ImGui index buffer to new size {_indexBufferSize}");
-                }
+                int indexSize = cmdList.IdxBuffer.Size * sizeof(ushort);
+                if (indexSize > ebo.Size)
+                    throw new OutOfMemoryException($"Buffer size is {ebo.Size}, but needs to be at least {indexSize}");
             }
 
-            // Setup orthographic projection matrix into our constant buffer
-            ImGuiNET.ImGuiIOPtr io = ImGuiNET.ImGui.GetIO();
-            Matrix4 mvp = Matrix4.CreateOrthographicOffCenter(
-                0.0f,
-                io.DisplaySize.X,
-                io.DisplaySize.Y,
-                0.0f,
-                -1.0f,
-                1.0f);
+            ImGuiIOPtr io = ImGui.GetIO();
+            Matrix4 mvp = Matrix4.CreateOrthographicOffCenter(0.0f, io.DisplaySize.X, io.DisplaySize.Y, 0.0f, -1.0f, 1.0f);
 
-            // _shader.UseShader();
-            OpenTK_PathTracer.Render.Objects.ShaderProgram.Use(_shader.Program);
-            GL.UniformMatrix4(_shader.GetUniformLocation("projection_matrix"), false, ref mvp);
-            GL.Uniform1(_shader.GetUniformLocation("in_fontTexture"), 0);
+            shaderProgram.Use();
+            shaderProgram.Upload("projection_matrix", mvp);
+            shaderProgram.Upload("in_fontTexture", 0);
 
-            GL.BindVertexArray(_vertexArray);
+            vao.Bind();
 
-            draw_data.ScaleClipRects(io.DisplayFramebufferScale);
+            drawData.ScaleClipRects(io.DisplayFramebufferScale);
 
             GL.Enable(EnableCap.Blend);
             GL.Enable(EnableCap.ScissorTest);
             GL.BlendEquation(BlendEquationMode.FuncAdd);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             //GL.BlendFuncSeparate(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha, BlendingFactorSrc.One, BlendingFactorDest.One);
-            GL.Disable(EnableCap.CullFace);
-            GL.Disable(EnableCap.DepthTest);
 
-            // Render command lists
-            for (int n = 0; n < draw_data.CmdListsCount; n++)
+            for (int i = 0; i < drawData.CmdListsCount; i++)
             {
-                ImDrawListPtr cmd_list = draw_data.CmdListsRange[n];
+                ImDrawListPtr cmd_list = drawData.CmdListsRange[i];
 
-                GL.NamedBufferSubData(_vertexBuffer, IntPtr.Zero, cmd_list.VtxBuffer.Size * Unsafe.SizeOf<ImDrawVert>(), cmd_list.VtxBuffer.Data);
+                vbo.SubData(0, cmd_list.VtxBuffer.Size * vao.VertexSize, cmd_list.VtxBuffer.Data);
+                ebo.SubData(0, cmd_list.IdxBuffer.Size * sizeof(ushort), cmd_list.IdxBuffer.Data);
 
-                GL.NamedBufferSubData(_indexBuffer, IntPtr.Zero, cmd_list.IdxBuffer.Size * sizeof(ushort), cmd_list.IdxBuffer.Data);
-
-                int vtx_offset = 0;
                 int idx_offset = 0;
 
                 for (int cmd_i = 0; cmd_i < cmd_list.CmdBuffer.Size; cmd_i++)
@@ -348,35 +267,23 @@ namespace OpenTK_PathTracer.GUI
                     }
                     else
                     {
-                        GL.ActiveTexture(TextureUnit.Texture0);
-                        GL.BindTexture(TextureTarget.Texture2D, (int)pcmd.TextureId);
+                        Texture.AttachToUnit(0, (int)pcmd.TextureId);
 
                         // We do _windowHeight - (int)clip.W instead of (int)clip.Y because gl has flipped Y when it comes to these coordinates
                         var clip = pcmd.ClipRect;
-                        GL.Scissor((int)clip.X, _windowHeight - (int)clip.W, (int)(clip.Z - clip.X), (int)(clip.W - clip.Y));
+                        GL.Scissor((int)clip.X, Height - (int)clip.W, (int)(clip.Z - clip.X), (int)(clip.W - clip.Y));
 
-                        if ((io.BackendFlags & ImGuiNET.ImGuiBackendFlags.RendererHasVtxOffset) != 0)
-                        {
-                            GL.DrawElementsBaseVertex(PrimitiveType.Triangles, (int)pcmd.ElemCount, DrawElementsType.UnsignedShort, (IntPtr)(idx_offset * sizeof(ushort)), vtx_offset);
-                        }
+                        if ((io.BackendFlags & ImGuiBackendFlags.RendererHasVtxOffset) != 0)
+                            GL.DrawElementsBaseVertex(PrimitiveType.Triangles, (int)pcmd.ElemCount, DrawElementsType.UnsignedShort, (IntPtr)(idx_offset * sizeof(ushort)), 0);
                         else
-                        {
                             GL.DrawElements(BeginMode.Triangles, (int)pcmd.ElemCount, DrawElementsType.UnsignedShort, (int)pcmd.IdxOffset * sizeof(ushort));
-                        }
                     }
 
                     idx_offset += (int)pcmd.ElemCount;
                 }
-                vtx_offset += cmd_list.VtxBuffer.Size;
             }
-
-            GL.ActiveTexture(TextureUnit.Texture0);
-            GL.BindTexture(TextureTarget.Texture2D, 0);
-
             GL.Disable(EnableCap.Blend);
             GL.Disable(EnableCap.ScissorTest);
-
-            OpenTK_PathTracer.Render.Objects.VAO.Bind(0);
         }
 
         /// <summary>
@@ -384,8 +291,9 @@ namespace OpenTK_PathTracer.GUI
         /// </summary>
         public void Dispose()
         {
-            _fontTexture.Dispose();
-            _shader.Dispose();
+            fontTexture.Dispose();
+            shaderProgram.Dispose();
+            vao.Dispose();
         }
     }
 }

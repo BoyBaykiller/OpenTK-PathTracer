@@ -37,7 +37,7 @@ namespace OpenTK_PathTracer
                 //AtmosphericScatterer.Run(Camera.Position);
                 PathTracer.Run();
 
-                //Rasterizer.Run(new AABB[] { new AABB(Vector3.One, Vector3.One) } );
+                Rasterizer.Run(new AABB[] { new AABB(Vector3.One, Vector3.One) } );
                 PostProcesser.Run(PathTracer.Result, Rasterizer.Result);
 
                 Framebuffer.Clear(0, ClearBufferMask.ColorBufferBit);
@@ -72,8 +72,8 @@ namespace OpenTK_PathTracer
                 fpsTimer.Restart();
             }
             ThreadManager.InvokeQueuedActions();
-            KeyboardManager.Update(Keyboard.GetState());
-            MouseManager.Update(Mouse.GetState());
+            KeyboardManager.Update();
+            MouseManager.Update();
 
             if (Focused)
             {
@@ -102,7 +102,7 @@ namespace OpenTK_PathTracer
                     
                     if (!CursorVisible)
                     {
-                        MouseManager.Update(Mouse.GetState());
+                        MouseManager.Update();
                         Camera.Velocity = Vector3.Zero;
                     }
                 }
@@ -164,15 +164,15 @@ namespace OpenTK_PathTracer
             AtmosphericScatterer = new AtmosphericScattering(128, 100, 10, 2.1f, 35.0f, 0.01f, new Vector3(680, 550, 440), new Vector3(0, 500, 0));
             AtmosphericScatterer.Run();
 
-            finalProgram = new ShaderProgram(new Shader(ShaderType.VertexShader, @"Src\Shaders\screenQuad.vs"), new Shader(ShaderType.FragmentShader, @"Src\Shaders\final.frag"));
-            BasicDataUBO = new BufferObject(BufferRangeTarget.UniformBuffer, 0, Vector4.SizeInBytes * 4 * 5 + Vector4.SizeInBytes * 3, BufferUsageHint.StreamRead);
-            GameObjectsUBO = new BufferObject(BufferRangeTarget.UniformBuffer, 1, Sphere.GPU_INSTANCE_SIZE * MAX_GAMEOBJECTS_SPHERES + Cuboid.GPU_INSTANCE_SIZE * MAX_GAMEOBJECTS_CUBOIDS, BufferUsageHint.StreamRead);
+            finalProgram = new ShaderProgram(new Shader(ShaderType.VertexShader, "Src/Shaders/screenQuad.vs".GetPathContent()), new Shader(ShaderType.FragmentShader, "Src/Shaders/final.frag".GetPathContent()));
+            BasicDataUBO = new BufferObject(BufferRangeTarget.UniformBuffer, 0, Vector4.SizeInBytes * 4 * 5 + Vector4.SizeInBytes * 3, BufferStorageFlags.DynamicStorageBit);
+            GameObjectsUBO = new BufferObject(BufferRangeTarget.UniformBuffer, 1, Sphere.GPU_INSTANCE_SIZE * MAX_GAMEOBJECTS_SPHERES + Cuboid.GPU_INSTANCE_SIZE * MAX_GAMEOBJECTS_CUBOIDS, BufferStorageFlags.DynamicStorageBit);
             UBOCompatibleBase.BufferObject = GameObjectsUBO;
 
             PathTracer = new PathTracer(new EnvironmentMap(AtmosphericScatterer.Result), Width, Height, 13, 1, 20f, 0.14f);
             //PathTracer = new PathTracing(skyBox, Width, Height, 8, 1, 20f, 0.07f);
             Rasterizer = new Rasterizer(Width, Height);
-            PostProcesser = new ScreenEffect(new Shader(ShaderType.FragmentShader, @"Src\Shaders\PostProcessing\fragment.frag"), Width, Height);
+            PostProcesser = new ScreenEffect(new Shader(ShaderType.FragmentShader, "Src/Shaders/PostProcessing/fragment.frag".GetPathContent()), Width, Height);
             float width = 40, height = 25, depth = 25;
 
             {
@@ -257,7 +257,7 @@ namespace OpenTK_PathTracer
         protected override void OnFocusedChanged(EventArgs e)
         {
             if (Focused)
-                MouseManager.Update(Mouse.GetState());
+                MouseManager.Update();
         }
 
         protected override void OnClosed(EventArgs e)
