@@ -8,10 +8,10 @@ Due to the realistic nature of Path Tracers various effects like Soft Shadows, R
 
 The renderer also features [Depth of Field](https://en.wikipedia.org/wiki/Depth_of_field), which can be controlled with two variables at runtime through [ImGui](https://github.com/ocornut/imgui).
 `FocalLength` is the distance an object appears in focus.
-`ApertureRadius` controlls how strongly objects out of focus are blured.
+`ApertureDiameter` controlls how strongly objects out of focus are blured.
 
-If a ray does not hit any object the color is retrieved from a precomputed cubemap.
-The atmospheric scattering in this cubemap is calculated in yet an other Compute Shader at startup.
+If a ray does not hit any object the color is retrieved from a cubemap which can either be 6 images inside the `Res` folder or a precomputed skybox.
+The atmospheric scattering in this skybox gets calculated in yet an other Compute Shader at startup.
 
 Screenshots taken via the screenshot feature are saved in the local execution folder `Screenshots`.
 
