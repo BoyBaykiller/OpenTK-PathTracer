@@ -72,10 +72,10 @@ layout(std140, binding = 1) uniform GameObjectsUBO
 vec3 PathTrace(Ray ray);
 bool GetClosestIntersectingRayObject(Ray ray, out HitInfo hitInfo);
 bool GetClosestIntersectingLight(Ray ray, out HitInfo hitInfo);
-bool RaySphereIntersect(Ray ray, Sphere sphere, out float t1, out float t2);
-bool RayCuboidIntersect(Ray ray, Cuboid cuboid, out float t1, out float t2);
-vec3 GetNormal(Sphere sphere, vec3 surfacePosition);
-vec3 GetNormal(Cuboid cuboid, vec3 surfacePosition);
+bool RaySphereIntersect(Ray ray, vec3 position, float radius, out float t1, out float t2);
+bool RayCuboidIntersect(Ray ray, vec3 aabbMin, vec3 aabbMax, out float t1, out float t2);
+vec3 GetNormal(vec3 spherePos, vec3 surfacePosition);
+vec3 GetNormal(vec3 aabbMin, vec3 aabbMax, vec3 surfacePosition);
 vec3 GetCosWeightedHemissphereDir(inout uint rndSeed, vec3 normal);
 vec2 GetPointOnCircle(inout uint rndSeed);
 uint GetWangHash(inout uint seed);
@@ -217,39 +217,43 @@ bool GetClosestIntersectingRayObject(Ray ray, out HitInfo hitInfo)
 
     for (int i = 0; i < uboGameObjectsSize.x; i++)
     {
-        if (RaySphereIntersect(ray, gameObjectsUBO.Spheres[i], t1, t2) && t2 > 0 && t1 < hitInfo.T)
+        vec3 pos = gameObjectsUBO.Spheres[i].Position;
+        float radius = gameObjectsUBO.Spheres[i].Radius;
+        if (RaySphereIntersect(ray, pos, radius, t1, t2) && t2 > 0 && t1 < hitInfo.T)
         {
             hitInfo.T = GetSmallestPositive(t1, t2);
             hitInfo.FromInside = hitInfo.T == t2;
             hitInfo.Material = gameObjectsUBO.Spheres[i].Material;
             hitInfo.NearHitPos = ray.Origin + ray.Direction * hitInfo.T;
-            hitInfo.Normal = GetNormal(gameObjectsUBO.Spheres[i], hitInfo.NearHitPos);
+            hitInfo.Normal = GetNormal(pos, hitInfo.NearHitPos);
         }
     }
     
     for (int i = 0; i < uboGameObjectsSize.y; i++)
     {
-        if (RayCuboidIntersect(ray, gameObjectsUBO.Cuboids[i], t1, t2) && t2 > 0 && t1 < hitInfo.T)
+        vec3 aabbMin = gameObjectsUBO.Cuboids[i].Min;
+        vec3 aabbMax = gameObjectsUBO.Cuboids[i].Max;
+        if (RayCuboidIntersect(ray, aabbMin, aabbMax, t1, t2) && t2 > 0 && t1 < hitInfo.T)
         {
             hitInfo.T = GetSmallestPositive(t1, t2);
             hitInfo.FromInside = hitInfo.T == t2;
             hitInfo.Material = gameObjectsUBO.Cuboids[i].Material;
             hitInfo.NearHitPos = ray.Origin + ray.Direction * hitInfo.T;
-            hitInfo.Normal = GetNormal(gameObjectsUBO.Cuboids[i], hitInfo.NearHitPos);
+            hitInfo.Normal = GetNormal(aabbMin, aabbMax, hitInfo.NearHitPos);
         }
     }
 
     return hitInfo.T != FLOAT_MAX;
 }
 
-bool RaySphereIntersect(Ray ray, Sphere sphere, out float t1, out float t2)
+bool RaySphereIntersect(Ray ray, vec3 position, float radius, out float t1, out float t2)
 {
     // Source: https://antongerdelan.net/opengl/raycasting.html
     t1 = t2 = FLOAT_MAX;
 
-    vec3 sphereToRay = ray.Origin - sphere.Position;
+    vec3 sphereToRay = ray.Origin - position;
     float b = dot(ray.Direction, sphereToRay);
-    float c = dot(sphereToRay, sphereToRay) - sphere.Radius * sphere.Radius;
+    float c = dot(sphereToRay, sphereToRay) - radius * radius;
     float discriminant = b * b - c;
     if (discriminant < 0)
         return false;
@@ -261,14 +265,14 @@ bool RaySphereIntersect(Ray ray, Sphere sphere, out float t1, out float t2)
     return true;
 }
 
-bool RayCuboidIntersect(Ray ray, Cuboid cuboid, out float t1, out float t2)
+bool RayCuboidIntersect(Ray ray, vec3 aabbMin, vec3 aabbMax, out float t1, out float t2)
 {
     // Source: https://medium.com/@bromanz/another-view-on-the-classic-ray-aabb-intersection-algorithm-for-bvh-traversal-41125138b525
     t1 = FLOAT_MIN;
     t2 = FLOAT_MAX;
 
-    vec3 t0s = (cuboid.Min - ray.Origin) * (1.0 / ray.Direction);
-    vec3 t1s = (cuboid.Max - ray.Origin) * (1.0 / ray.Direction);
+    vec3 t0s = (aabbMin - ray.Origin) * (1.0 / ray.Direction);
+    vec3 t1s = (aabbMax - ray.Origin) * (1.0 / ray.Direction);
 
     vec3 tsmaller = min(t0s, t1s);
     vec3 tbigger = max(t0s, t1s);
@@ -278,18 +282,18 @@ bool RayCuboidIntersect(Ray ray, Cuboid cuboid, out float t1, out float t2)
     return t1 <= t2;
 }
 
-vec3 GetNormal(Sphere sphere, vec3 surfacePosition)
+vec3 GetNormal(vec3 spherePos, vec3 surfacePosition)
 {
-    return normalize(surfacePosition - sphere.Position);
+    return normalize(surfacePosition - spherePos);
 }
 
-vec3 GetNormal(Cuboid cuboid, vec3 surfacePosition)
+vec3 GetNormal(vec3 aabbMin, vec3 aabbMax, vec3 surfacePosition)
 {
     // Source: https://gist.github.com/Shtille/1f98c649abeeb7a18c5a56696546d3cf
     // step(edge,x) : x < edge ? 0 : 1
 
-    vec3 halfSize = (cuboid.Max - cuboid.Min) * 0.5;
-    vec3 centerSurface = surfacePosition - (cuboid.Max + cuboid.Min) * 0.5;
+    vec3 halfSize = (aabbMax - aabbMin) * 0.5;
+    vec3 centerSurface = surfacePosition - (aabbMax + aabbMin) * 0.5;
     
     vec3 normal = vec3(0.0);
     normal += vec3(sign(centerSurface.x), 0.0, 0.0) * step(abs(abs(centerSurface.x) - halfSize.x), EPSILON);
@@ -358,7 +362,7 @@ float FresnelReflectAmount(float n1, float n2, vec3 normal, vec3 incident, float
 
 vec3 InverseGammaToLinear(vec3 rgb)
 {
-    return mix(pow(((rgb + 0.055) / 1.055), vec3(2.4)), rgb / 12.92, vec3(lessThan(rgb, 0.04045.xxx)));
+    return mix(pow(((rgb + 0.055) / 1.055), vec3(2.4)), rgb / 12.92, vec3(lessThan(rgb, vec3(0.04045))));
 }
 
 Ray GetWorldSpaceRay(mat4 inverseProj, mat4 inverseView, vec3 viewPos, vec2 normalizedDeviceCoords)

@@ -16,7 +16,7 @@ namespace OpenTK_PathTracer.Render
             framebuffer = new Framebuffer();
 
             Result = new Texture(TextureTarget2d.Texture2D);
-            Result.Allocate(width, height, 1, PixelInternalFormat.Rgba8);
+            Result.MutableAllocate(width, height, 1, PixelInternalFormat.Rgba8);
 
             framebuffer.AddRenderTarget(FramebufferAttachment.ColorAttachment0, Result);
             
@@ -35,7 +35,7 @@ namespace OpenTK_PathTracer.Render
 
         public void SetSize(int width, int height)
         {
-            Result.Allocate(width, height, 1, Result.PixelInternalFormat);
+            Result.MutableAllocate(width, height, 1, Result.PixelInternalFormat);
         }
     }
 }

@@ -90,7 +90,7 @@ namespace OpenTK_PathTracer
         public PathTracer(Texture environmentMap, int width, int height, int rayDepth, int ssp, float focalLength, float apertureRadius)
         {
             Result = new Texture(TextureTarget2d.Texture2D);
-            Result.Allocate(width, height, 1, PixelInternalFormat.Rgba32f);
+            Result.MutableAllocate(width, height, 1, PixelInternalFormat.Rgba32f);
 
             /// OPTION TO USE FRAGMENT SHADER FOR PATH TRACING IS EXPERIMENTAL
 #if PRE_USE_COMPUTE
@@ -129,7 +129,7 @@ namespace OpenTK_PathTracer
         public void SetSize(int width, int height)
         {
             ThisRenderNumFrame = 0;
-            Result.Allocate(width, height, 1, Result.PixelInternalFormat);
+            Result.MutableAllocate(width, height, 1, Result.PixelInternalFormat);
         }
     }
 }

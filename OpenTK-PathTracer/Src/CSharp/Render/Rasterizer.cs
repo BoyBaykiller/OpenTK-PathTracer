@@ -17,7 +17,7 @@ namespace OpenTK_PathTracer.Render
             Framebuffer = new Framebuffer();
            
             Result = new Texture(TextureTarget2d.Texture2D);
-            Result.Allocate(width, height, 1, PixelInternalFormat.Rgba8);
+            Result.MutableAllocate(width, height, 1, PixelInternalFormat.Rgba8);
 
             Framebuffer.AddRenderTarget(FramebufferAttachment.ColorAttachment0, Result);
 
@@ -50,7 +50,7 @@ namespace OpenTK_PathTracer.Render
 
         public void SetSize(int width, int height)
         {
-            Result.Allocate(width, height, 1, Result.PixelInternalFormat);
+            Result.MutableAllocate(width, height, 1, Result.PixelInternalFormat);
         }
 
         private static readonly float[] unitCubeVerts = new float[]

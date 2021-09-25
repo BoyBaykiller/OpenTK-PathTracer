@@ -14,7 +14,7 @@ namespace OpenTK_PathTracer.Render
             Query = new Query(600);
 
             Result = new Texture(TextureTarget2d.Texture2D);
-            Result.Allocate(width, height, 1, PixelInternalFormat.Rgba8);
+            Result.MutableAllocate(width, height, 1, PixelInternalFormat.Rgba8);
 
             shaderProgram = new ShaderProgram(new Shader(ShaderType.ComputeShader, "Res/Shaders/GaussianBlur/compute.glsl".GetPathContent()));
         }
@@ -42,7 +42,7 @@ namespace OpenTK_PathTracer.Render
 
         public void SetSize(int width, int height)
         {
-            Result.Allocate(width, height, 1, Result.PixelInternalFormat);
+            Result.MutableAllocate(width, height, 1, Result.PixelInternalFormat);
         }
     }
 }

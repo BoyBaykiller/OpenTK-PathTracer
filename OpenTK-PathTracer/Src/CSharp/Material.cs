@@ -30,7 +30,7 @@ namespace OpenTK_PathTracer
             RefractionRoughnes = refractionRoughnes;
         }
 
-        public override int BufferOffset => throw new NotSupportedException("Material is not meant to directly be uploaded to the GPU");
+        public override int BufferOffset => throw new NotSupportedException("Material is not meant to be directly uploaded to the GPU");
 
         private readonly Vector4[] GPUData = new Vector4[4];
         public override Vector4[] GetGPUFriendlyData()

@@ -119,7 +119,7 @@ namespace OpenTK_PathTracer.Render
             Query = new Query(600);
 
             Result = new Texture(TextureTarget2d.TextureCubeMap);
-            Result.Allocate(size, size, 1, PixelInternalFormat.Rgba32f);
+            Result.MutableAllocate(size, size, 1, PixelInternalFormat.Rgba32f);
 
             shaderProgram = new ShaderProgram(new Shader(ShaderType.ComputeShader, "Res/Shaders/AtmosphericScattering/compute.glsl".GetPathContent()));
             
@@ -179,7 +179,7 @@ namespace OpenTK_PathTracer.Render
                 return;
             }
 
-            Result.Allocate(width, width, 1, Result.PixelInternalFormat);
+            Result.MutableAllocate(width, width, 1, Result.PixelInternalFormat);
         }
     }
 }

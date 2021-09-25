@@ -15,6 +15,8 @@ The atmospheric scattering in this skybox gets calculated in yet an other Comput
 
 Screenshots taken via the screenshot feature are saved in the local execution folder `Screenshots`.
 
+Also see https://youtu.be/XcIToi0fh5c.
+
 ---
 
 ## **Controls**

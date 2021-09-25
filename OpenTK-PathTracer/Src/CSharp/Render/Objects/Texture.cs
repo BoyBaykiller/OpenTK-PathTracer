@@ -20,8 +20,17 @@ namespace OpenTK_PathTracer.Render.Objects
             TextureAlphaSize = 32863,
         }
 
+        public enum TextureDimension
+        {
+            None = 0,
+            One = 1,
+            Two = 2,
+            Three = 3,
+        }
+
         public readonly int ID;
-        public readonly TextureTarget TextureTarget;
+        public readonly TextureTarget Target;
+        public readonly TextureDimension Dimension;
         public int Width { get; private set; } = 1;
         public int Height { get; private set; } = 1;
         public int Depth { get; private set; } = 1;
@@ -29,26 +38,39 @@ namespace OpenTK_PathTracer.Render.Objects
 
         public Texture(TextureTarget3d textureTarget3D)
         {
-            TextureTarget = (TextureTarget)textureTarget3D;
+            Target = (TextureTarget)textureTarget3D;
+            Dimension = TextureDimension.Three;
 
-            GL.CreateTextures(TextureTarget, 1, out ID);
+            GL.CreateTextures(Target, 1, out ID);
             SetFilter(TextureMinFilter.Linear, TextureMagFilter.Linear);
         }
 
         public Texture(TextureTarget2d textureTarget2D)
         {
-            TextureTarget = (TextureTarget)textureTarget2D;
+            Target = (TextureTarget)textureTarget2D;
+            Dimension = TextureDimension.Two;
 
-            GL.CreateTextures(TextureTarget, 1, out ID);
+            GL.CreateTextures(Target, 1, out ID);
             SetFilter(TextureMinFilter.Linear, TextureMagFilter.Linear);
         }
 
         public Texture(TextureTarget1d textureTarget1D)
         {
-            TextureTarget = (TextureTarget)textureTarget1D;
+            Target = (TextureTarget)textureTarget1D;
+            Dimension = TextureDimension.One;
 
-            GL.CreateTextures(TextureTarget, 1, out ID);
+            GL.CreateTextures(Target, 1, out ID);
             SetFilter(TextureMinFilter.Linear, TextureMagFilter.Linear);
+        }
+
+        public Texture(TextureBufferTarget textureBufferTarget, BufferObject bufferObject, SizedInternalFormat sizedInternalFormat = SizedInternalFormat.Rgba32f)
+        {
+            Target = (TextureTarget)textureBufferTarget;
+            Dimension = TextureDimension.None;
+
+            GL.CreateTextures(Target, 1, out ID);
+            GL.TextureBuffer(ID, sizedInternalFormat, bufferObject.ID);
+            GL.TextureBufferRange(ID, sizedInternalFormat, bufferObject.ID, IntPtr.Zero, bufferObject.Size);
         }
 
         public void SetFilter(TextureMinFilter minFilter, TextureMagFilter magFilter)
@@ -78,7 +100,7 @@ namespace OpenTK_PathTracer.Render.Objects
 
         public void Bind()
         {
-            GL.BindTexture(TextureTarget, ID);
+            GL.BindTexture(Target, ID);
         }
 
         public void AttachImage(int unit, int level, bool layered, int layer, TextureAccess textureAccess, SizedInternalFormat sizedInternalFormat)
@@ -90,13 +112,25 @@ namespace OpenTK_PathTracer.Render.Objects
             GL.BindTextureUnit(unit, ID);
         }
 
+        public void SubTexture3D<T>(int width, int heigth, int depth, PixelFormat pixelFormat, PixelType pixelType, T[] pixels, int level = 0, int xOffset = 0, int yOffset = 0, int zOffset = 0) where T : struct
+        {
+            GL.TextureSubImage3D(ID, level, xOffset, yOffset, zOffset, width, heigth, depth, pixelFormat, pixelType, pixels);
+        }
         public void SubTexture3D(int width, int heigth, int depth, PixelFormat pixelFormat, PixelType pixelType, IntPtr pixels, int level = 0, int xOffset = 0, int yOffset = 0, int zOffset = 0)
         {
             GL.TextureSubImage3D(ID, level, xOffset, yOffset, zOffset, width, heigth, depth, pixelFormat, pixelType, pixels);
         }
+        public void SubTexture2D<T>(int width, int heigth, PixelFormat pixelFormat, PixelType pixelType, T[] pixels, int level = 0, int xOffset = 0, int yOffset = 0) where T : struct
+        {
+            GL.TextureSubImage2D(ID, level, xOffset, yOffset, width, heigth, pixelFormat, pixelType, pixels);
+        }
         public void SubTexture2D(int width, int heigth, PixelFormat pixelFormat, PixelType pixelType, IntPtr pixels, int level = 0, int xOffset = 0, int yOffset = 0)
         {
             GL.TextureSubImage2D(ID, level, xOffset, yOffset, width, heigth, pixelFormat, pixelType, pixels);
+        }
+        public void SubTexture1D<T>(int width, PixelFormat pixelFormat, PixelType pixelType, T[] pixels, int level = 0, int xOffset = 0) where T : struct
+        {
+            GL.TextureSubImage1D(ID, level, xOffset, width, pixelFormat, pixelType, pixels);
         }
         public void SubTexture1D(int width, PixelFormat pixelFormat, PixelType pixelType, IntPtr pixels, int level = 0, int xOffset = 0)
         {
@@ -114,7 +148,7 @@ namespace OpenTK_PathTracer.Render.Objects
         /// <param name="param"></param>
         public void SetSeamlessCubeMapPerTexture(bool param)
         {
-            if (TextureTarget == TextureTarget.TextureCubeMap)
+            if (Target == TextureTarget.TextureCubeMap)
                 GL.TextureParameter(ID, (TextureParameterName)All.TextureCubeMapSeamless, param ? 1 : 0);
         }
 
@@ -128,54 +162,82 @@ namespace OpenTK_PathTracer.Render.Objects
             GL.TextureParameter(ID, TextureParameterName.TextureLodBias, bias);
         }
 
-        public void Allocate(int width, int height, int depth, PixelInternalFormat pixelInternalFormat)
+        public void MutableAllocate(int width, int height, int depth, PixelInternalFormat pixelInternalFormat)
         {
             Bind();
-            int[] oneDTargets = (int[])Enum.GetValues(typeof(TextureTarget1d));
-            int[] twoDTargets = (int[])Enum.GetValues(typeof(TextureTarget2d));
-            if (oneDTargets.Contains((int)TextureTarget))
+            switch (Dimension)
             {
-                GL.TexImage1D(TextureTarget, 0, pixelInternalFormat, width, 0, PixelFormat.Rgba, PixelType.Float, IntPtr.Zero);
-                Width = width;
-            }
-            else if (twoDTargets.Contains((int)TextureTarget))
-            {
-                if (TextureTarget == TextureTarget.TextureCubeMap)
-                    for (int i = 0; i < 6; i++)
-                        GL.TexImage2D(TextureTarget.TextureCubeMapPositiveX + i, 0, pixelInternalFormat, width, height, 0, PixelFormat.Rgba, PixelType.Float, IntPtr.Zero);
-                else
-                    GL.TexImage2D(TextureTarget, 0, pixelInternalFormat, width, height, 0, PixelFormat.Rgba, PixelType.Float, IntPtr.Zero);
-                Width = width; Height = height;
-            }
-            else
-            {
-                GL.TexImage3D(TextureTarget, 0, pixelInternalFormat, width, height, depth, 0, PixelFormat.Rgba, PixelType.Float, IntPtr.Zero);
-                Width = width; Height = height; Depth = depth;
+                case TextureDimension.One:
+                    GL.TexImage1D(Target, 0, pixelInternalFormat, width, 0, PixelFormat.Rgba, PixelType.Float, IntPtr.Zero);
+                    Width = width;
+                    break;
+
+                case TextureDimension.Two:
+                    GL.TexImage2D(Target, 0, pixelInternalFormat, width, height, 0, PixelFormat.Rgba, PixelType.Float, IntPtr.Zero);
+                    Width = width; Height = height;
+                    break;
+
+                case TextureDimension.Three:
+                    GL.TexImage3D(Target, 0, pixelInternalFormat, width, height, depth, 0, PixelFormat.Rgba, PixelType.Float, IntPtr.Zero);
+                    Width = width; Height = height; Depth = depth;
+                    break;
+
+                default:
+                    return;
             }
             PixelInternalFormat = pixelInternalFormat;
         }
 
-        public void Allocate(int width, int height, int depth, PixelInternalFormat pixelInternalFormat, IntPtr intPtr, PixelFormat pixelFormat, PixelType pixelType)
+        public void MutableAllocate(int width, int height, int depth, PixelInternalFormat pixelInternalFormat, IntPtr intPtr, PixelFormat pixelFormat, PixelType pixelType)
         {
             Bind();
-            int[] oneDTargets = (int[])Enum.GetValues(typeof(TextureTarget1d));
-            int[] twoDTargets = (int[])Enum.GetValues(typeof(TextureTarget2d));
-            if (oneDTargets.Contains((int)TextureTarget))
+            switch (Dimension)
             {
-                GL.TexImage1D(TextureTarget, 0, pixelInternalFormat, width, 0, pixelFormat, pixelType, intPtr);
-                Width = width;
-            }
-            else if (twoDTargets.Contains((int)TextureTarget))
-            {
-                GL.TexImage2D(TextureTarget, 0, pixelInternalFormat, width, height, 0, pixelFormat, pixelType, intPtr);
-                Width = width; Height = height;
-            }
-            else
-            {
-                GL.TexImage3D(TextureTarget, 0, pixelInternalFormat, width, height, depth, 0, pixelFormat, pixelType, intPtr);
-                Width = width; Height = height; Depth = depth;
+                case TextureDimension.One:
+                    GL.TexImage1D(Target, 0, pixelInternalFormat, width, 0, pixelFormat, pixelType, intPtr);
+                    Width = width;
+                    break;
+
+                case TextureDimension.Two:
+                    GL.TexImage2D(Target, 0, pixelInternalFormat, width, height, 0, pixelFormat, pixelType, intPtr);
+                    Width = width; Height = height;
+                    break;
+
+                case TextureDimension.Three:
+                    GL.TexImage3D(Target, 0, pixelInternalFormat, width, height, depth, 0, pixelFormat, pixelType, intPtr);
+                    Width = width; Height = height; Depth = depth;
+                    break;
+
+                default:
+                    return;
             }
             PixelInternalFormat = pixelInternalFormat;
+        }
+
+        public void ImmutableAllocate(int width, int height, int depth, SizedInternalFormat sizedInternalFormat, int levels = 1)
+        {
+            Bind();
+            switch (Dimension)
+            {
+                case TextureDimension.One:
+                    GL.TextureStorage1D(ID, levels, sizedInternalFormat, width);
+                    Width = width;
+                    break;
+
+                case TextureDimension.Two:
+                    GL.TextureStorage2D(ID, levels, sizedInternalFormat, width, height);
+                    Width = width; Height = height;
+                    break;
+
+                case TextureDimension.Three:
+                    GL.TextureStorage3D(ID, levels, sizedInternalFormat, width, height, depth);
+                    Width = width; Height = height; Depth = depth;
+                    break;
+
+                default:
+                    return;
+            }
+            PixelInternalFormat = (PixelInternalFormat)sizedInternalFormat;
         }
 
         public long GetTextureBindlessHandle()
