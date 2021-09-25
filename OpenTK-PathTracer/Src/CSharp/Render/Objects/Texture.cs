@@ -173,7 +173,11 @@ namespace OpenTK_PathTracer.Render.Objects
                     break;
 
                 case TextureDimension.Two:
-                    GL.TexImage2D(Target, 0, pixelInternalFormat, width, height, 0, PixelFormat.Rgba, PixelType.Float, IntPtr.Zero);
+                    if (Target == TextureTarget.TextureCubeMap)
+                        for (int i = 0; i < 6; i++)
+                            GL.TexImage2D(TextureTarget.TextureCubeMapPositiveX + i, 0, pixelInternalFormat, width, height, 0, PixelFormat.Rgba, PixelType.Float, IntPtr.Zero);
+                    else
+                        GL.TexImage2D(Target, 0, pixelInternalFormat, width, height, 0, PixelFormat.Rgba, PixelType.Float, IntPtr.Zero);
                     Width = width; Height = height;
                     break;
 
@@ -199,7 +203,11 @@ namespace OpenTK_PathTracer.Render.Objects
                     break;
 
                 case TextureDimension.Two:
-                    GL.TexImage2D(Target, 0, pixelInternalFormat, width, height, 0, pixelFormat, pixelType, intPtr);
+                    if (Target == TextureTarget.TextureCubeMap)
+                        for (int i = 0; i < 6; i++)
+                            GL.TexImage2D(TextureTarget.TextureCubeMapPositiveX + i, 0, pixelInternalFormat, width, height, 0, pixelFormat, pixelType, intPtr);
+                    else
+                        GL.TexImage2D(Target, 0, pixelInternalFormat, width, height, 0, pixelFormat, pixelType, intPtr);
                     Width = width; Height = height;
                     break;
 
