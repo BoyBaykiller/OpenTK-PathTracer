@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Drawing;
 using System.Diagnostics;
 using System.Collections.Generic;
@@ -35,15 +34,13 @@ namespace OpenTK_PathTracer
             if (Focused || IsRenderInBackground)
             {
                 //AtmosphericScatterer.ViewPos = Camera.Position;
-                //AtmosphericScatterer.Run(new AtmosphericScattering.RenderParams());
+                //AtmosphericScatterer.Run();
 
                 PathTracer.Run();
 
                 Rasterizer.Run(new AABB(Vector3.One, Vector3.One));
 
                 PostProcesser.Run(PathTracer.Result, Rasterizer.Result);
-
-                //GaussianBlur.Run(PostProcesser.Result);
 
                 GL.Viewport(0, 0, Width, Height);
                 Framebuffer.Clear(0, ClearBufferMask.ColorBufferBit);
@@ -134,17 +131,17 @@ namespace OpenTK_PathTracer
         public Rasterizer Rasterizer;
         public ScreenEffect PostProcesser;
         public AtmosphericScattering AtmosphericScatterer;
-        public GaussianBlur GaussianBlur;
         public Texture SkyBox;
         protected override void OnLoad(EventArgs e)
         {
+            if (!Helper.IsExtensionsAvailable("GL_ARB_direct_state_access"))
+                throw new NotSupportedException("Your system does not support GL_ARB_direct_state_access");
+
             Console.WriteLine($"GPU: {GL.GetString(StringName.Renderer)}");
             Console.WriteLine($"OpenGL: {GL.GetString(StringName.Version)}");
             Console.WriteLine($"GLSL: {GL.GetString(StringName.ShadingLanguageVersion)}");
             // FIX: For some reason MaxUniformBlockSize seems to be ≈33728 for RX 5700XT, although GL.GetInteger(MaxUniformBlockSize) returns 572657868.
-            // I dont want to use SSBO, because of performance. Also see: https://opengl.gpuinfo.org/displayreport.php?id=6204 
-            Console.WriteLine($"MaxShaderStorageBlockSize: {GL.GetInteger((GetPName)All.MaxShaderStorageBlockSize)}");
-            Console.WriteLine($"MaxUniformBlockSize: {GL.GetInteger(GetPName.MaxUniformBlockSize)}");
+            // I dont want to use SSBO, because of performance. Also see: https://opengl.gpuinfo.org/displayreport.php?id=6204
 
             GL.Disable(EnableCap.DepthTest);
             GL.Disable(EnableCap.CullFace);
@@ -164,20 +161,19 @@ namespace OpenTK_PathTracer
                 "Res/Textures/EnvironmentMap/negy.png",
                 "Res/Textures/EnvironmentMap/posz.png",
                 "Res/Textures/EnvironmentMap/negz.png"
-            }, PixelInternalFormat.Srgb8Alpha8);
-
+            }, (SizedInternalFormat)PixelInternalFormat.Srgb8Alpha8);
+            
             AtmosphericScatterer = new AtmosphericScattering(128, 100, 10, 2.1f, 35.0f, 0.01f, new Vector3(680, 550, 440), new Vector3(0, 500, 0), new Vector3(20.43f, -201.99f, -20.67f));
             PathTracer = new PathTracer(SkyBox, Width, Height, 13, 1, 20f, 0.14f);
             Rasterizer = new Rasterizer(Width, Height);
             PostProcesser = new ScreenEffect(new Shader(ShaderType.FragmentShader, "Res/Shaders/PostProcessing/fragment.glsl".GetPathContent()), Width, Height);
-            GaussianBlur = new GaussianBlur(Width, Height);
 
             finalProgram = new ShaderProgram(new Shader(ShaderType.VertexShader, "Res/Shaders/screenQuad.glsl".GetPathContent()), new Shader(ShaderType.FragmentShader, "Res/Shaders/final.glsl".GetPathContent()));
             
-            BasicDataUBO = new BufferObject(BufferRangeTarget.UniformBuffer, BufferUsageHint.StaticDraw, 0);
-            BasicDataUBO.Allocate(Vector4.SizeInBytes * 4 * 5 + Vector4.SizeInBytes * 3, IntPtr.Zero);
-            GameObjectsUBO = new BufferObject(BufferRangeTarget.UniformBuffer, BufferUsageHint.StaticDraw, 1);
-            GameObjectsUBO.Allocate(Sphere.GPU_INSTANCE_SIZE * MAX_GAMEOBJECTS_SPHERES + Cuboid.GPU_INSTANCE_SIZE * MAX_GAMEOBJECTS_CUBOIDS, IntPtr.Zero);
+            BasicDataUBO = new BufferObject(BufferRangeTarget.UniformBuffer, 0);
+            BasicDataUBO.MutableAllocate(Vector4.SizeInBytes * 4 * 5 + Vector4.SizeInBytes * 3, IntPtr.Zero, BufferUsageHint.StaticDraw);
+            GameObjectsUBO = new BufferObject(BufferRangeTarget.UniformBuffer, 1);
+            GameObjectsUBO.MutableAllocate(Sphere.GPU_INSTANCE_SIZE * MAX_GAMEOBJECTS_SPHERES + Cuboid.GPU_INSTANCE_SIZE * MAX_GAMEOBJECTS_CUBOIDS, IntPtr.Zero, BufferUsageHint.StaticDraw);
 
             float width = 40, height = 25, depth = 25;
             #region SetupSpheres
@@ -245,7 +241,6 @@ namespace OpenTK_PathTracer
                 PathTracer.SetSize(Width, Height);
                 Rasterizer.SetSize(Width, Height);
                 PostProcesser.SetSize(Width, Height);
-                GaussianBlur.SetSize(Width, Height);
                 Render.GUI.Final.SetSize(Width, Height);
 
                 projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(FOV), Width / (float)Height, nearFarPlane.X, nearFarPlane.Y);

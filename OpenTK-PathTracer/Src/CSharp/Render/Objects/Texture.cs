@@ -22,7 +22,7 @@ namespace OpenTK_PathTracer.Render.Objects
 
         public enum TextureDimension
         {
-            None = 0,
+            Undefined = 0,
             One = 1,
             Two = 2,
             Three = 3,
@@ -66,7 +66,7 @@ namespace OpenTK_PathTracer.Render.Objects
         public Texture(TextureBufferTarget textureBufferTarget, BufferObject bufferObject, SizedInternalFormat sizedInternalFormat = SizedInternalFormat.Rgba32f)
         {
             Target = (TextureTarget)textureBufferTarget;
-            Dimension = TextureDimension.None;
+            Dimension = TextureDimension.Undefined;
 
             GL.CreateTextures(Target, 1, out ID);
             GL.TextureBuffer(ID, sizedInternalFormat, bufferObject.ID);
@@ -148,6 +148,9 @@ namespace OpenTK_PathTracer.Render.Objects
         /// <param name="param"></param>
         public void SetSeamlessCubeMapPerTexture(bool param)
         {
+            if (!Helper.IsExtensionsAvailable("GL_ARB_seamless_cubemap_per_texture"))
+                throw new NotSupportedException("Your system does not support GL_ARB_seamless_cubemap_per_texture");
+
             if (Target == TextureTarget.TextureCubeMap)
                 GL.TextureParameter(ID, (TextureParameterName)All.TextureCubeMapSeamless, param ? 1 : 0);
         }

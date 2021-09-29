@@ -32,21 +32,21 @@ namespace OpenTK_PathTracer
 
         public override int BufferOffset => throw new NotSupportedException("Material is not meant to be directly uploaded to the GPU");
 
-        private readonly Vector4[] GPUData = new Vector4[4];
+        private readonly Vector4[] gpuData = new Vector4[4];
         public override Vector4[] GetGPUFriendlyData()
         {
-            GPUData[0].Xyz = Albedo;
-            GPUData[0].W = SpecularChance;
+            gpuData[0].Xyz = Albedo;
+            gpuData[0].W = SpecularChance;
            
-            GPUData[1].Xyz = Emissiv;
-            GPUData[1].W = SpecularRoughness;
+            gpuData[1].Xyz = Emissiv;
+            gpuData[1].W = SpecularRoughness;
 
-            GPUData[2].Xyz = AbsorbanceColor;
-            GPUData[2].W = RefractionChance;
+            gpuData[2].Xyz = AbsorbanceColor;
+            gpuData[2].W = RefractionChance;
 
-            GPUData[3].X = RefractionRoughnes;
-            GPUData[3].Y = IOR;
-            return GPUData;
+            gpuData[3].X = RefractionRoughnes;
+            gpuData[3].Y = IOR;
+            return gpuData;
         }
 
         private readonly static Random rnd = new Random();

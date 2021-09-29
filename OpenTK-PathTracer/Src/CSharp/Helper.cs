@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Drawing;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK_PathTracer.Render.Objects;
 
@@ -28,7 +29,7 @@ namespace OpenTK_PathTracer
             return File.ReadAllText(path);
         }
 
-        public static void ParallelLoadCubemapImages(Texture texture, string[] paths, PixelInternalFormat pixelInternalFormat)
+        public static void ParallelLoadCubemapImages(Texture texture, string[] paths, SizedInternalFormat sizedInternalFormat)
         {
             if (texture.Target != TextureTarget.TextureCubeMap)
                 throw new ArgumentException($"texture must be {TextureTarget.TextureCubeMap}");
@@ -50,7 +51,7 @@ namespace OpenTK_PathTracer
             if (!bitmaps.All(i => i.Width == i.Height && i.Width == bitmaps[0].Width))
                 throw new ArgumentException($"Individual cubemap textures must be squares and every texture must be of the same size");
             int size = bitmaps[0].Width;
-            texture.ImmutableAllocate(size, size, 1, (SizedInternalFormat)PixelInternalFormat.Srgb8Alpha8);
+            texture.ImmutableAllocate(size, size, 1, sizedInternalFormat);
             for (int i = 0; i < 6; i++)
             {
                 System.Drawing.Imaging.BitmapData bitmapData = bitmaps[i].LockBits(new Rectangle(0, 0, size, size), System.Drawing.Imaging.ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
@@ -58,6 +59,26 @@ namespace OpenTK_PathTracer
                 bitmaps[i].UnlockBits(bitmapData);
                 bitmaps[i].Dispose();
             }
+        }
+
+
+
+        private static IEnumerable<string> GetExtensions()
+        {
+            for (int i = 0; i < GL.GetInteger(GetPName.NumExtensions); i++)
+                yield return GL.GetString(StringNameIndexed.Extensions, i);
+        }
+
+        private static readonly HashSet<string> extensions = new HashSet<string>(GetExtensions());
+
+        /// <summary>
+        /// Checks if a extensions is available.
+        /// </summary>
+        /// <param name="extension">The extension to check against. Examples: GL_ARB_seamless_cube_map or WGL_EXT_swap_control</param>
+        /// <returns></returns>
+        public static bool IsExtensionsAvailable(string extension)
+        {
+            return extensions.Contains(extension);
         }
     }
 }

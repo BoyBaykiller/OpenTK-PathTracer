@@ -1,5 +1,4 @@
 #version 430 core
-#extension GL_ARB_bindless_texture : require
 #define FLOAT_MAX 3.4028235e+38
 #define FLOAT_MIN -3.4028235e+38
 #define EPSILON 0.001
@@ -71,7 +70,6 @@ layout(std140, binding = 1) uniform GameObjectsUBO
 
 vec3 PathTrace(Ray ray);
 bool GetClosestIntersectingRayObject(Ray ray, out HitInfo hitInfo);
-bool GetClosestIntersectingLight(Ray ray, out HitInfo hitInfo);
 bool RaySphereIntersect(Ray ray, vec3 position, float radius, out float t1, out float t2);
 bool RayCuboidIntersect(Ray ray, vec3 aabbMin, vec3 aabbMax, out float t1, out float t2);
 vec3 GetNormal(vec3 spherePos, vec3 surfacePosition);
@@ -81,8 +79,7 @@ vec2 GetPointOnCircle(inout uint rndSeed);
 uint GetWangHash(inout uint seed);
 float GetRandomFloat01(inout uint state);
 float GetSmallestPositive(float t1, float t2);
-float FresnelReflectAmount(float n1, float n2, vec3 normal, vec3 incident, float f0);
-float Fresnel(float n1, float n2, float cosTheta, float minReflect);
+float FresnelSchlick(float cosTheta, float n1, float n2);
 vec3 LessThan(vec3 f, float value);
 vec3 InverseGammaToLinear(vec3 rgb);
 Ray GetWorldSpaceRay(mat4 inverseProj, mat4 inverseView, vec3 viewPos, vec2 normalizedDeviceCoords);
@@ -145,17 +142,10 @@ vec3 PathTrace(Ray ray)
             float refractionChance = hitInfo.Material.RefractionChance;
             if (specularChance > 0.0)
             {
-                specularChance = FresnelReflectAmount(
-                hitInfo.FromInside ? hitInfo.Material.IOR : 1.0, 
-                !hitInfo.FromInside ? hitInfo.Material.IOR : 1.0,
-                ray.Direction, 
-                hitInfo.Normal, 
-                specularChance);
-
-                float chanceMultiplier = (1.0 - specularChance) / (1.0 - hitInfo.Material.SpecularChance);
-                refractionChance *= chanceMultiplier;
+                specularChance = mix(specularChance, 1.0, FresnelSchlick(-dot(ray.Direction, hitInfo.Normal), hitInfo.FromInside ? hitInfo.Material.IOR : 1.0, !hitInfo.FromInside ? hitInfo.Material.IOR : 1.0));
+                float diffuseChance = (1.0 - (specularChance + refractionChance));
+                refractionChance = (1.0 - (diffuseChance + specularChance));
             }
-            
 
             float rayProbability = 1.0;
             float doSpecular = 0.0;
@@ -339,26 +329,12 @@ float GetSmallestPositive(float t1, float t2)
     return t1 < 0 ? t2 : t1;
 }
 
-float FresnelReflectAmount(float n1, float n2, vec3 normal, vec3 incident, float f0)
+float FresnelSchlick(float cosTheta, float n1, float n2)
 {
-    // Schlick aproximation
     float r0 = (n1 - n2) / (n1 + n2);
     r0 *= r0;
-    float cosX = -dot(normal, incident);
-    if (n1 > n2)
-    {
-        float n = n1 / n2;
-        float sinT2 = n * n * (1.0 - cosX * cosX);
-        // Total internal reflection
-        if (sinT2 > 1.0)
-            return 1.0;
-        cosX = sqrt(1.0 - sinT2);
-    }
-    float x = 1.0 - cosX;
-    float ret = r0 + (1.0 - r0) * x * x * x * x * x;
-
-    return mix(f0, 1.0, ret);
-}
+    return r0 + (1.0 - r0) * pow(1.0 - cosTheta, 5.0);
+} 
 
 vec3 InverseGammaToLinear(vec3 rgb)
 {

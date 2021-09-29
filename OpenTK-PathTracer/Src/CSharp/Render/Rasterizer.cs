@@ -23,8 +23,8 @@ namespace OpenTK_PathTracer.Render
 
             shaderProgram = new ShaderProgram(new Shader(ShaderType.VertexShader, "Res/Shaders/Rasterisation/vertex.glsl".GetPathContent()), new Shader(ShaderType.FragmentShader, "Res/Shaders/Rasterisation/fragment.glsl".GetPathContent()));
 
-            vbo = new BufferObject(BufferUsageHint.StaticDraw);
-            vbo.Allocate(unitCubeVerts.Length * sizeof(float), unitCubeVerts);
+            vbo = new BufferObject();
+            vbo.MutableAllocate(unitCubeVerts.Length * sizeof(float), unitCubeVerts, BufferUsageHint.StaticDraw);
             
             vao = new VAO(vbo, 3 * sizeof(float));
             vao.SetAttribFormat(0, 3, VertexAttribType.Float, 0);

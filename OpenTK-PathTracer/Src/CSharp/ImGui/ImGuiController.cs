@@ -56,14 +56,14 @@ namespace OpenTK_PathTracer.GUI
             Height = height;
         }
 
-        public void CreateDeviceResources()
+        private void CreateDeviceResources()
         {
-            vbo = new BufferObject(BufferUsageHint.DynamicDraw);
-            vbo.Allocate(10000, IntPtr.Zero);
-            ebo = new BufferObject(BufferUsageHint.DynamicDraw);
-            ebo.Allocate(2000, IntPtr.Zero);
+            vbo = new BufferObject();
+            vbo.MutableAllocate(10000, IntPtr.Zero, BufferUsageHint.DynamicDraw);
+            ebo = new BufferObject();
+            ebo.MutableAllocate(2000, IntPtr.Zero, BufferUsageHint.DynamicDraw);
 
-            RecreateFontDeviceTexture();
+            CreateFontDeviceTexture();
 
             string vertexSource = @"#version 330 core
 
@@ -104,13 +104,15 @@ namespace OpenTK_PathTracer.GUI
             vao.SetAttribFormat(2, 4, VertexAttribType.UnsignedByte, 4 * sizeof(float), true);
         }
 
-        public void RecreateFontDeviceTexture()
+        private void CreateFontDeviceTexture()
         {
             ImGuiIOPtr io = ImGui.GetIO();
             io.Fonts.GetTexDataAsRGBA32(out IntPtr pixels, out int width, out int height, out _);
 
             fontTexture = new Texture(TextureTarget2d.Texture2D);
-            fontTexture.MutableAllocate(width, height, 1, PixelInternalFormat.Rgba8, pixels, PixelFormat.Bgra, PixelType.UnsignedByte);
+            fontTexture.ImmutableAllocate(width, height, 1, SizedInternalFormat.Rgba8);
+            fontTexture.SubTexture2D(width, height, PixelFormat.Bgra, PixelType.UnsignedByte, pixels);
+
 
             io.Fonts.SetTexID((IntPtr)fontTexture.ID);
             io.Fonts.ClearTexData();
@@ -230,14 +232,14 @@ namespace OpenTK_PathTracer.GUI
                 if (vertexSize > vbo.Size)
                 {
                     int newSize = (int)Math.Max(vbo.Size * 1.5f, vertexSize);
-                    vbo.Allocate(newSize, IntPtr.Zero);
+                    vbo.MutableAllocate(newSize, IntPtr.Zero, BufferUsageHint.DynamicDraw);
                 }
 
                 int indexSize = cmdList.IdxBuffer.Size * sizeof(ushort);
                 if (indexSize > ebo.Size)
                 {
                     int newSize = (int)Math.Max(ebo.Size * 1.5f, indexSize);
-                    ebo.Allocate(newSize, IntPtr.Zero);
+                    ebo.MutableAllocate(newSize, IntPtr.Zero, BufferUsageHint.DynamicDraw);
                 }
             }
 

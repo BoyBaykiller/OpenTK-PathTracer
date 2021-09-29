@@ -16,10 +16,9 @@ namespace OpenTK_PathTracer.Render.Objects
 
         public readonly int ID;
         public int BufferOffset;
-        public BufferUsageHint BufferUsageHint { get; private set; }
         public int Size { get; private set; }
 
-        public BufferObject(BufferRangeTarget bufferRangeTarget, BufferUsageHint bufferUsageHint, int bindingIndex)
+        public BufferObject(BufferRangeTarget bufferRangeTarget, int bindingIndex)
         {
             if (bufferTypeBindingIndexDict[bufferRangeTarget].Contains(bindingIndex))
             {
@@ -27,14 +26,17 @@ namespace OpenTK_PathTracer.Render.Objects
                 bufferTypeBindingIndexDict[bufferRangeTarget].Add(bindingIndex);
             }
             GL.CreateBuffers(1, out ID);
-            GL.BindBufferBase(bufferRangeTarget, bindingIndex, ID);
-            BufferUsageHint = bufferUsageHint;
+            BindBase(bufferRangeTarget, bindingIndex);
         }
 
-        public BufferObject(BufferUsageHint bufferUsageHint)
+        public BufferObject()
         {
             GL.CreateBuffers(1, out ID);
-            BufferUsageHint = bufferUsageHint;
+        }
+
+        public void BindBase(BufferRangeTarget bufferRangeTarget, int index)
+        {
+            GL.BindBufferBase(bufferRangeTarget, index, ID);
         }
 
         public void Bind(BufferTarget bufferTarget)
@@ -83,25 +85,43 @@ namespace OpenTK_PathTracer.Render.Objects
             BufferOffset = offset + size;
         }
 
-        public void Allocate<T>(int size, T data) where T : struct
+        public void MutableAllocate<T>(int size, T data, BufferUsageHint bufferUsageHint) where T : struct
         {
-            GL.NamedBufferData(ID, size, ref data, BufferUsageHint);
+            GL.NamedBufferData(ID, size, ref data, bufferUsageHint);
             BufferOffset = 0;
             Size = size;
         }
-        public void Allocate<T>(int size, T[] data) where T : struct
+        public void MutableAllocate<T>(int size, T[] data, BufferUsageHint bufferUsageHint) where T : struct
         {
-            GL.NamedBufferData(ID, size, data, BufferUsageHint);
+            GL.NamedBufferData(ID, size, data, bufferUsageHint);
             BufferOffset = 0;
             Size = size;
         }
-        public void Allocate(int size, IntPtr data)
+        public void MutableAllocate(int size, IntPtr data, BufferUsageHint bufferUsageHint)
         {
-            GL.NamedBufferData(ID, size, data, BufferUsageHint);
+            GL.NamedBufferData(ID, size, data, bufferUsageHint);
             BufferOffset = 0;
             Size = size;
         }
 
+        public void ImmutableAllocate<T>(int size, T data, BufferStorageFlags bufferStorageFlags) where T : struct
+        {
+            GL.NamedBufferStorage(ID, size, ref data, bufferStorageFlags);
+            BufferOffset = 0;
+            Size = size;
+        }
+        public void ImmutableAllocate<T>(int size, T[] data, BufferStorageFlags bufferStorageFlags) where T : struct
+        {
+            GL.NamedBufferStorage(ID, size, data, bufferStorageFlags);
+            BufferOffset = 0;
+            Size = size;
+        }
+        public void ImmutableAllocate(int size, IntPtr data, BufferStorageFlags bufferStorageFlags)
+        {
+            GL.NamedBufferStorage(ID, size, data, bufferStorageFlags);
+            BufferOffset = 0;
+            Size = size;
+        }
 
         public void GetSubData<T>(int offset, int size, out T data) where T : struct
         {
