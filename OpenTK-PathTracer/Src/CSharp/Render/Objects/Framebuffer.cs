@@ -73,14 +73,14 @@ namespace OpenTK_PathTracer.Render.Objects
             GL.Clear(clearBufferMask);
         }
 
-        public Bitmap GetBitmapRenderTarget(FramebufferAttachment framebufferAttachment, int width, int height, int x = 0, int y = 0)
+        public static Bitmap GetBitmapFramebufferAttachment(int id, FramebufferAttachment framebufferAttachment, int width, int height, int x = 0, int y = 0)
         {
             Bitmap bmp = new Bitmap(width, height);
             BitmapData bmpData = bmp.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.WriteOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
 
-            SetReadTarget((ReadBufferMode)framebufferAttachment);
-            
-            Bind();
+            GL.NamedFramebufferReadBuffer(id, (ReadBufferMode)framebufferAttachment);
+
+            Bind(id, FramebufferTarget.ReadFramebuffer);
             GL.ReadPixels(x, y, width, height, OpenTK.Graphics.OpenGL4.PixelFormat.Bgra, PixelType.UnsignedByte, bmpData.Scan0);
             GL.Finish();
 
@@ -89,22 +89,6 @@ namespace OpenTK_PathTracer.Render.Objects
 
             return bmp;
         }
-
-        public static Bitmap GetBitmapDefaultFramebuffer(int width, int height, int x = 0, int y = 0)
-        {
-            Bitmap bmp = new Bitmap(width, height);
-            BitmapData bmpData = bmp.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.WriteOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-
-            Bind(0);
-            GL.ReadPixels(x, y, width, height, OpenTK.Graphics.OpenGL4.PixelFormat.Bgra, PixelType.UnsignedByte, bmpData.Scan0);
-            GL.Finish();
-
-            bmp.UnlockBits(bmpData);
-            bmp.RotateFlip(RotateFlipType.RotateNoneFlipY);
-
-            return bmp;
-        }
-
 
         public void Dispose()
         {

@@ -29,7 +29,7 @@ namespace OpenTK_PathTracer.Render.GUI
                 if (ImGui.Button("Screenshot"))
                 {
                     System.IO.Directory.CreateDirectory("Screenshots");
-                    using System.Drawing.Bitmap bmp = Framebuffer.GetBitmapDefaultFramebuffer(mainWindow.Width, mainWindow.Height);
+                    using System.Drawing.Bitmap bmp = Framebuffer.GetBitmapFramebufferAttachment(0, OpenTK.Graphics.OpenGL4.FramebufferAttachment.ColorAttachment0, mainWindow.Width, mainWindow.Height);
                     bmp.Save($@"Screenshots\Samples_{mainWindow.PathTracer.Samples}.png", System.Drawing.Imaging.ImageFormat.Png);
                 }
                 if (ImGui.CollapsingHeader("PathTracing"))

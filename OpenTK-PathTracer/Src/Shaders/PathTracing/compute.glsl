@@ -68,19 +68,18 @@ layout(std140, binding = 1) uniform GameObjectsUBO
 	Cuboid Cuboids[64];
 } gameObjectsUBO;
 
-vec3 PathTrace(Ray ray);
+vec3 Radiance(Ray ray);
 bool GetClosestIntersectingRayObject(Ray ray, out HitInfo hitInfo);
 bool RaySphereIntersect(Ray ray, vec3 position, float radius, out float t1, out float t2);
 bool RayCuboidIntersect(Ray ray, vec3 aabbMin, vec3 aabbMax, out float t1, out float t2);
-vec3 GetNormal(vec3 spherePos, vec3 surfacePosition);
+vec3 GetNormal(vec3 spherePos, float radius, vec3 surfacePosition);
 vec3 GetNormal(vec3 aabbMin, vec3 aabbMax, vec3 surfacePosition);
 vec3 GetCosWeightedHemissphereDir(inout uint rndSeed, vec3 normal);
 vec2 GetPointOnCircle(inout uint rndSeed);
-uint GetWangHash(inout uint seed);
+uint GetPCGHash(inout uint seed);
 float GetRandomFloat01(inout uint state);
 float GetSmallestPositive(float t1, float t2);
 float FresnelSchlick(float cosTheta, float n1, float n2);
-vec3 LessThan(vec3 f, float value);
 vec3 InverseGammaToLinear(vec3 rgb);
 Ray GetWorldSpaceRay(mat4 inverseProj, mat4 inverseView, vec3 viewPos, vec2 normalizedDeviceCoords);
 
@@ -114,7 +113,7 @@ void main()
         rayEyeToWorld.Origin = (basicDataUBO.InvView * vec4(offset, 0.0, 1.0)).xyz;
         rayEyeToWorld.Direction = normalize(focalPoint - rayEyeToWorld.Origin);
 
-        color += PathTrace(rayEyeToWorld);
+        color += Radiance(rayEyeToWorld);
     }
     color /= SSP;
     vec3 lastFrameColor = imageLoad(ImgResult, imgCoord).rgb;
@@ -123,7 +122,7 @@ void main()
     imageStore(ImgResult, imgCoord, vec4(color, 1.0));
 }
 
-vec3 PathTrace(Ray ray)
+vec3 Radiance(Ray ray)
 {
     vec3 throughPut = vec3(1);
     vec3 ret = vec3(0);
@@ -215,7 +214,7 @@ bool GetClosestIntersectingRayObject(Ray ray, out HitInfo hitInfo)
             hitInfo.FromInside = hitInfo.T == t2;
             hitInfo.Material = gameObjectsUBO.Spheres[i].Material;
             hitInfo.NearHitPos = ray.Origin + ray.Direction * hitInfo.T;
-            hitInfo.Normal = GetNormal(pos, hitInfo.NearHitPos);
+            hitInfo.Normal = GetNormal(pos, radius, hitInfo.NearHitPos);
         }
     }
     
@@ -272,9 +271,9 @@ bool RayCuboidIntersect(Ray ray, vec3 aabbMin, vec3 aabbMax, out float t1, out f
     return t1 <= t2;
 }
 
-vec3 GetNormal(vec3 spherePos, vec3 surfacePosition)
+vec3 GetNormal(vec3 spherePos, float radius, vec3 surfacePosition)
 {
-    return normalize(surfacePosition - spherePos);
+    return (surfacePosition - spherePos) / radius;
 }
 
 vec3 GetNormal(vec3 aabbMin, vec3 aabbMax, vec3 surfacePosition)
@@ -294,9 +293,9 @@ vec3 GetNormal(vec3 aabbMin, vec3 aabbMax, vec3 surfacePosition)
 
 vec3 GetCosWeightedHemissphereDir(inout uint rndSeed, vec3 normal)
 {
-    float z = GetRandomFloat01(rndSeed) * 2.0 - 1.0; // ZPosition: Map from [0, 1] to [-1, 1]
-    float a = GetRandomFloat01(rndSeed) * 2.0 * PI; // Angle (radians): Map from [0, 1] to [0, 2Pi]
-    float r = (1.0 - z * z); // Radius at ZPosition. Mathematically correct would be: sqrt(1 - z * z)
+    float z = GetRandomFloat01(rndSeed) * 2.0 - 1.0;
+    float a = GetRandomFloat01(rndSeed) * 2.0 * PI;
+    float r = sqrt(1.0 - z * z);
     float x = r * cos(a);
     float y = r * sin(a);
 
