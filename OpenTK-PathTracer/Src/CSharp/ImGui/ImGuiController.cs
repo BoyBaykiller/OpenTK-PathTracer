@@ -175,8 +175,8 @@ namespace OpenTK_PathTracer.GUI
             io.MousePos = new System.Numerics.Vector2(point.X, point.Y);
 
             io.MouseWheel = MouseManager.DeltaScrollY;
-            io.MouseWheelH = MouseManager.DeltaScrollY;
-            
+            io.MouseWheelH = MouseManager.DeltaScrollX;
+
             foreach (Key key in Enum.GetValues(typeof(Key)))
                 io.KeysDown[(int)key] = KeyboardManager.IsKeyDown(key);
 

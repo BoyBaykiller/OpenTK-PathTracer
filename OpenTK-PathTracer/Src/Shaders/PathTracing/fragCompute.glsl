@@ -1,5 +1,4 @@
 #version 430 core
-#extension GL_ARB_bindless_texture : require
 #define FLOAT_MAX 3.4028235e+38
 #define FLOAT_MIN -3.4028235e+38
 #define EPSILON 0.001

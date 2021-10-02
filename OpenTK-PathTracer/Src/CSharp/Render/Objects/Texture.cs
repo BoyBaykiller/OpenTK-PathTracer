@@ -253,12 +253,18 @@ namespace OpenTK_PathTracer.Render.Objects
 
         public long GetTextureBindlessHandle()
         {
+            if (Helper.IsExtensionsAvailable("GL_ARB_bindless_texture"))
+                throw new NotSupportedException("Your system does not support GL_ARB_bindless_texture");
+
             long textureHandle = GL.Arb.GetTextureHandle(ID);
             GL.Arb.MakeTextureHandleResident(textureHandle);
             return textureHandle;
         }
         public static bool UnmakeTextureBindless(long textureHandle)
         {
+            if (Helper.IsExtensionsAvailable("GL_ARB_bindless_texture"))
+                throw new NotSupportedException("Your system does not support GL_ARB_bindless_texture");
+
             if (GL.Arb.IsTextureHandleResident(textureHandle))
             {
                 GL.Arb.MakeTextureHandleNonResident(textureHandle);
@@ -269,12 +275,18 @@ namespace OpenTK_PathTracer.Render.Objects
 
         public long GetImageBindlessHandle(int level, bool layered, int layer, PixelFormat pixelFormat, TextureAccess textureAccess)
         {
+            if (Helper.IsExtensionsAvailable("GL_ARB_bindless_texture"))
+                throw new NotSupportedException("Your system does not support GL_ARB_bindless_texture");
+
             long imageHandle = GL.Arb.GetImageHandle(ID, level, layered, layer, pixelFormat);
             GL.Arb.MakeImageHandleResident(imageHandle, (All)textureAccess);
             return imageHandle;
         }
         public static bool UnmakeImageBindless(long imageHandle)
         {
+            if (Helper.IsExtensionsAvailable("GL_ARB_bindless_texture"))
+                throw new NotSupportedException("Your system does not support GL_ARB_bindless_texture");
+
             if (GL.Arb.IsImageHandleResident(imageHandle))
             {
                 GL.Arb.MakeImageHandleNonResident(imageHandle);

@@ -134,15 +134,14 @@ namespace OpenTK_PathTracer
         public Texture SkyBox;
         protected override void OnLoad(EventArgs e)
         {
-            if (!Helper.IsExtensionsAvailable("GL_ARB_direct_state_access"))
+            Console.WriteLine($"OpenGL: {Helper.APIMajor}.{Helper.APIMinor}");
+            Console.WriteLine($"GLSL: {GL.GetString(StringName.ShadingLanguageVersion)}");
+            Console.WriteLine($"GPU: {GL.GetString(StringName.Renderer)}");
+
+            if (!Helper.IsCoreExtensionAvailable("GL_ARB_direct_state_access", 4, 5))
                 throw new NotSupportedException("Your system does not support GL_ARB_direct_state_access");
 
-            Console.WriteLine($"GPU: {GL.GetString(StringName.Renderer)}");
-            Console.WriteLine($"OpenGL: {GL.GetString(StringName.Version)}");
-            Console.WriteLine($"GLSL: {GL.GetString(StringName.ShadingLanguageVersion)}");
-            // FIX: For some reason MaxUniformBlockSize seems to be ≈33728 for RX 5700XT, although GL.GetInteger(MaxUniformBlockSize) returns 572657868.
-            // I dont want to use SSBO, because of performance. Also see: https://opengl.gpuinfo.org/displayreport.php?id=6204
-
+            GL.DepthMask(false);
             GL.Disable(EnableCap.DepthTest);
             GL.Disable(EnableCap.CullFace);
             GL.Disable(EnableCap.Multisample);

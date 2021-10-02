@@ -62,6 +62,8 @@ namespace OpenTK_PathTracer
         }
 
 
+        public static readonly int APIMajor = (int)char.GetNumericValue(GL.GetString(StringName.Version)[0]);
+        public static readonly int APIMinor = (int)char.GetNumericValue(GL.GetString(StringName.Version)[2]);
 
         private static IEnumerable<string> GetExtensions()
         {
@@ -71,14 +73,27 @@ namespace OpenTK_PathTracer
 
         private static readonly HashSet<string> extensions = new HashSet<string>(GetExtensions());
 
+
         /// <summary>
-        /// Checks if a extensions is available.
+        /// Checks if a extensions is available
         /// </summary>
-        /// <param name="extension">The extension to check against. Examples: GL_ARB_seamless_cube_map or WGL_EXT_swap_control</param>
+        /// <param name="extension">The extension to check against. Examples: GL_ARB_bindless_texture or WGL_EXT_swap_control</param>
         /// <returns></returns>
         public static bool IsExtensionsAvailable(string extension)
         {
             return extensions.Contains(extension);
+        }
+
+        /// <summary>
+        /// Checks if a core extension is available
+        /// </summary>
+        /// <param name="extension">The extension to check against. Examples: GL_ARB_direct_state_access or GL_ARB_seamless_cube_map</param>
+        /// <param name="major">The major API version the extension became part of the core profile</param>
+        /// <param name="minor">The minor API version the extension became part of the core profile</param>
+        /// <returns></returns>
+        public static bool IsCoreExtensionAvailable(string extension, int major, int minor)
+        {
+            return (APIMajor >= major && APIMinor >= minor) || extension.Contains(extension);
         }
     }
 }

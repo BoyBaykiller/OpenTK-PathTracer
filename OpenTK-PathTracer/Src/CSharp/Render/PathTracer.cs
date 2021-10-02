@@ -2,7 +2,6 @@
 using System;
 using OpenTK;
 using OpenTK.Graphics.OpenGL4;
-using OpenTK_PathTracer.Render;
 using OpenTK_PathTracer.Render.Objects;
 
 namespace OpenTK_PathTracer
@@ -92,7 +91,6 @@ namespace OpenTK_PathTracer
             Result = new Texture(TextureTarget2d.Texture2D);
             Result.MutableAllocate(width, height, 1, PixelInternalFormat.Rgba32f);
 
-            /// OPTION TO USE FRAGMENT SHADER FOR PATH TRACING IS EXPERIMENTAL
 #if PRE_USE_COMPUTE
             shaderProgram = new ShaderProgram(new Shader(ShaderType.ComputeShader, "Res/Shaders/PathTracing/compute.glsl".GetPathContent()));
 #else
