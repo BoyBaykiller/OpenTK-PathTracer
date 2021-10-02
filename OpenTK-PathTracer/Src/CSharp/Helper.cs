@@ -93,7 +93,7 @@ namespace OpenTK_PathTracer
         /// <returns></returns>
         public static bool IsCoreExtensionAvailable(string extension, int major, int minor)
         {
-            return (APIMajor >= major && APIMinor >= minor) || extension.Contains(extension);
+            return (Convert.ToInt32($"{APIMajor}{APIMinor}") >= Convert.ToInt32($"{major}{minor}")) || extension.Contains(extension);
         }
     }
 }
