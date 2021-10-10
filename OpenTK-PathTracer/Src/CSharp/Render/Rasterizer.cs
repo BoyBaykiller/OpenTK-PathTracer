@@ -21,7 +21,7 @@ namespace OpenTK_PathTracer.Render
 
             Framebuffer.AddRenderTarget(FramebufferAttachment.ColorAttachment0, Result);
 
-            shaderProgram = new ShaderProgram(new Shader(ShaderType.VertexShader, "Res/Shaders/Rasterisation/vertex.glsl".GetPathContent()), new Shader(ShaderType.FragmentShader, "Res/Shaders/Rasterisation/fragment.glsl".GetPathContent()));
+            shaderProgram = new ShaderProgram(new Shader(ShaderType.VertexShader, "Res/Shaders/Rasterization/vertex.glsl".GetPathContent()), new Shader(ShaderType.FragmentShader, "Res/Shaders/Rasterization/fragment.glsl".GetPathContent()));
 
             vbo = new BufferObject();
             vbo.MutableAllocate(unitCubeVerts.Length * sizeof(float), unitCubeVerts, BufferUsageHint.StaticDraw);

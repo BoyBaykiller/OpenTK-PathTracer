@@ -13,7 +13,7 @@ namespace OpenTK_PathTracer.Render.GUI
         public static ImGuiController ImGuiController = new ImGuiController(0, 0, "Res/imgui.ini");
         private static BaseGameObject pickedObject;
 
-        private static bool IsEnvironmentAtmossphere = false;
+        private static bool IsEnvironmentAtmosphere = false;
 
         public static ImGuiIOPtr ImGuiIOPtr => ImGui.GetIO();
 
@@ -35,13 +35,13 @@ namespace OpenTK_PathTracer.Render.GUI
                 if (ImGui.CollapsingHeader("PathTracing"))
                 {
                     ImGui.Text($"VSync: {mainWindow.VSync}");
-                    ImGui.Text($"FPS: {mainWindow.FPS}"); ImGui.SameLine(); ImGui.Text($"UPS: {mainWindow.UPS}");
+                    ImGui.Text($"FPS: {mainWindow.FPS}"); ImGui.SameLine(); ImGui.Text($"SPS: {mainWindow.FPS * mainWindow.PathTracer.SPP}"); ImGui.SameLine(); ImGui.Text($"UPS: {mainWindow.UPS}"); 
                     ImGui.Checkbox("RenderInBackground", ref mainWindow.IsRenderInBackground);
-                    int temp = mainWindow.PathTracer.SSP;
-                    if (ImGui.SliderInt("SSP", ref temp, 1, 10))
+                    int temp = mainWindow.PathTracer.SPP;
+                    if (ImGui.SliderInt("SPP", ref temp, 1, 10))
                     {
                         frameChanged = true;
-                        mainWindow.PathTracer.SSP = temp;
+                        mainWindow.PathTracer.SPP = temp;
                     }
 
 
@@ -77,10 +77,10 @@ namespace OpenTK_PathTracer.Render.GUI
                 {
                     bool hadInput = false;
 
-                    if (ImGui.Checkbox("Atmossphere", ref IsEnvironmentAtmossphere))
+                    if (ImGui.Checkbox("Atmosphere", ref IsEnvironmentAtmosphere))
                     {
                         hadInput = true;
-                        if (!IsEnvironmentAtmossphere)
+                        if (!IsEnvironmentAtmosphere)
                         {
                             mainWindow.PathTracer.EnvironmentMap = mainWindow.SkyBox;
                         }
@@ -91,7 +91,7 @@ namespace OpenTK_PathTracer.Render.GUI
                         }
                     }
                     
-                    if (IsEnvironmentAtmossphere)
+                    if (IsEnvironmentAtmosphere)
                     {
                         ImGui.Text($"Computation Time: {MathF.Round(mainWindow.AtmosphericScatterer.Query.ElapsedMilliseconds, 2)} ms");
 
@@ -127,11 +127,11 @@ namespace OpenTK_PathTracer.Render.GUI
                             mainWindow.AtmosphericScatterer.Run();
                         }
 
-                        temp = mainWindow.AtmosphericScatterer.AtmossphereRadius;
-                        if (ImGui.DragFloat("AtmossphereRadius", ref temp, 0.2f, 0.1f, 100))
+                        temp = mainWindow.AtmosphericScatterer.AtmosphereRadius;
+                        if (ImGui.DragFloat("AtmosphereRadius", ref temp, 0.2f, 0.1f, 100))
                         {
                             hadInput = true;
-                            mainWindow.AtmosphericScatterer.AtmossphereRadius = temp;
+                            mainWindow.AtmosphericScatterer.AtmosphereRadius = temp;
                             mainWindow.AtmosphericScatterer.Run();
                         }
 
@@ -228,21 +228,23 @@ namespace OpenTK_PathTracer.Render.GUI
                 if (MouseManager.IsButtonTouched(MouseButton.Left))
                 {
                     System.Drawing.Point windowSpaceCoords = mainWindow.PointToClient(new System.Drawing.Point(Mouse.GetCursorState().X, Mouse.GetCursorState().Y)); windowSpaceCoords.Y = mainWindow.Height - windowSpaceCoords.Y; // [0, Width][0, Height]
-                    Vector2 normalizedDeviceCoords = Vector2.Divide(new Vector2(windowSpaceCoords.X, windowSpaceCoords.Y), new Vector2(mainWindow.Width, mainWindow.Height)) * 2.0f - new Vector2(1.0f);
+                    Vector2 normalizedDeviceCoords = Vector2.Divide(new Vector2(windowSpaceCoords.X, windowSpaceCoords.Y), new Vector2(mainWindow.Width, mainWindow.Height)) * 2.0f - new Vector2(1.0f); // [-1.0, 1.0][-1.0, 1.0]
                     Ray rayWorld = Ray.GetWorldSpaceRay(mainWindow.inverseProjection, mainWindow.Camera.View.Inverted(), mainWindow.Camera.Position, normalizedDeviceCoords);
 
                     mainWindow.RayTrace(rayWorld, out pickedObject, out _, out _);
 
-                    /// DEBUG
+                    /// Comment out to test object deletion (Spheres in this case)
                     //if (pickedObject is Sphere sphere)
                     //{
+                    //    /// Procedure to properly delete objects 
+
                     //    /// Delete from GPU
                     //    int start = pickedObject.BufferOffset + Sphere.GPU_INSTANCE_SIZE;
-                    //    int size = Sphere.GPU_INSTANCE_SIZE * mainWindow.PathTracer.NumSpheres - start;
+                    //    int bufferSpheresEnd = Sphere.GPU_INSTANCE_SIZE * mainWindow.PathTracer.NumSpheres - start;
 
-                    //    /// Copys data from GPU to CPU and then with tiny offset back to GPU
-                    //    mainWindow.GameObjectsUBO.GetSubData(start, size, out IntPtr followingSphereData);
-                    //    mainWindow.GameObjectsUBO.SubData(pickedObject.BufferOffset, size, followingSphereData); // override selected sphere
+                    //    /// Shift following Spheres backwards to override the picked one (just using the last sphere to overriding the picked sphere should work as well !?)
+                    //    mainWindow.GameObjectsUBO.GetSubData(start, bufferSpheresEnd, out IntPtr followingSphereData);
+                    //    mainWindow.GameObjectsUBO.SubData(pickedObject.BufferOffset, bufferSpheresEnd, followingSphereData); // override selected sphere
                     //    System.Runtime.InteropServices.Marshal.FreeHGlobal(followingSphereData);
 
                     //    /// Delete from CPU
@@ -250,7 +252,7 @@ namespace OpenTK_PathTracer.Render.GUI
                     //    mainWindow.PathTracer.NumSpheres--;
 
                     //    for (int i = 0; i < mainWindow.GameObjects.Count; i++)
-                    //        if (mainWindow.GameObjects[i] is Sphere temp && temp != null && temp.Instance > sphere.Instance)
+                    //        if (mainWindow.GameObjects[i] is Sphere temp && temp is not null && temp.Instance > sphere.Instance)
                     //            temp.Instance--;
 
                     //    mainWindow.PathTracer.ThisRenderNumFrame = 0;
@@ -260,11 +262,11 @@ namespace OpenTK_PathTracer.Render.GUI
             }
         }
 
-        private static OpenTK.Vector3 NVector3ToVector3(System.Numerics.Vector3 v) => new OpenTK.Vector3(v.X, v.Y, v.Z);
-        private static System.Numerics.Vector3 Vector3ToNVector3(OpenTK.Vector3 v) => new System.Numerics.Vector3(v.X, v.Y, v.Z);
+        private static Vector3 NVector3ToVector3(System.Numerics.Vector3 v) => new Vector3(v.X, v.Y, v.Z);
+        private static System.Numerics.Vector3 Vector3ToNVector3(Vector3 v) => new System.Numerics.Vector3(v.X, v.Y, v.Z);
 
-        private static OpenTK.Vector2 NVector2ToVector2(System.Numerics.Vector2 v) => new OpenTK.Vector2(v.X, v.Y);
-        private static System.Numerics.Vector2 Vector2ToNVector2(OpenTK.Vector2 v) => new System.Numerics.Vector2(v.X, v.Y);
+        private static Vector2 NVector2ToVector2(System.Numerics.Vector2 v) => new Vector2(v.X, v.Y);
+        private static System.Numerics.Vector2 Vector2ToNVector2(Vector2 v) => new System.Numerics.Vector2(v.X, v.Y);
 
         public static void SetSize(int width, int height)
         {

@@ -13,7 +13,7 @@ struct Ray {
     vec3 Direction;
 };
 
-layout (std140, binding = 3) uniform AtmossphericDataUBO
+layout (std140, binding = 3) uniform AtmosphericDataUBO
 {
     mat4 InvProjection;
     mat4[6] InvView;
@@ -29,7 +29,7 @@ bool IsInside(vec2 pos, vec2 size);
 
 const vec3 PlanetPos = vec3(0, -800, 0);
 const float PlanetRad = 600;
-uniform float atmossphereRad;
+uniform float atmosphereRad;
 
 uniform vec3 lightPos;
 uniform vec3 viewPos;
@@ -64,7 +64,7 @@ vec3 CalculateScattering(Ray ray, int samples)
     ScatteringCoefficients = vec3(pow(400 / max(waveLengths.x, EPSILON), 4), pow(400 / max(waveLengths.y, EPSILON), 4), pow(400 / max(waveLengths.z, EPSILON), 4)) * scatteringStrength;
     vec3 color = vec3(0);
     float t1, t2;
-    if (!(RaySphereIntersect(ray, PlanetPos, PlanetRad + atmossphereRad, t1, t2) && t2 > 0))
+    if (!(RaySphereIntersect(ray, PlanetPos, PlanetRad + atmosphereRad, t1, t2) && t2 > 0))
         return color;
 
     float planetT1, planetT2;
@@ -82,7 +82,7 @@ vec3 CalculateScattering(Ray ray, int samples)
     for (int i = 0; i < samples; i++)
     {
         ray.Direction = normalize(lightPos - ray.Origin);
-        RaySphereIntersect(ray, PlanetPos, PlanetRad + atmossphereRad, t1, t2);
+        RaySphereIntersect(ray, PlanetPos, PlanetRad + atmosphereRad, t1, t2);
     
         float avgDensityAlongRay = AvgDensityOver(ray.Origin, ray.Origin + ray.Direction * t2, densitySamples);
         float avgDensityAlongViewRay = AvgDensityOver(viewPos, ray.Origin, densitySamples);
@@ -117,7 +117,7 @@ float AvgDensityOver(vec3 start, vec3 end, int samples) // Physics terminology: 
 float DensityAtPoint(vec3 point)
 {
     float height = length(point - PlanetPos) - PlanetRad;
-    float height01 = height / (atmossphereRad - PlanetRad); // 0 at Planetshell, 1 at outer atmosphere
+    float height01 = height / (atmosphereRad - PlanetRad); // 0 at Planetshell, 1 at outer atmosphere
     
     return exp(-height01 * densityFallOff) * (1 - height01); // 1 at Planetshell, 0 at outer atmosphere
 }

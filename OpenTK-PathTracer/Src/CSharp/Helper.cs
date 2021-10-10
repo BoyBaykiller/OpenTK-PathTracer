@@ -11,6 +11,10 @@ namespace OpenTK_PathTracer
 {
     static class Helper
     {
+        public const string SHADER_DIRECTORY_PATH = "Res/Shaders/";
+        public static readonly int APIMajor = (int)char.GetNumericValue(GL.GetString(StringName.Version)[0]);
+        public static readonly int APIMinor = (int)char.GetNumericValue(GL.GetString(StringName.Version)[2]);
+
         public static T[] AddArray<T>(this T[] arr0, T[] arr1) where T : struct
         {
             int oldLength = arr0.Length;
@@ -61,39 +65,42 @@ namespace OpenTK_PathTracer
             }
         }
 
-
-        public static readonly int APIMajor = (int)char.GetNumericValue(GL.GetString(StringName.Version)[0]);
-        public static readonly int APIMinor = (int)char.GetNumericValue(GL.GetString(StringName.Version)[2]);
-
         private static IEnumerable<string> GetExtensions()
         {
             for (int i = 0; i < GL.GetInteger(GetPName.NumExtensions); i++)
                 yield return GL.GetString(StringNameIndexed.Extensions, i);
         }
 
-        private static readonly HashSet<string> extensions = new HashSet<string>(GetExtensions());
+        private static readonly HashSet<string> glExtensions = new HashSet<string>(GetExtensions());
 
 
         /// <summary>
-        /// Checks if a extensions is available
+        /// Extensions are not guaranteed to be part of any OpenGL version. Some of them are widely implemented on any hardware, others are supported only on specific vendors like NVIDIA and newer hardware.
         /// </summary>
         /// <param name="extension">The extension to check against. Examples: GL_ARB_bindless_texture or WGL_EXT_swap_control</param>
-        /// <returns></returns>
+        /// <returns>True if the extension is available</returns>
         public static bool IsExtensionsAvailable(string extension)
         {
-            return extensions.Contains(extension);
+            return glExtensions.Contains(extension);
         }
 
         /// <summary>
-        /// Checks if a core extension is available
+        /// Core Extensions are those which are core in a specific version and are very likely to be supported in following releases as well. There functionality may also be available in lower GL versions.
+        /// See all core extensions <see href="https://www.khronos.org/opengl/wiki/History_of_OpenGL#Summary_of_version_changes">here</see>
         /// </summary>
-        /// <param name="extension">The extension to check against. Examples: GL_ARB_direct_state_access or GL_ARB_seamless_cube_map</param>
-        /// <param name="major">The major API version the extension became part of the core profile</param>
-        /// <param name="minor">The minor API version the extension became part of the core profile</param>
-        /// <returns></returns>
-        public static bool IsCoreExtensionAvailable(string extension, int major, int minor)
+        /// <param name="extension">The extension to check against. Examples: GL_ARB_direct_state_access or GL_ARB_compute_shader</param>
+        /// <param name="firstMajor">The major API version the extension became part of the core profile</param>
+        /// <param name="firstMinor">The minor API version the extension became part of the core profile</param>
+        /// <param name="lastMajor">The last major API version the extension was part of the core profile</param>
+        /// <param name="lastMinor">The last minor API version the extension was part of the core profile</param>
+        /// <returns>True if this OpenGL version is in the specified range or the extension is otherwise available</returns>
+        public static bool IsCoreExtensionAvailable(string extension, int firstMajor, int firstMinor, int lastMajor = 4, int lastMinor = 6)
         {
-            return (Convert.ToInt32($"{APIMajor}{APIMinor}") >= Convert.ToInt32($"{major}{minor}")) || extension.Contains(extension);
+            int firstVersion = Convert.ToInt32($"{firstMajor}{firstMinor}");
+            int lastVersion = Convert.ToInt32($"{lastMajor}{lastMinor}");
+            int thisVersion = Convert.ToInt32($"{APIMajor}{APIMinor}");
+
+            return (thisVersion >= firstVersion && thisVersion <= lastVersion) || IsExtensionsAvailable(extension);
         }
     }
 }

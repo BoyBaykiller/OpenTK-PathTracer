@@ -1,5 +1,7 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
+using System.Text;
 using OpenTK;
 using OpenTK.Graphics.OpenGL4;
 
@@ -15,12 +17,41 @@ namespace OpenTK_PathTracer.Render.Objects
             ShaderType = shaderType;
             
             ID = GL.CreateShader(shaderType);
+
+            sourceCode = PreProcessIncludes(sourceCode);
             GL.ShaderSource(ID, sourceCode);
             GL.CompileShader(ID);
 
             string compileInfo = GL.GetShaderInfoLog(ID);
             if (compileInfo != string.Empty)
                 Console.WriteLine(compileInfo);
+        }
+
+        /// <summary>
+        /// Searches the string for #include and includes the specified Path. Example: #include PathTracing/fragCompute
+        /// </summary>
+        /// <param name="s"></param>
+        /// <returns></returns>
+        private static string PreProcessIncludes(string s)
+        {
+            StringBuilder includedContent = new StringBuilder(s.Length + 2000);
+            using StringReader stringReader = new StringReader(s);
+
+            string line;
+            while ((line = stringReader.ReadLine()) is not null) // dont use != because it could be overriden
+            {
+                string trimmed = line.Trim();
+                if (trimmed.Length > 9 && trimmed.Substring(0, 9) == "#include ")
+                {
+                    string filePath = $"{Helper.SHADER_DIRECTORY_PATH}{trimmed.Substring(9, trimmed.Length - 9)}.glsl";
+                    includedContent.Append(PreProcessIncludes(File.ReadAllText(filePath)));
+                }
+                else
+                {
+                    includedContent.AppendLine(line);
+                }
+            }
+            return includedContent.ToString();
         }
 
         public void Dispose()
@@ -31,13 +62,13 @@ namespace OpenTK_PathTracer.Render.Objects
 
     class ShaderProgram : IDisposable
     {
-        public readonly int ID;
-
         private static int lastBindedID = -1;
+
+        public readonly int ID;
         public ShaderProgram(params Shader[] shaders)
         {
             if (shaders is null || shaders.Length == 0 || !shaders.All(s => s.ID != 0))
-                throw new IndexOutOfRangeException($"Shader array is empty or null. Or one shader has ID 0");
+                throw new IndexOutOfRangeException($"Shader array is empty or null. Or at least one shader has ID 0");
 
             if(!shaders.All(s => shaders.All(s1 => s.ID == s1.ID || s1.ShaderType != s.ShaderType)))
                 throw new Exception($"A ShaderProgram can only hold one instance of every ShaderType. Validate the shader array.");
@@ -64,12 +95,12 @@ namespace OpenTK_PathTracer.Render.Objects
             }
         }
 
-        public static void Use(int ID)
+        public static void Use(int id)
         {
-            if (lastBindedID != ID)
+            if (lastBindedID != id)
             {
-                GL.UseProgram(ID);
-                lastBindedID = ID;
+                GL.UseProgram(id);
+                lastBindedID = id;
             }
         }
 

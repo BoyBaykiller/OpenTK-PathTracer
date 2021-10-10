@@ -155,9 +155,10 @@ namespace OpenTK_PathTracer.Render.Objects
                 GL.TextureParameter(ID, (TextureParameterName)All.TextureCubeMapSeamless, param ? 1 : 0);
         }
 
-        public void SetBorderColor(Vector4 color)
+        public unsafe void SetBorderColor(Vector4 color)
         {
-            GL.TextureParameter(ID, TextureParameterName.TextureBorderColor, new float[] { color.X, color.Y, color.Z, color.W });
+            float* colors = stackalloc[] { color.X, color.Y, color.Z, color.W };
+            GL.TextureParameter(ID, TextureParameterName.TextureBorderColor, colors);
         }
 
         public void SetMipmapLodBias(float bias)
@@ -227,7 +228,6 @@ namespace OpenTK_PathTracer.Render.Objects
 
         public void ImmutableAllocate(int width, int height, int depth, SizedInternalFormat sizedInternalFormat, int levels = 1)
         {
-            Bind();
             switch (Dimension)
             {
                 case TextureDimension.One:
@@ -297,8 +297,7 @@ namespace OpenTK_PathTracer.Render.Objects
 
         public Bitmap GetTextureContent(int mipmapLevel = 0)
         {
-            if (!TryGetSizeMipmap(out int width, out int height, mipmapLevel))
-                throw new ArgumentException($"Can not get size from Texture {ID} at level {mipmapLevel}");
+            GetSizeMipmap(out int width, out int height, mipmapLevel);
 
             Bitmap bmp = new Bitmap(width, height);
             BitmapData bmpData = bmp.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.WriteOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
@@ -312,12 +311,13 @@ namespace OpenTK_PathTracer.Render.Objects
             return bmp;
         }
 
-        public bool TryGetSizeMipmap(out int width, out int height, int mipmapLevel = 0)
+        public void GetSizeMipmap(out int width, out int height, int mipmapLevel = 0)
         {
             GL.GetTextureLevelParameter(ID, mipmapLevel, GetTextureParameter.TextureWidth, out width);
             GL.GetTextureLevelParameter(ID, mipmapLevel, GetTextureParameter.TextureHeight, out height);
-
-            return width * height != 0;
+            
+            if (width * height != 0)
+                throw new ArgumentException($"Can not get size from Texture {ID} at level {mipmapLevel}");
         }
 
         public int GetPixelTypeComponentSize(PixelTypeSize pixelTypeSize, int mipmapLevel = 0)

@@ -36,7 +36,7 @@ namespace OpenTK_PathTracer
 
         public static Ray GetWorldSpaceRay(Matrix4 inverseProjection, Matrix4 inverseView, Vector3 worldPosition, Vector2 normalizedDeviceCoords)
         {
-            Vector4 _rayEye = new Vector4(normalizedDeviceCoords.X, normalizedDeviceCoords.Y, -1.0f, 1.0f) * inverseProjection; _rayEye.Z = -1.0f; _rayEye.W = 0.0f; // vector * matrix, because OpenTK is stupid
+            Vector4 _rayEye = new Vector4(normalizedDeviceCoords.X, normalizedDeviceCoords.Y, -1.0f, 1.0f) * inverseProjection; _rayEye.Z = -1.0f; _rayEye.W = 0.0f; // vector * matrix, because OpenTK...
             return new Ray(worldPosition, (_rayEye * inverseView).Xyz.Normalized());
         }
 

@@ -59,15 +59,15 @@ namespace OpenTK_PathTracer.Render
         }
 
 
-        private float _atmossphereRadius;
-        public float AtmossphereRadius
+        private float _atmosphereRadius;
+        public float AtmosphereRadius
         {
-            get => _atmossphereRadius;
+            get => _atmosphereRadius;
 
             set
             {
-                shaderProgram.Upload("atmossphereRad", value);
-                _atmossphereRadius = value;
+                shaderProgram.Upload("atmosphereRad", value);
+                _atmosphereRadius = value;
             }
         }
 
@@ -114,7 +114,7 @@ namespace OpenTK_PathTracer.Render
         public readonly Texture Result;
         private readonly ShaderProgram shaderProgram;
         private readonly BufferObject bufferObject;
-        public AtmosphericScattering(int size, int inScatteringSamples, int densitySamples, float scatteringStrength, float densityFallOff, float atmossphereRadius, Vector3 waveLengths, Vector3 lightPos, Vector3 viewPos)
+        public AtmosphericScattering(int size, int inScatteringSamples, int densitySamples, float scatteringStrength, float densityFallOff, float atmosphereRadius, Vector3 waveLengths, Vector3 lightPos, Vector3 viewPos)
         {
             Query = new Query(600);
 
@@ -147,7 +147,7 @@ namespace OpenTK_PathTracer.Render
             DensitySamples = densitySamples;
             ScatteringStrength = scatteringStrength;
             DensityFallOff = densityFallOff;
-            AtmossphereRadius = atmossphereRadius;
+            AtmosphereRadius = atmosphereRadius;
             WaveLengths = waveLengths;
             LightPos = lightPos;
             ViewPos = viewPos;

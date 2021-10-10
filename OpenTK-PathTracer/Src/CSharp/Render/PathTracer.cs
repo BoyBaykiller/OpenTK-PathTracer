@@ -1,4 +1,4 @@
-﻿#define PRE_USE_COMPUTE
+﻿#define USE_COMPUTE
 using System;
 using OpenTK;
 using OpenTK.Graphics.OpenGL4;
@@ -46,15 +46,15 @@ namespace OpenTK_PathTracer
             }
         }
 
-        private int _ssp;
-        public int SSP
+        private int _spp;
+        public int SPP
         {
-            get => _ssp;
+            get => _spp;
 
             set
             {
-                _ssp = value;
-                shaderProgram.Upload("SSP", value);
+                _spp = value;
+                shaderProgram.Upload("SPP", value);
             }
         }
 
@@ -70,14 +70,14 @@ namespace OpenTK_PathTracer
             }
         }
 
-        private float _apertureRadius;
+        private float _apertureDiameter;
         public float ApertureDiameter
         {
-            get => _apertureRadius;
+            get => _apertureDiameter;
 
             set
             {
-                _apertureRadius = value;
+                _apertureDiameter = value;
                 shaderProgram.Upload("apertureDiameter", value);
             }
         }
@@ -86,12 +86,12 @@ namespace OpenTK_PathTracer
         public readonly Texture Result;
         private readonly Framebuffer framebuffer;
         private readonly ShaderProgram shaderProgram;
-        public PathTracer(Texture environmentMap, int width, int height, int rayDepth, int ssp, float focalLength, float apertureRadius)
+        public PathTracer(Texture environmentMap, int width, int height, int rayDepth, int spp, float focalLength, float apertureDiamater)
         {
             Result = new Texture(TextureTarget2d.Texture2D);
             Result.MutableAllocate(width, height, 1, PixelInternalFormat.Rgba32f);
 
-#if PRE_USE_COMPUTE
+#if USE_COMPUTE
             shaderProgram = new ShaderProgram(new Shader(ShaderType.ComputeShader, "Res/Shaders/PathTracing/compute.glsl".GetPathContent()));
 #else
             framebuffer = new Framebuffer();
@@ -100,22 +100,22 @@ namespace OpenTK_PathTracer
 #endif
 
             RayDepth = rayDepth;
-            SSP = ssp;
+            SPP = spp;
             FocalLength = focalLength;
-            ApertureDiameter = apertureRadius;
+            ApertureDiameter = apertureDiamater;
             EnvironmentMap = environmentMap;
         }
 
-        public int Samples => ThisRenderNumFrame * SSP;
+        public int Samples => ThisRenderNumFrame * SPP;
         public int ThisRenderNumFrame;
         public void Run()
         {
             shaderProgram.Use();
             shaderProgram.Upload(0, ThisRenderNumFrame++);
             EnvironmentMap.AttachSampler(1);
-#if PRE_USE_COMPUTE
+#if USE_COMPUTE
             Result.AttachImage(0, 0, false, 0, TextureAccess.ReadWrite, SizedInternalFormat.Rgba32f);
-            GL.DispatchCompute((int)MathF.Ceiling(Result.Width * Result.Height / 32.0f), 1, 1);
+            GL.DispatchCompute((Result.Width * Result.Height + 32 - 1) / 32, 1, 1);
             GL.MemoryBarrier(MemoryBarrierFlags.ShaderImageAccessBarrierBit);
 #else
             framebuffer.Bind();

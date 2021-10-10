@@ -166,9 +166,9 @@ namespace OpenTK_PathTracer.GUI
         {
             ImGuiIOPtr io = ImGui.GetIO();
 
-            io.MouseDown[0] = MouseManager.LeftButton == ButtonState.Pressed;
-            io.MouseDown[1] = MouseManager.RightButton == ButtonState.Pressed;
-            io.MouseDown[2] = MouseManager.MiddleButton == ButtonState.Pressed;
+            io.MouseDown[0] = MouseManager.IsButtonTouched(MouseButton.Left);
+            io.MouseDown[1] = MouseManager.IsButtonTouched(MouseButton.Right);
+            io.MouseDown[2] = MouseManager.IsButtonTouched(MouseButton.Middle);
 
             System.Drawing.Point screenPoint = new System.Drawing.Point(MouseManager.WindowPositionX, MouseManager.WindowPositionY);
             System.Drawing.Point point = wnd.PointToClient(screenPoint);

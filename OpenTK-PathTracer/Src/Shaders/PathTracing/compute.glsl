@@ -2,7 +2,8 @@
 #define FLOAT_MAX 3.4028235e+38
 #define FLOAT_MIN -3.4028235e+38
 #define EPSILON 0.001
-#define PI 3.1415926535898
+#define PI 3.1415926586            
+// Example shader include: #include PathTracing/fragCompute
 
 layout(local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
 
@@ -69,15 +70,15 @@ layout(std140, binding = 1) uniform GameObjectsUBO
 } gameObjectsUBO;
 
 vec3 Radiance(Ray ray);
-bool GetClosestIntersectingRayObject(Ray ray, out HitInfo hitInfo);
+bool RayTrace(Ray ray, out HitInfo hitInfo);
 bool RaySphereIntersect(Ray ray, vec3 position, float radius, out float t1, out float t2);
 bool RayCuboidIntersect(Ray ray, vec3 aabbMin, vec3 aabbMax, out float t1, out float t2);
+vec3 HemisphereSampleCosine(vec3 normal);
 vec3 GetNormal(vec3 spherePos, float radius, vec3 surfacePosition);
 vec3 GetNormal(vec3 aabbMin, vec3 aabbMax, vec3 surfacePosition);
-vec3 GetCosWeightedHemissphereDir(inout uint rndSeed, vec3 normal);
-vec2 GetPointOnCircle(inout uint rndSeed);
+vec2 GetPointOnCircle();
 uint GetPCGHash(inout uint seed);
-float GetRandomFloat01(inout uint state);
+float GetRandomFloat01();
 float GetSmallestPositive(float t1, float t2);
 float FresnelSchlick(float cosTheta, float n1, float n2);
 vec3 InverseGammaToLinear(vec3 rgb);
@@ -86,7 +87,7 @@ Ray GetWorldSpaceRay(mat4 inverseProj, mat4 inverseView, vec3 viewPos, vec2 norm
 uniform vec2 uboGameObjectsSize;
 
 uniform int rayDepth;
-uniform int SSP;
+uniform int SPP;
 
 uniform float focalLength;
 uniform float apertureDiameter;
@@ -101,21 +102,21 @@ void main()
 
     rndSeed = gl_GlobalInvocationID.x * 1973 + gl_GlobalInvocationID.y * 9277 + thisRendererFrame * 2699 | 1;
     vec3 color = vec3(0);
-    for (int i = 0; i < SSP; i++)
+    for (int i = 0; i < SPP; i++)
     {   
-        vec2 subPixelOffset = vec2(GetRandomFloat01(rndSeed), GetRandomFloat01(rndSeed)) - 0.5; // integrating over whole pixel eliminates aliasing
+        vec2 subPixelOffset = vec2(GetRandomFloat01(), GetRandomFloat01()) - 0.5; // integrating over whole pixel eliminates aliasing
         vec2 ndc = (imgCoord + subPixelOffset) / imgResultSize * 2.0 - 1.0;
         Ray rayEyeToWorld = GetWorldSpaceRay(basicDataUBO.InvProjection, basicDataUBO.InvView, basicDataUBO.ViewPos, ndc);
 
         vec3 focalPoint = rayEyeToWorld.Origin + rayEyeToWorld.Direction * focalLength;
-        vec2 offset = apertureDiameter * 0.5 * GetPointOnCircle(rndSeed);
+        vec2 offset = apertureDiameter * 0.5 * GetPointOnCircle();
         
         rayEyeToWorld.Origin = (basicDataUBO.InvView * vec4(offset, 0.0, 1.0)).xyz;
         rayEyeToWorld.Direction = normalize(focalPoint - rayEyeToWorld.Origin);
 
         color += Radiance(rayEyeToWorld);
     }
-    color /= SSP;
+    color /= SPP;
     vec3 lastFrameColor = imageLoad(ImgResult, imgCoord).rgb;
 
     color = mix(lastFrameColor, color, 1.0 / (thisRendererFrame + 1));
@@ -124,32 +125,32 @@ void main()
 
 vec3 Radiance(Ray ray)
 {
-    vec3 throughPut = vec3(1);
+    vec3 throughput = vec3(1);
     vec3 ret = vec3(0);
     HitInfo hitInfo;
     for (int i = 0; i < rayDepth; i++)
     {
-        if (GetClosestIntersectingRayObject(ray, hitInfo))
+        if (RayTrace(ray, hitInfo))
         {
             if (hitInfo.FromInside)
             {
                 hitInfo.Normal *= -1.0;
-                throughPut *= exp(-hitInfo.Material.Absorbance * hitInfo.T);
+                throughput *= exp(-hitInfo.Material.Absorbance * hitInfo.T);
             }
 
             float specularChance = hitInfo.Material.SpecularChance;
             float refractionChance = hitInfo.Material.RefractionChance;
             if (specularChance > 0.0)
             {
-                specularChance = mix(specularChance, 1.0, FresnelSchlick(-dot(ray.Direction, hitInfo.Normal), hitInfo.FromInside ? hitInfo.Material.IOR : 1.0, !hitInfo.FromInside ? hitInfo.Material.IOR : 1.0));
-                float diffuseChance = (1.0 - (specularChance + refractionChance));
-                refractionChance = (1.0 - (diffuseChance + specularChance));
+                specularChance = mix(specularChance, 1.0, FresnelSchlick(dot(-ray.Direction, hitInfo.Normal), hitInfo.FromInside ? hitInfo.Material.IOR : 1.0, !hitInfo.FromInside ? hitInfo.Material.IOR : 1.0));
+                float diffuseChance = 1.0 - specularChance - refractionChance;
+                refractionChance = 1.0 - specularChance - diffuseChance;
             }
 
             float rayProbability = 1.0;
             float doSpecular = 0.0;
             float doRefraction = 0.0;
-            float raySelectRoll = GetRandomFloat01(rndSeed);
+            float raySelectRoll = GetRandomFloat01();
             if (specularChance > raySelectRoll)
             {
                 doSpecular = 1.0;
@@ -162,44 +163,44 @@ vec3 Radiance(Ray ray)
             }
             else
             {
-                rayProbability = 1.0 - (specularChance + refractionChance);
+                rayProbability = 1.0 - specularChance - refractionChance;
             }
             
 
-            vec3 diffuseRayDir = GetCosWeightedHemissphereDir(rndSeed, hitInfo.Normal);
+            vec3 diffuseRayDir = HemisphereSampleCosine(hitInfo.Normal);
             vec3 specularRayDir = normalize(mix(reflect(ray.Direction, hitInfo.Normal), diffuseRayDir, hitInfo.Material.SpecularRoughness * hitInfo.Material.SpecularRoughness));
             vec3 refractionRayDir = refract(ray.Direction, hitInfo.Normal, hitInfo.FromInside ? hitInfo.Material.IOR / 1.0 : 1.0 / hitInfo.Material.IOR);
-            refractionRayDir = normalize(mix(refractionRayDir, GetCosWeightedHemissphereDir(rndSeed, -hitInfo.Normal), hitInfo.Material.RefractionRoughness * hitInfo.Material.RefractionRoughness));
-            
+            refractionRayDir = normalize(mix(refractionRayDir, HemisphereSampleCosine(-hitInfo.Normal), hitInfo.Material.RefractionRoughness * hitInfo.Material.RefractionRoughness));
 
             ray.Origin = hitInfo.NearHitPos + hitInfo.Normal * EPSILON * (doRefraction == 1.0 ? -1 : 1);
             ray.Direction = mix(diffuseRayDir, specularRayDir, doSpecular);
             ray.Direction = mix(ray.Direction, refractionRayDir, doRefraction);
 
-            ret += hitInfo.Material.Emissiv * throughPut;
+
+            ret += hitInfo.Material.Emissiv * throughput;
             if (doRefraction == 0.0)
-                throughPut *= hitInfo.Material.Albedo;
+                throughput *= hitInfo.Material.Albedo;
 
             rayProbability = max(rayProbability, EPSILON);
-            throughPut /= rayProbability;
+            throughput /= rayProbability;
             
             
-            float p = max(throughPut.x, max(throughPut.y, throughPut.z));
-            if (GetRandomFloat01(rndSeed) > p)
+            float p = max(throughput.x, max(throughput.y, throughput.z));
+            if (GetRandomFloat01() > p)
                 break;
 
-            throughPut *= 1.0 / p;
+            throughput *= 1.0 / p;
         }
         else
         {
-            ret += texture(SamplerEnvironment, ray.Direction).rgb * throughPut;
+            ret += texture(SamplerEnvironment, ray.Direction).rgb * throughput;
             break;
         }  
     }
     return ret;
 }
 
-bool GetClosestIntersectingRayObject(Ray ray, out HitInfo hitInfo)
+bool RayTrace(Ray ray, out HitInfo hitInfo)
 {
     hitInfo.T = FLOAT_MAX;
     float t1, t2;
@@ -244,7 +245,7 @@ bool RaySphereIntersect(Ray ray, vec3 position, float radius, out float t1, out 
     float b = dot(ray.Direction, sphereToRay);
     float c = dot(sphereToRay, sphereToRay) - radius * radius;
     float discriminant = b * b - c;
-    if (discriminant < 0)
+    if (discriminant < 0.0)
         return false;
 
     float squareRoot = sqrt(discriminant);
@@ -271,6 +272,18 @@ bool RayCuboidIntersect(Ray ray, vec3 aabbMin, vec3 aabbMax, out float t1, out f
     return t1 <= t2;
 }
 
+vec3 HemisphereSampleCosine(vec3 normal)
+{
+    float z = GetRandomFloat01() * 2.0 - 1.0;
+    float a = GetRandomFloat01() * 2.0 * PI;
+    float r = sqrt(1.0 - z * z);
+    float x = r * cos(a);
+    float y = r * sin(a);
+
+    // Convert unit vector in sphere to a cosine weighted vector in hemisphere
+    return normalize(normal + vec3(x, y, z));
+}
+
 vec3 GetNormal(vec3 spherePos, float radius, vec3 surfacePosition)
 {
     return (surfacePosition - spherePos) / radius;
@@ -291,22 +304,10 @@ vec3 GetNormal(vec3 aabbMin, vec3 aabbMax, vec3 surfacePosition)
     return normalize(normal);
 }
 
-vec3 GetCosWeightedHemissphereDir(inout uint rndSeed, vec3 normal)
+vec2 GetPointOnCircle()
 {
-    float z = GetRandomFloat01(rndSeed) * 2.0 - 1.0;
-    float a = GetRandomFloat01(rndSeed) * 2.0 * PI;
-    float r = sqrt(1.0 - z * z);
-    float x = r * cos(a);
-    float y = r * sin(a);
-
-    // Convert unit vector in sphere to a cosine weighted vector in hemissphere
-    return normalize(normal + vec3(x, y, z));
-}
-
-vec2 GetPointOnCircle(inout uint rndSeed)
-{
-    float angle = GetRandomFloat01(rndSeed) * 2.0 * PI;
-    float r = sqrt(GetRandomFloat01(rndSeed));
+    float angle = GetRandomFloat01() * 2.0 * PI;
+    float r = sqrt(GetRandomFloat01());
     return vec2(cos(angle), sin(angle)) * r;
 }
 
@@ -317,9 +318,9 @@ uint GetPCGHash(inout uint seed)
     return (word >> 22u) ^ word;
 }
  
-float GetRandomFloat01(inout uint state)
+float GetRandomFloat01()
 {
-    return float(GetPCGHash(state)) / 4294967296.0;
+    return float(GetPCGHash(rndSeed)) / 4294967296.0;
 }
 
 float GetSmallestPositive(float t1, float t2)
