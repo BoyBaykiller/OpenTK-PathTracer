@@ -1,7 +1,6 @@
 ﻿using System;
 using OpenTK.Graphics.OpenGL4;
 
-
 namespace OpenTK_PathTracer.Render.Objects
 {
     class VAO : IDisposable
@@ -10,19 +9,19 @@ namespace OpenTK_PathTracer.Render.Objects
 
         public readonly int VertexSize;
         public readonly int ID;
-        public VAO(BufferObject arrayBuffer, int vertexSize)
+        public VAO(BufferObject vbo, int vertexSize)
         {
             VertexSize = vertexSize;
             GL.CreateVertexArrays(1, out ID);
-            GL.VertexArrayVertexBuffer(ID, 0, arrayBuffer.ID, IntPtr.Zero, vertexSize);
+            GL.VertexArrayVertexBuffer(ID, 0, vbo.ID, IntPtr.Zero, vertexSize);
         }
 
-        public VAO(BufferObject arrayBuffer, BufferObject elementBuffer, int stride)
+        public VAO(BufferObject vbo, BufferObject ebo, int stride)
         {
             VertexSize = stride;
             GL.CreateVertexArrays(1, out ID);
-            GL.VertexArrayVertexBuffer(ID, 0, arrayBuffer.ID, IntPtr.Zero, stride);
-            GL.VertexArrayElementBuffer(ID, elementBuffer.ID);
+            GL.VertexArrayVertexBuffer(ID, 0, vbo.ID, IntPtr.Zero, stride);
+            GL.VertexArrayElementBuffer(ID, ebo.ID);
             
         }
 

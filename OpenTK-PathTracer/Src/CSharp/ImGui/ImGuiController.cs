@@ -19,7 +19,6 @@ namespace OpenTK_PathTracer.GUI
 
         private VAO vao;
         private ShaderProgram shaderProgram;
-        //private Texture fontTexture;
         private Texture fontTexture;
         private BufferObject vbo;
         private BufferObject ebo;

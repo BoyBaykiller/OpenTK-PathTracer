@@ -25,7 +25,7 @@ namespace OpenTK_PathTracer
         public int FPS, UPS;
         private int fps, ups;
 
-        public readonly Camera Camera = new Camera(new Vector3(-18.93f, -5.07f, -17.75f), Vector3.Normalize(new Vector3(0.98491096f, 0.06783889f, 0.1592114f)), new Vector3(0, 1, 0)); // new Vector3(-9, 12, 4) || new Vector3(-11, 9.3f, -9.7f)
+        public readonly Camera Camera = new Camera(new Vector3(-18.93f, -5.07f, -17.75f), new Vector3(0, 1, 0), 6.7f, 3.5f); // new Vector3(-9, 12, 4) || new Vector3(-11, 9.3f, -9.7f)
 
 
         public bool IsRenderInBackground = true;
@@ -47,7 +47,7 @@ namespace OpenTK_PathTracer
                 PostProcesser.Result.AttachSampler(0);
                 finalProgram.Use();
                 GL.DrawArrays(PrimitiveType.Quads, 0, 4);
-
+                
                 if (Focused)
                 {
                     Render.GUI.Final.Run(this, (float)e.Time, out bool frameChanged);

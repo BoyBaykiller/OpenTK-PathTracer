@@ -10,7 +10,8 @@ layout(local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
 layout(binding = 0, rgba32f) restrict uniform image2D ImgResult;
 layout(binding = 1) uniform samplerCube SamplerEnvironment;
 
-struct Material {
+struct Material 
+{
     vec3 Albedo; // Base color
     float SpecularChance; // How reflective
     
@@ -24,21 +25,24 @@ struct Material {
     float IOR; // How strongly light gets refracted and the amout of light that is reflected
 };
 
-struct Cuboid {
+struct Cuboid 
+{
     vec3 Min;
     vec3 Max;
     
     Material Material;
 };
 
-struct Sphere {
+struct Sphere 
+{
     vec3 Position;
     float Radius;
 
     Material Material;
 };
 
-struct HitInfo {
+struct HitInfo 
+{
     float T;
     bool FromInside;
     vec3 NearHitPos;
@@ -46,7 +50,8 @@ struct HitInfo {
     Material Material;
 };
 
-struct Ray {
+struct Ray 
+{
     vec3 Origin;
     vec3 Direction;
 };

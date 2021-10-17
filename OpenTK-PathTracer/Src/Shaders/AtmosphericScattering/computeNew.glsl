@@ -54,73 +54,17 @@ void main()
     vec2 ndc = vec2(imgCoord.xy) / imgResultSize * 2.0 - 1.0;
     
     Ray rayEyeToWorld = GetWorldSpaceRay(atmoDataUBO.InvProjection, atmoDataUBO.InvView[imgCoord.z], viewPos, ndc);
-    vec3 scattered = CalculateScattering(rayEyeToWorld, inScatteringSamples);
+    vec3 scattered = vec3(1.0);
     
     imageStore(ImgResult, imgCoord, vec4(scattered, 1.0));
 }
 
-
-vec3 CalculateScattering(Ray ray, int samples)
+vec3 CalculateScattering()
 {
-    ScatteringCoefficients = vec3(pow(400 / max(waveLengths.x, EPSILON), 4), pow(400 / max(waveLengths.y, EPSILON), 4), pow(400 / max(waveLengths.z, EPSILON), 4)) * scatteringStrength;
-    vec3 color = vec3(0);
-    float t1, t2;
-    if (!(RaySphereIntersect(ray, PlanetPos, PlanetRad + atmosphereRad, t1, t2) && t2 > 0))
-        return color;
+    vec3 rayleighScattering = vec3(0.0);
+    vec3 mieScattering = vec3(0.0);
 
-    float planetT1, planetT2;
-    RaySphereIntersect(ray, PlanetPos, PlanetRad, planetT1, planetT2);
     
-    t2 = min(planetT1, t2); // if also hit planet set t2 to planetT1
-
-
-    vec3 viewPos = t1 < 0 ? ray.Origin : (ray.Origin + ray.Direction * t1);
-    ray.Origin = viewPos + EPSILON;
-    
-    vec3 deltaStep = ((ray.Origin + ray.Direction * t2) - ray.Origin) / samples;
-
-    vec3 scatteredLight = vec3(0);
-    for (int i = 0; i < samples; i++)
-    {
-        ray.Direction = normalize(lightPos - ray.Origin);
-        RaySphereIntersect(ray, PlanetPos, PlanetRad + atmosphereRad, t1, t2);
-    
-        float avgDensityAlongRay = AvgDensityOver(ray.Origin, ray.Origin + ray.Direction * t2, densitySamples);
-        float avgDensityAlongViewRay = AvgDensityOver(viewPos, ray.Origin, densitySamples);
-        vec3 transmitted = exp((-avgDensityAlongRay - avgDensityAlongViewRay) * ScatteringCoefficients); // combines transmittance from Densityray and ViewRay
-
-        float localDensity = DensityAtPoint(ray.Origin);
-
-        scatteredLight += localDensity * transmitted * ScatteringCoefficients;
-        
-        ray.Origin += deltaStep;
-    }
-    return scatteredLight / samples;
-}
-
-float AvgDensityOver(vec3 start, vec3 end, int samples) // Physics terminology: "Optical Depth"
-{   
-    // Take integral over DensityAtPoint() from start to end. I dont think there exists a closed-form solution so we are simply going to make an approxiamtion using riemann sum
-
-    vec3 rayPos = start;
-    vec3 deltaStep = (end - start) / samples;
-    float density = 0.0;
-    
-    for (int i = 0; i < samples; i++)
-    {
-        density += DensityAtPoint(rayPos);
-        rayPos += deltaStep;
-    }
-    
-    return density / samples;
-}
-
-float DensityAtPoint(vec3 point)
-{
-    float height = length(point - PlanetPos) - PlanetRad;
-    float height01 = height / (atmosphereRad - PlanetRad); // 0 at Planetshell, 1 at outer atmosphere
-    
-    return exp(-height01 * densityFallOff) * (1 - height01); // 1 at Planetshell, 0 at outer atmosphere
 }
 
 bool RaySphereIntersect(Ray ray, vec3 position, float radius, out float t1, out float t2)

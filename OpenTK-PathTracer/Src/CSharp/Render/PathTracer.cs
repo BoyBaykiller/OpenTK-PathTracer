@@ -116,7 +116,7 @@ namespace OpenTK_PathTracer
 #if USE_COMPUTE
             Result.AttachImage(0, 0, false, 0, TextureAccess.ReadWrite, SizedInternalFormat.Rgba32f);
             GL.DispatchCompute((Result.Width * Result.Height + 32 - 1) / 32, 1, 1);
-            GL.MemoryBarrier(MemoryBarrierFlags.ShaderImageAccessBarrierBit);
+            GL.MemoryBarrier(MemoryBarrierFlags.TextureFetchBarrierBit);
 #else
             framebuffer.Bind();
             Result.AttachSampler(0);

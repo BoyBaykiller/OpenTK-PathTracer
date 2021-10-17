@@ -126,13 +126,13 @@ namespace OpenTK_PathTracer.Render
             bufferObject = new BufferObject(BufferRangeTarget.UniformBuffer, 3);
             bufferObject.MutableAllocate(Vector4.SizeInBytes * 4 * 7 + Vector4.SizeInBytes, IntPtr.Zero, BufferUsageHint.StaticDraw);
 
-            Matrix4 invProjection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(90), 1, 0.1f, 10f).Inverted();
+            Matrix4 invProjection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(90.0f), 1, 0.1f, 10f).Inverted();
             Matrix4[] invViews = new Matrix4[]
             {
                 Camera.GenerateMatrix(Vector3.Zero, new Vector3(1.0f, 0.0f, 0.0f), new Vector3(0.0f, -1.0f, 0.0f)), // PositiveX
                 Camera.GenerateMatrix(Vector3.Zero, new Vector3(-1.0f, 0.0f, 0.0f), new Vector3(0.0f, -1.0f, 0.0f)), // NegativeX
                
-                // Fix: Conventions say that these should be reversed. Am I doing smth reversed in shader?! (May be reversed other GPUs)
+                // Fix: Conventions say that these should be reversed. Am I doing smth reversed in shader?!
                 Camera.GenerateMatrix(Vector3.Zero, new Vector3(0.0f, -1.0f, 0.0f), new Vector3(0.0f, 0.0f, -1.0f)), // NegativeY
                 Camera.GenerateMatrix(Vector3.Zero, new Vector3(0.0f, 1.0f, 0.0f), new Vector3(0.0f, 0.0f, 1.0f)), // PositiveY
 
@@ -155,7 +155,7 @@ namespace OpenTK_PathTracer.Render
 
 
         /// <summary>
-        /// This method computes a whole cubemap rather than just whats visible. It is meant for precomputation and should not be called frequently
+        /// This method computes a whole cubemap rather than just whats visible. It is meant for precomputation and should not be called frequently for performance reasons
         /// </summary>
         /// <param name="renderParams"></param>
         public void Run()
@@ -166,7 +166,7 @@ namespace OpenTK_PathTracer.Render
             shaderProgram.Use();
 
             GL.DispatchCompute((int)MathF.Ceiling(Result.Width / 8.0f), (int)MathF.Ceiling(Result.Width / 8.0f), 6);
-            GL.MemoryBarrier(MemoryBarrierFlags.ShaderImageAccessBarrierBit);
+            GL.MemoryBarrier(MemoryBarrierFlags.TextureFetchBarrierBit);
 
             Query.StopAndReset();
         }

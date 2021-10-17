@@ -75,7 +75,7 @@ namespace OpenTK_PathTracer
 
 
         /// <summary>
-        /// Extensions are not guaranteed to be part of any OpenGL version. Some of them are widely implemented on any hardware, others are supported only on specific vendors like NVIDIA and newer hardware.
+        /// Extensions are not part of any GL specification. Some of them are widely implemented on any hardware, others are supported only on specific vendors like NVIDIA and newer hardware.
         /// </summary>
         /// <param name="extension">The extension to check against. Examples: GL_ARB_bindless_texture or WGL_EXT_swap_control</param>
         /// <returns>True if the extension is available</returns>

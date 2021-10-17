@@ -13,21 +13,25 @@ namespace OpenTK_PathTracer
         public float MovmentSpeed;
         public float MouseSensitivity;
         public Matrix4 View { get; private set; }
-        public Camera(Vector3 position, Vector3 viewDir, Vector3 up, float mouseSensitivity = 0.1f, float speed = 10)
+        public Camera(Vector3 position, Vector3 up, float lookX = 0.0f, float lookY = -90.0f, float mouseSensitivity = 0.1f, float speed = 10)
         {
-            View = Matrix4.LookAt(position, position + viewDir, up);
+            LookX = lookX;
+            LookY = lookY;
+
+            ViewDir.X = MathF.Cos(MathHelper.DegreesToRadians(LookX)) * MathF.Cos(MathHelper.DegreesToRadians(LookY));
+            ViewDir.Y = MathF.Sin(MathHelper.DegreesToRadians(LookY));
+            ViewDir.Z = MathF.Sin(MathHelper.DegreesToRadians(LookX)) * MathF.Cos(MathHelper.DegreesToRadians(LookY));
+
+            View = GenerateMatrix(position, ViewDir, up);
             Position = position;
-            ViewDir = viewDir;
             Up = up;
             MovmentSpeed = speed;
             MouseSensitivity = mouseSensitivity;
-
-            
-            LookXY.Y = MathHelper.RadiansToDegrees(MathF.Asin(viewDir.Y));
-            LookXY.X = MathHelper.RadiansToDegrees(MathF.Acos(viewDir.X / MathF.Cos(MathHelper.DegreesToRadians(LookXY.Y))));
         }
 
-        private Vector2 LookXY = new Vector2();
+
+        public float LookX { get; private set; }
+        public float LookY { get; private set; }
         public void ProcessInputs(float dT, out bool frameChanged)
         {
             frameChanged = false;
@@ -36,21 +40,15 @@ namespace OpenTK_PathTracer
             if (mouseDelta.X != 0 || mouseDelta.Y != 0)
                 frameChanged = true;
 
-            LookXY.X += mouseDelta.X * MouseSensitivity;
-            LookXY.Y -= mouseDelta.Y * MouseSensitivity;
+            LookX += mouseDelta.X * MouseSensitivity;
+            LookY -= mouseDelta.Y * MouseSensitivity;
 
-            if (LookXY.Y >= 90)
-                LookXY.Y = 89.999f;
+            if (LookX >= 90) LookX = 89.999f;
+            if (LookY <= -90) LookY = -89.999f;
 
-            if (LookXY.Y <= -90)
-                LookXY.Y = -89.999f;
-
-            Vector3 viewDir;
-            viewDir.X = MathF.Cos(MathHelper.DegreesToRadians(LookXY.X)) * MathF.Cos(MathHelper.DegreesToRadians(LookXY.Y));
-            viewDir.Y = MathF.Sin(MathHelper.DegreesToRadians(LookXY.Y));
-            viewDir.Z = MathF.Sin(MathHelper.DegreesToRadians(LookXY.X)) * MathF.Cos(MathHelper.DegreesToRadians(LookXY.Y));
-            ViewDir = viewDir;
-
+            ViewDir.X = MathF.Cos(MathHelper.DegreesToRadians(LookX)) * MathF.Cos(MathHelper.DegreesToRadians(LookY));
+            ViewDir.Y = MathF.Sin(MathHelper.DegreesToRadians(LookY));
+            ViewDir.Z = MathF.Sin(MathHelper.DegreesToRadians(LookX)) * MathF.Cos(MathHelper.DegreesToRadians(LookY));
 
             Vector3 acceleration = Vector3.Zero;
             if (KeyboardManager.IsKeyDown(Key.W))
