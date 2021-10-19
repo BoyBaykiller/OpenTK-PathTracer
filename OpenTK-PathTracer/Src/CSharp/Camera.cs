@@ -43,7 +43,7 @@ namespace OpenTK_PathTracer
             LookX += mouseDelta.X * MouseSensitivity;
             LookY -= mouseDelta.Y * MouseSensitivity;
 
-            if (LookX >= 90) LookX = 89.999f;
+            if (LookY >= 90) LookY = 89.999f;
             if (LookY <= -90) LookY = -89.999f;
 
             ViewDir.X = MathF.Cos(MathHelper.DegreesToRadians(LookX)) * MathF.Cos(MathHelper.DegreesToRadians(LookY));
