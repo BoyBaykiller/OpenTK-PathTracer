@@ -75,6 +75,9 @@ namespace OpenTK_PathTracer
             View = GenerateMatrix(Position, ViewDir, Up);
         }
 
-        public static Matrix4 GenerateMatrix(Vector3 position, Vector3 viewDir, Vector3 up) => Matrix4.LookAt(position, position + viewDir, up);
+        public static Matrix4 GenerateMatrix(Vector3 position, Vector3 viewDir, Vector3 up)
+        {
+            return Matrix4.LookAt(position, position + viewDir, up);
+        }
     }
 }

@@ -7,6 +7,8 @@
     <Platforms>AnyCPU;x64</Platforms>
     <RunPostBuildEvent>Always</RunPostBuildEvent>
     <AssemblyName>OpenTK-PathTracer</AssemblyName>
+    <ApplicationIcon />
+    <StartupObject />
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">

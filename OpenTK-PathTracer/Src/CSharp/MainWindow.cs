@@ -21,7 +21,7 @@ namespace OpenTK_PathTracer
 
 
         public Matrix4 projection, inverseProjection;
-        Vector2 nearFarPlane = new Vector2(EPSILON, 2000f);
+        Vector2 nearFarPlane = new Vector2(EPSILON, 200f);
         public int FPS, UPS;
         private int fps, ups;
 
@@ -75,7 +75,7 @@ namespace OpenTK_PathTracer
             ThreadManager.InvokeQueuedActions();
             KeyboardManager.Update();
             MouseManager.Update();
-            
+
             if (Focused)
             {
                 if (Render.GUI.Final.ImGuiIOPtr.WantCaptureMouse && !CursorVisible)
@@ -83,7 +83,7 @@ namespace OpenTK_PathTracer
                     Point _point = PointToScreen(new Point(Width / 2, Height / 2));
                     Mouse.SetPosition(_point.X, _point.Y);
                 }
-                
+
                 Render.GUI.Final.Update(this);
 
                 if (KeyboardManager.IsKeyDown(Key.Escape))
@@ -99,7 +99,7 @@ namespace OpenTK_PathTracer
                 {
                     CursorVisible = !CursorVisible;
                     CursorGrabbed = !CursorGrabbed;
-                    
+
                     if (!CursorVisible)
                     {
                         MouseManager.Update();
@@ -137,9 +137,11 @@ namespace OpenTK_PathTracer
             Console.WriteLine($"OpenGL: {Helper.APIMajor}.{Helper.APIMinor}");
             Console.WriteLine($"GLSL: {GL.GetString(StringName.ShadingLanguageVersion)}");
             Console.WriteLine($"GPU: {GL.GetString(StringName.Renderer)}");
-
             if (!Helper.IsCoreExtensionAvailable("GL_ARB_direct_state_access", 4, 5))
                 throw new NotSupportedException("Your system does not support GL_ARB_direct_state_access");
+
+            if (!Helper.IsCoreExtensionAvailable("GL_ARB_texture_storage", 4, 2))
+                throw new NotSupportedException("Your system does not support GL_ARB_texture_storage");
 
             GL.DepthMask(false);
             GL.Disable(EnableCap.DepthTest);
@@ -161,8 +163,8 @@ namespace OpenTK_PathTracer
                 "Res/Textures/EnvironmentMap/posz.png",
                 "Res/Textures/EnvironmentMap/negz.png"
             }, (SizedInternalFormat)PixelInternalFormat.Srgb8Alpha8);
-            
-            AtmosphericScatterer = new AtmosphericScattering(128, 100, 10, 2.1f, 35.0f, 0.01f, new Vector3(680, 550, 440), new Vector3(0, 500, 0), new Vector3(20.43f, -201.99f, -20.67f));
+
+            AtmosphericScatterer = new AtmosphericScattering(128, 100, 10, 2.1f, 35.0f, 0.01f, new Vector3(680, 550, 440), new Vector3(0, 500 + 800.0f, 0), new Vector3(20.43f, -201.99f + 800.0f, -20.67f));
             PathTracer = new PathTracer(SkyBox, Width, Height, 13, 1, 20f, 0.14f);
             Rasterizer = new Rasterizer(Width, Height);
             PostProcesser = new ScreenEffect(new Shader(ShaderType.FragmentShader, "Res/Shaders/PostProcessing/fragment.glsl".GetPathContent()), Width, Height);
@@ -182,7 +184,7 @@ namespace OpenTK_PathTracer
             for (float x = 0; x < balls; x++)
                 for (float y = 0; y < balls; y++)
                     GameObjects.Add(new Sphere(new Vector3(dimensions.X / balls * x * 1.1f - dimensions.X / 2, (dimensions.Y / balls) * y - dimensions.Y / 2 + radius, -5), radius, PathTracer.NumSpheres++, new Material(albedo: new Vector3(0.59f, 0.59f, 0.99f), emissiv: new Vector3(0), refractionColor: Vector3.Zero, specularChance: x / (balls - 1), specularRoughness: y / (balls - 1), indexOfRefraction: 1f, refractionChance: 0.0f, refractionRoughnes: 0.1f)));
-
+            
             Vector3 delta = dimensions / balls;
             for (float x = 0; x < balls; x++)
             {
@@ -207,7 +209,7 @@ namespace OpenTK_PathTracer
                 GameObjects.Add(new Sphere(position, radius, PathTracer.NumSpheres++, material1));
             }
             #endregion
-
+            
             #region SetupCuboids
             
             Cuboid down = new Cuboid(new Vector3(0, -height / 2, -10), new Vector3(width, EPSILON, depth), PathTracer.NumCuboids++, new Material(albedo: new Vector3(0.2f, 0.04f, 0.04f), emissiv: new Vector3(0.0f), refractionColor: Vector3.Zero, specularChance: 0.0f, specularRoughness: 0.051f, indexOfRefraction: 1.0f, refractionChance: 0.0f, refractionRoughnes: 0.0f));
@@ -225,7 +227,7 @@ namespace OpenTK_PathTracer
 
             GameObjects.AddRange(new Cuboid[] { down, upLight, back, front, right, left, middle });
             #endregion
-
+            
             for (int i = 0; i < GameObjects.Count; i++)
                 GameObjects[i].Upload(GameObjectsUBO);
             
@@ -286,7 +288,10 @@ namespace OpenTK_PathTracer
 
             return tMin != float.MaxValue;
         }
-        public static float GetSmallestPositive(float t1, float t2) => t1 < 0 ? t2 : t1;
+        public static float GetSmallestPositive(float t1, float t2)
+        {
+            return t1 < 0 ? t2 : t1;
+        }
         
         public void SetGameObjectsRandomMaterial<T>(int maxNum) where T : BaseGameObject
         {

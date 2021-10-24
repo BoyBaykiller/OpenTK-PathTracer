@@ -1,5 +1,4 @@
 ﻿#define USE_COMPUTE
-using System;
 using OpenTK;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK_PathTracer.Render.Objects;
@@ -84,7 +83,9 @@ namespace OpenTK_PathTracer
 
         public Texture EnvironmentMap;
         public readonly Texture Result;
+#if !USE_COMPUTE
         private readonly Framebuffer framebuffer;
+#endif
         private readonly ShaderProgram shaderProgram;
         public PathTracer(Texture environmentMap, int width, int height, int rayDepth, int spp, float focalLength, float apertureDiamater)
         {
@@ -116,10 +117,10 @@ namespace OpenTK_PathTracer
 #if USE_COMPUTE
             Result.AttachImage(0, 0, false, 0, TextureAccess.ReadWrite, SizedInternalFormat.Rgba32f);
             GL.DispatchCompute((Result.Width * Result.Height + 32 - 1) / 32, 1, 1);
-            GL.MemoryBarrier(MemoryBarrierFlags.TextureFetchBarrierBit);
+            GL.MemoryBarrier(MemoryBarrierFlags.TextureFetchBarrierBit | MemoryBarrierFlags.ShaderImageAccessBarrierBit);
 #else
             framebuffer.Bind();
-            Result.AttachSampler(0);
+            Result.AttachImage(0, 0, false, 0, TextureAccess.ReadOnly, SizedInternalFormat.Rgba32f);
             GL.DrawArrays(PrimitiveType.Quads, 0, 4);
 #endif
         }

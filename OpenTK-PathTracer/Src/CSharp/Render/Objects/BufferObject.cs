@@ -45,7 +45,7 @@ namespace OpenTK_PathTracer.Render.Objects
         }
 
         /// <summary>
-        /// Sets <seealso cref="BufferOffset"/> to 0 and overrides the content with 0
+        /// Sets <see cref="BufferOffset"/> to 0 and overrides the content with 0
         /// </summary>
         public void Reset()
         {

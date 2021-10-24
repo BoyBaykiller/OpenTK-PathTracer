@@ -28,7 +28,7 @@ Ray GetWorldSpaceRay(mat4 inverseProj, mat4 inverseView, vec3 viewPos, vec2 norm
 bool IsInside(vec2 pos, vec2 size);
 
 
-const vec3 PlanetPos = vec3(0, -800, 0);
+const vec3 PlanetPos = vec3(0, 0, 0);
 const float PlanetRad = 600;
 uniform float atmosphereRad;
 
@@ -126,7 +126,7 @@ float DensityAtPoint(vec3 point)
 bool RaySphereIntersect(Ray ray, vec3 position, float radius, out float t1, out float t2)
 {
     // Source: https://antongerdelan.net/opengl/raycasting.html
-    t1 = FLOAT_MAX; t2 = FLOAT_MAX;
+    t1 = t2 = FLOAT_MAX;
 
     vec3 sphereToRay = ray.Origin - position;
     float b = dot(ray.Direction, sphereToRay);

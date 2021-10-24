@@ -55,7 +55,7 @@ namespace OpenTK_PathTracer
             if (!bitmaps.All(i => i.Width == i.Height && i.Width == bitmaps[0].Width))
                 throw new ArgumentException($"Individual cubemap textures must be squares and every texture must be of the same size");
             int size = bitmaps[0].Width;
-            texture.ImmutableAllocate(size, size, 1, sizedInternalFormat);
+            texture.ImmutableAllocate(size, size, 1, sizedInternalFormat, 6);
             for (int i = 0; i < 6; i++)
             {
                 System.Drawing.Imaging.BitmapData bitmapData = bitmaps[i].LockBits(new Rectangle(0, 0, size, size), System.Drawing.Imaging.ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);

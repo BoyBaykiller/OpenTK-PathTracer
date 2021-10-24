@@ -3,7 +3,7 @@ using OpenTK;
 
 namespace OpenTK_PathTracer
 {
-    class Material : BaseUBOCompatible
+    class Material : BaseSTD140Compatible
     {
         public static Material Zero => new Material(albedo: Vector3.One, emissiv: Vector3.Zero, refractionColor: Vector3.Zero, specularChance: 0.0f, specularRoughness: 0.0f, indexOfRefraction: 1.0f, refractionChance: 0.0f, refractionRoughnes: 0.0f);
         public const int GPU_INSTANCE_SIZE = 16 * 4;

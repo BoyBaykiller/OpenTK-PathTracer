@@ -4,20 +4,16 @@ using OpenTK.Graphics.OpenGL4;
 
 namespace OpenTK_PathTracer.Render.Objects
 {
-    /// <summary>
-    /// This measures the timings of GPU commands
-    /// </summary>
-    class Query : IDisposable
+    class TimerQuery : IDisposable
     {
-        public readonly int ID;
         public float ElapsedMilliseconds { get; private set; }
 
         private readonly Stopwatch timer = new Stopwatch();
         private bool doStopAndReset = false;
 
-
+        public readonly int ID;
         public int UpdateRate;
-        public Query(int updatePeriodInMs)
+        public TimerQuery(int updatePeriodInMs)
         {
             GL.CreateQueries(QueryTarget.TimeElapsed, 1, out ID);
             UpdateRate = updatePeriodInMs;
@@ -25,7 +21,7 @@ namespace OpenTK_PathTracer.Render.Objects
 
 
         /// <summary>
-        /// If <seealso cref="UpdateRate"/> milliseconds are elapsed since the last Query, a new Query on the GPU, which captures all render commands from now until StopAndReset, is started.
+        /// If <see cref="UpdateRate"/> milliseconds are elapsed since the last <see cref="TimerQuery"/>, a new one on will be issued, which measures all render commands from now until <see cref="StopAndReset"/>.
         /// </summary>
         public void Start()
         {
@@ -38,7 +34,7 @@ namespace OpenTK_PathTracer.Render.Objects
         }
 
         /// <summary>
-        /// Resets the Query on the GPU and stores the result in <seealso cref="ElapsedMilliseconds"/>
+        /// Resets the <see cref="TimerQuery"/> and stores the result in <see cref="ElapsedMilliseconds"/>
         /// </summary>
         public void StopAndReset()
         {

@@ -2,7 +2,7 @@
 
 namespace OpenTK_PathTracer.GameObjects
 {
-    abstract class BaseGameObject : BaseUBOCompatible
+    abstract class BaseGameObject : BaseSTD140Compatible
     {
         public Material Material;
         public Vector3 Position;

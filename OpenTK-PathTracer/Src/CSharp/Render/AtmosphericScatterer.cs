@@ -110,13 +110,13 @@ namespace OpenTK_PathTracer.Render
             }
         }
 
-        public readonly Query Query;
+        public readonly TimerQuery Query;
         public readonly Texture Result;
         private readonly ShaderProgram shaderProgram;
         private readonly BufferObject bufferObject;
         public AtmosphericScattering(int size, int inScatteringSamples, int densitySamples, float scatteringStrength, float densityFallOff, float atmosphereRadius, Vector3 waveLengths, Vector3 lightPos, Vector3 viewPos)
         {
-            Query = new Query(600);
+            Query = new TimerQuery(600);
 
             Result = new Texture(TextureTarget2d.TextureCubeMap);
             Result.MutableAllocate(size, size, 1, PixelInternalFormat.Rgba32f);

@@ -23,13 +23,18 @@ layout (std140, binding = 3) uniform AtmosphericDataUBO
 vec3 CalculateScattering(Ray ray, int samples);
 float AvgDensityOver(vec3 start, vec3 end, int samples);
 float DensityAtPoint(vec3 point);
-bool RaySphereIntersect(Ray ray, vec3 position, float radius, out float t1, out float t2);
+float RaySphereIntersect(Ray ray, vec3 position, float radius, out float t1, out float t2);
 Ray GetWorldSpaceRay(mat4 inverseProj, mat4 inverseView, vec3 viewPos, vec2 normalizedDeviceCoors);
 bool IsInside(vec2 pos, vec2 size);
 
 
-const vec3 PlanetPos = vec3(0, -800, 0);
-const float PlanetRad = 600;
+const vec3 PLANET_POSITION = vec3(0, 0, 0);
+const float PLANET_RADIUS = 600;
+const vec3 LIGHT_DIR = vec3(0, -1, 0);
+const float MIE_STRENGTH = 0.76;
+const float MAX_RAYLEIGH_HEIGHT = 100;
+const float MAX_MIE_HEIGHT = 100;
+const float HEIGHT_ABSORBTION = 10000;
 uniform float atmosphereRad;
 
 uniform vec3 lightPos;
@@ -52,38 +57,52 @@ void main()
         return;
     
     vec2 ndc = vec2(imgCoord.xy) / imgResultSize * 2.0 - 1.0;
-    
     Ray rayEyeToWorld = GetWorldSpaceRay(atmoDataUBO.InvProjection, atmoDataUBO.InvView[imgCoord.z], viewPos, ndc);
     vec3 scattered = vec3(1.0);
     
     imageStore(ImgResult, imgCoord, vec4(scattered, 1.0));
 }
 
-vec3 CalculateScattering()
+vec3 CalculateScattering(Ray ray)
 {
     vec3 rayleighScattering = vec3(0.0);
     vec3 mieScattering = vec3(0.0);
 
-    
+    float opticalDepthRayleigh = 0.0;
+    float opticalDepthMie = 0.0;
+
+    float cosTheta = dot(ray.Direction, LIGHT_DIR);
+    float rayleigh = 3.0 * (1.0 + cosTheta * cosTheta) / (16.0 * PI);
+    float mie = 3.0 * (1.0 - MIE_STRENGTH * MIE_STRENGTH) * (1.0 + u * u) / (8.0 * PI * (2.0 + MIE_STRENGTH * MIE_STRENGTH) * pow(1.0 + MIE_STRENGTH * MIE_STRENGTH - 2.0 * MIE_STRENGTH * u, 1.5));
+
+    vec3 endPoint = ray.Origin + ray.Direction * RayAtmossphereIntersect(ray);
+    vec3 deltaStep = (endPoint - ray.Origin) / inScatteringSamples;
+
+    for (int i = 0; i < inScatteringSamples; i++)
+    {
+        // do some shit
+        float height = length(ray.Origin) - PLANET_RADIUS;
+
+        vec3 density = vec3(exp(-height / vec2(MAX_RAYLEIGH_HEIGHT, MAX_MIE_HEIGHT)), 0.0);
+
+        float denom = ()
+
+        for (int i = 0; < densitySamples; i++)
+        {
+            // do more shit
+        }
+
+        // combine all shit
+        ray.Origin += deltaStep;
+    }
 }
 
-bool RaySphereIntersect(Ray ray, vec3 position, float radius, out float t1, out float t2)
+float RayAtmossphereIntersect(Ray ray)
 {
-    // Source: https://antongerdelan.net/opengl/raycasting.html
-    t1 = FLOAT_MAX; t2 = FLOAT_MAX;
-
-    vec3 sphereToRay = ray.Origin - position;
+    vec3 sphereToRay = ray.Origin/* - PLANET_POSITION*/;
     float b = dot(ray.Direction, sphereToRay);
-    float c = dot(sphereToRay, sphereToRay) - radius * radius;
-    float discriminant = b * b - c;
-    if (discriminant < 0)
-        return false;
-
-    float squareRoot = sqrt(discriminant);
-    t1 = -b - squareRoot;
-    t2 = -b + squareRoot;
-
-    return true;
+    float c = dot(sphereToRay, sphereToRay) - PLANET_RADIUS * PLANET_RADIUS;
+    return -b + sqrt(b * b - c);
 }
 
 Ray GetWorldSpaceRay(mat4 inverseProj, mat4 inverseView, vec3 viewPos, vec2 normalizedDeviceCoors)

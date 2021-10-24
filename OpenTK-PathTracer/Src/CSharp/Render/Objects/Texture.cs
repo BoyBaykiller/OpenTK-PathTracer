@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Drawing;
 using System.Drawing.Imaging;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using OpenTK;
 using OpenTK.Graphics.OpenGL4;
 using PixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
@@ -91,7 +88,7 @@ namespace OpenTK_PathTracer.Render.Objects
             GL.TextureParameter(ID, TextureParameterName.TextureWrapT, (int)wrapT);
         }
 
-        public void SetTextureWrap(TextureWrapMode wrapS, TextureWrapMode wrapT, TextureWrapMode wrapR)
+        public void SetWrapMode(TextureWrapMode wrapS, TextureWrapMode wrapT, TextureWrapMode wrapR)
         {
             GL.TextureParameter(ID, TextureParameterName.TextureWrapS, (int)wrapS);
             GL.TextureParameter(ID, TextureParameterName.TextureWrapT, (int)wrapT);
@@ -137,6 +134,11 @@ namespace OpenTK_PathTracer.Render.Objects
             GL.TextureSubImage1D(ID, level, xOffset, width, pixelFormat, pixelType, pixels);
         }
 
+
+        /// <summary>
+        /// To properly generate mipmaps <see cref="TextureMinFilter"/> must be set to one of the mipmap options 
+        /// and if immutable storage is used the level parameter should match the number of desired mipmap levels to generate (default: 1).
+        /// </summary>
         public void GenerateMipmap()
         {
             GL.GenerateTextureMipmap(ID);
@@ -155,10 +157,13 @@ namespace OpenTK_PathTracer.Render.Objects
                 GL.TextureParameter(ID, (TextureParameterName)All.TextureCubeMapSeamless, param ? 1 : 0);
         }
 
-        public unsafe void SetBorderColor(Vector4 color)
+        public void SetBorderColor(Vector4 color)
         {
-            float* colors = stackalloc[] { color.X, color.Y, color.Z, color.W };
-            GL.TextureParameter(ID, TextureParameterName.TextureBorderColor, colors);
+            unsafe
+            {
+                float* colors = stackalloc[] { color.X, color.Y, color.Z, color.W };
+                GL.TextureParameter(ID, TextureParameterName.TextureBorderColor, colors);
+            }
         }
 
         public void SetMipmapLodBias(float bias)
@@ -253,18 +258,12 @@ namespace OpenTK_PathTracer.Render.Objects
 
         public long GetTextureBindlessHandle()
         {
-            if (Helper.IsExtensionsAvailable("GL_ARB_bindless_texture"))
-                throw new NotSupportedException("Your system does not support GL_ARB_bindless_texture");
-
             long textureHandle = GL.Arb.GetTextureHandle(ID);
             GL.Arb.MakeTextureHandleResident(textureHandle);
             return textureHandle;
         }
         public static bool UnmakeTextureBindless(long textureHandle)
         {
-            if (Helper.IsExtensionsAvailable("GL_ARB_bindless_texture"))
-                throw new NotSupportedException("Your system does not support GL_ARB_bindless_texture");
-
             if (GL.Arb.IsTextureHandleResident(textureHandle))
             {
                 GL.Arb.MakeTextureHandleNonResident(textureHandle);
@@ -275,18 +274,12 @@ namespace OpenTK_PathTracer.Render.Objects
 
         public long GetImageBindlessHandle(int level, bool layered, int layer, PixelFormat pixelFormat, TextureAccess textureAccess)
         {
-            if (Helper.IsExtensionsAvailable("GL_ARB_bindless_texture"))
-                throw new NotSupportedException("Your system does not support GL_ARB_bindless_texture");
-
             long imageHandle = GL.Arb.GetImageHandle(ID, level, layered, layer, pixelFormat);
             GL.Arb.MakeImageHandleResident(imageHandle, (All)textureAccess);
             return imageHandle;
         }
         public static bool UnmakeImageBindless(long imageHandle)
         {
-            if (Helper.IsExtensionsAvailable("GL_ARB_bindless_texture"))
-                throw new NotSupportedException("Your system does not support GL_ARB_bindless_texture");
-
             if (GL.Arb.IsImageHandleResident(imageHandle))
             {
                 GL.Arb.MakeImageHandleNonResident(imageHandle);
