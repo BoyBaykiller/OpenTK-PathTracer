@@ -145,14 +145,11 @@ namespace OpenTK_PathTracer.Render.Objects
         }
 
         /// <summary>
-        /// Uses ARB_seamless_cubemap_per_texture to allow for seamless cubemapping
+        /// ARB_seamless_cubemap_per_texture must be available
         /// </summary>
         /// <param name="param"></param>
         public void SetSeamlessCubeMapPerTexture(bool param)
         {
-            if (!Helper.IsExtensionsAvailable("GL_ARB_seamless_cubemap_per_texture"))
-                throw new NotSupportedException("Your system does not support GL_ARB_seamless_cubemap_per_texture");
-
             if (Target == TextureTarget.TextureCubeMap)
                 GL.TextureParameter(ID, (TextureParameterName)All.TextureCubeMapSeamless, param ? 1 : 0);
         }
@@ -256,12 +253,21 @@ namespace OpenTK_PathTracer.Render.Objects
             PixelInternalFormat = (PixelInternalFormat)sizedInternalFormat;
         }
 
+        /// <summary>
+        /// GL_ARB_bindless_texture must be available
+        /// </summary>
+        /// <returns></returns>
         public long GetTextureBindlessHandle()
         {
             long textureHandle = GL.Arb.GetTextureHandle(ID);
             GL.Arb.MakeTextureHandleResident(textureHandle);
             return textureHandle;
         }
+
+        /// <summary>
+        /// GL_ARB_bindless_texture must be available
+        /// </summary>
+        /// <returns></returns>
         public static bool UnmakeTextureBindless(long textureHandle)
         {
             if (GL.Arb.IsTextureHandleResident(textureHandle))
@@ -272,12 +278,21 @@ namespace OpenTK_PathTracer.Render.Objects
             return false;
         }
 
+        /// <summary>
+        /// GL_ARB_bindless_texture must be available
+        /// </summary>
+        /// <returns></returns>
         public long GetImageBindlessHandle(int level, bool layered, int layer, PixelFormat pixelFormat, TextureAccess textureAccess)
         {
             long imageHandle = GL.Arb.GetImageHandle(ID, level, layered, layer, pixelFormat);
             GL.Arb.MakeImageHandleResident(imageHandle, (All)textureAccess);
             return imageHandle;
         }
+
+        /// <summary>
+        /// GL_ARB_bindless_texture must be available
+        /// </summary>
+        /// <returns></returns>
         public static bool UnmakeImageBindless(long imageHandle)
         {
             if (GL.Arb.IsImageHandleResident(imageHandle))

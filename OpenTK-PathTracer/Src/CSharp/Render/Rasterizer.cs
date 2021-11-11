@@ -9,13 +9,13 @@ namespace OpenTK_PathTracer.Render
         public readonly Framebuffer Framebuffer;
         public readonly Texture Result;
         private readonly ShaderProgram shaderProgram;
-        private readonly BufferObject vbo;
+        private readonly BufferObject vertexBuffer;
         private readonly VAO vao;
-        
+
         public Rasterizer(int width, int height)
         {
             Framebuffer = new Framebuffer();
-           
+
             Result = new Texture(TextureTarget2d.Texture2D);
             Result.MutableAllocate(width, height, 1, PixelInternalFormat.Rgba8);
 
@@ -23,11 +23,12 @@ namespace OpenTK_PathTracer.Render
 
             shaderProgram = new ShaderProgram(new Shader(ShaderType.VertexShader, "Res/Shaders/Rasterization/vertex.glsl".GetPathContent()), new Shader(ShaderType.FragmentShader, "Res/Shaders/Rasterization/fragment.glsl".GetPathContent()));
 
-            vbo = new BufferObject();
-            vbo.MutableAllocate(unitCubeVerts.Length * sizeof(float), unitCubeVerts, BufferUsageHint.StaticDraw);
-            
-            vao = new VAO(vbo, 3 * sizeof(float));
-            vao.SetAttribFormat(0, 3, VertexAttribType.Float, 0);
+            vertexBuffer = new BufferObject();
+            vertexBuffer.ImmutableAllocate(unitCubeVerts.Length * sizeof(float), unitCubeVerts, BufferStorageFlags.DynamicStorageBit);
+
+            vao = new VAO();
+            vao.AddSourceBuffer(vertexBuffer, 0, 3 * sizeof(float));
+            vao.SetAttribFormat(0, 0, 3, VertexAttribType.Float, 0);
         }
 
         public void Run(params AABB[] aabbs)
@@ -40,7 +41,7 @@ namespace OpenTK_PathTracer.Render
             for (int i = 0; i < aabbs.Length; i++)
             {
                 Matrix4 model = Matrix4.CreateScale(aabbs[i].Dimensions) * Matrix4.CreateTranslation(aabbs[i].Position);
-                
+
                 shaderProgram.Upload(0, model);
                 GL.DrawArrays(PrimitiveType.Quads, 0, unitCubeVerts.Length / 3);
             }

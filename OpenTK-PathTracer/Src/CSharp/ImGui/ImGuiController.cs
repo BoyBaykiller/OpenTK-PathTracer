@@ -97,10 +97,11 @@ namespace OpenTK_PathTracer.GUI
 
             shaderProgram = new ShaderProgram(new Shader(ShaderType.VertexShader, vertexSource), new Shader(ShaderType.FragmentShader, fragmentSource));
 
-            vao = new VAO(vbo, ebo, Unsafe.SizeOf<ImDrawVert>());
-            vao.SetAttribFormat(0, 2, VertexAttribType.Float, 0 * sizeof(float));
-            vao.SetAttribFormat(1, 2, VertexAttribType.Float, 2 * sizeof(float));
-            vao.SetAttribFormat(2, 4, VertexAttribType.UnsignedByte, 4 * sizeof(float), true);
+            vao = new VAO(ebo);
+            vao.AddSourceBuffer(vbo, 0, Unsafe.SizeOf<ImDrawVert>());
+            vao.SetAttribFormat(0, 0, 2, VertexAttribType.Float, 0 * sizeof(float));
+            vao.SetAttribFormat(0, 1, 2, VertexAttribType.Float, 2 * sizeof(float));
+            vao.SetAttribFormat(0, 2, 4, VertexAttribType.UnsignedByte, 4 * sizeof(float), true);
         }
 
         private void CreateFontDeviceTexture()
@@ -227,7 +228,7 @@ namespace OpenTK_PathTracer.GUI
             for (int i = 0; i < drawData.CmdListsCount; i++)
             {
                 ImDrawListPtr cmdList = drawData.CmdListsRange[i];
-                int vertexSize = cmdList.VtxBuffer.Size * vao.VertexSize;
+                int vertexSize = cmdList.VtxBuffer.Size * Unsafe.SizeOf<ImDrawVert>();
                 if (vertexSize > vbo.Size)
                 {
                     int newSize = (int)Math.Max(vbo.Size * 1.5f, vertexSize);
@@ -263,7 +264,7 @@ namespace OpenTK_PathTracer.GUI
             {
                 ImDrawListPtr cmd_list = drawData.CmdListsRange[i];
 
-                vbo.SubData(0, cmd_list.VtxBuffer.Size * vao.VertexSize, cmd_list.VtxBuffer.Data);
+                vbo.SubData(0, cmd_list.VtxBuffer.Size * Unsafe.SizeOf<ImDrawVert>(), cmd_list.VtxBuffer.Data);
                 ebo.SubData(0, cmd_list.IdxBuffer.Size * sizeof(ushort), cmd_list.IdxBuffer.Data);
 
                 int idx_offset = 0;

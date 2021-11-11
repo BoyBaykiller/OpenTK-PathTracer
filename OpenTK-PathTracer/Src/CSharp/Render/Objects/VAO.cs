@@ -7,29 +7,29 @@ namespace OpenTK_PathTracer.Render.Objects
     {
         private static int lastBindedID = -1;
 
-        public readonly int VertexSize;
         public readonly int ID;
-        public VAO(BufferObject vbo, int vertexSize)
+        public VAO()
         {
-            VertexSize = vertexSize;
             GL.CreateVertexArrays(1, out ID);
-            GL.VertexArrayVertexBuffer(ID, 0, vbo.ID, IntPtr.Zero, vertexSize);
         }
 
-        public VAO(BufferObject vbo, BufferObject ebo, int stride)
+        public VAO(BufferObject elementArrayBuffer)
         {
-            VertexSize = stride;
             GL.CreateVertexArrays(1, out ID);
-            GL.VertexArrayVertexBuffer(ID, 0, vbo.ID, IntPtr.Zero, stride);
-            GL.VertexArrayElementBuffer(ID, ebo.ID);
-            
+            GL.VertexArrayElementBuffer(ID, elementArrayBuffer.ID);
         }
 
-        public void SetAttribFormat(int index, int attribTypeElements, VertexAttribType vertexAttribType, int offset, bool normalize = false)
+        public void AddSourceBuffer(BufferObject sourceBuffer, int bindingIndex, int vertexSize, int bufferOffset = 0)
+        {
+            GL.VertexArrayVertexBuffer(ID, bindingIndex, sourceBuffer.ID, (IntPtr)bufferOffset, vertexSize);
+        }
+
+        public void SetAttribFormat(int bindingIndex, int index, int attribTypeElements, VertexAttribType vertexAttribType, int offset, bool normalize = false, int divisor = 0)
         {
             GL.EnableVertexArrayAttrib(ID, index);
             GL.VertexArrayAttribFormat(ID, index, attribTypeElements, vertexAttribType, normalize, offset);
-            GL.VertexArrayAttribBinding(ID, index, 0);
+            GL.VertexArrayAttribBinding(ID, index, bindingIndex);
+            GL.VertexArrayBindingDivisor(ID, bindingIndex, divisor);
         }
 
         public void Bind()

@@ -21,7 +21,7 @@ namespace OpenTK_PathTracer
 
 
         public Matrix4 projection, inverseProjection;
-        Vector2 nearFarPlane = new Vector2(EPSILON, 200f);
+        Vector2 nearFarPlane = new Vector2(EPSILON, 1000f);
         public int FPS, UPS;
         private int fps, ups;
 

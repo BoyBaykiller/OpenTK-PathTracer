@@ -219,7 +219,7 @@ float BSDF(inout Ray ray, HitInfo hitInfo, out bool isRefractive)
         rayProbability = 1.0 - specularChance - refractionChance;
     }
     
-    ray.Origin = hitInfo.NearHitPos + hitInfo.Normal * EPSILON * (isRefractive ? -1 : 1);
+    ray.Origin = hitInfo.NearHitPos + ray.Direction * EPSILON; // new ray direction method
     return max(rayProbability, EPSILON);
 }
 
