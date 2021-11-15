@@ -10,7 +10,7 @@ layout(local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
 layout(binding = 0, rgba32f) restrict uniform image2D ImgResult;
 layout(binding = 1) uniform samplerCube SamplerEnvironment;
 
-struct Material 
+struct Material
 {
     vec3 Albedo; // Base color
     float SpecularChance; // How reflective
@@ -58,14 +58,9 @@ struct Ray
 
 layout(std140, binding = 0) uniform BasicDataUBO
 {
-	mat4 Projection;
     mat4 InvProjection;
-    vec2 NearFar;
-	mat4 View;
 	mat4 InvView;
-    mat4 ProjectionView;
 	vec3 ViewPos;
-    vec3 ViewDir;
 } basicDataUBO;
 
 layout(std140, binding = 1) uniform GameObjectsUBO
@@ -219,7 +214,7 @@ float BSDF(inout Ray ray, HitInfo hitInfo, out bool isRefractive)
         rayProbability = 1.0 - specularChance - refractionChance;
     }
     
-    ray.Origin = hitInfo.NearHitPos + ray.Direction * EPSILON; // new ray direction method
+    ray.Origin = hitInfo.NearHitPos + ray.Direction * EPSILON;
     return max(rayProbability, EPSILON);
 }
 

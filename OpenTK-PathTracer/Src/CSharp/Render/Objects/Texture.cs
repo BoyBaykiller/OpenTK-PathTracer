@@ -145,7 +145,7 @@ namespace OpenTK_PathTracer.Render.Objects
         }
 
         /// <summary>
-        /// ARB_seamless_cubemap_per_texture must be available
+        /// GL_ARB_seamless_cubemap_per_texture must be available
         /// </summary>
         /// <param name="param"></param>
         public void SetSeamlessCubeMapPerTexture(bool param)

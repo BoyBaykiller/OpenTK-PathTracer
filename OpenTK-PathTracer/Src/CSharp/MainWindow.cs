@@ -114,11 +114,8 @@ namespace OpenTK_PathTracer
                         PathTracer.ThisRenderNumFrame = 0;
                 }
 
-                int oldOffset = Vector4.SizeInBytes * 4 * 2 + Vector4.SizeInBytes;
-                BasicDataUBO.Append(Vector4.SizeInBytes * 4 * 3, new Matrix4[] { Camera.View, Camera.View.Inverted(), Camera.View * projection });
-                BasicDataUBO.Append(Vector4.SizeInBytes, Camera.Position);
-                BasicDataUBO.Append(Vector4.SizeInBytes, Camera.ViewDir);
-                BasicDataUBO.BufferOffset = oldOffset;
+                BasicDataUBO.SubData(Vector4.SizeInBytes * 4, Vector4.SizeInBytes * 4, Camera.View.Inverted());
+                BasicDataUBO.SubData(Vector4.SizeInBytes * 8, Vector4.SizeInBytes, Camera.Position);
             }
             ups++;
             base.OnUpdateFrame(args);
@@ -172,7 +169,7 @@ namespace OpenTK_PathTracer
             finalProgram = new ShaderProgram(new Shader(ShaderType.VertexShader, "Res/Shaders/screenQuad.glsl".GetPathContent()), new Shader(ShaderType.FragmentShader, "Res/Shaders/final.glsl".GetPathContent()));
             
             BasicDataUBO = new BufferObject(BufferRangeTarget.UniformBuffer, 0);
-            BasicDataUBO.MutableAllocate(Vector4.SizeInBytes * 4 * 5 + Vector4.SizeInBytes * 3, IntPtr.Zero, BufferUsageHint.StaticDraw);
+            BasicDataUBO.MutableAllocate(Vector4.SizeInBytes * 4 * 2 + Vector4.SizeInBytes, IntPtr.Zero, BufferUsageHint.StaticDraw);
             GameObjectsUBO = new BufferObject(BufferRangeTarget.UniformBuffer, 1);
             GameObjectsUBO.MutableAllocate(Sphere.GPU_INSTANCE_SIZE * MAX_GAMEOBJECTS_SPHERES + Cuboid.GPU_INSTANCE_SIZE * MAX_GAMEOBJECTS_CUBOIDS, IntPtr.Zero, BufferUsageHint.StaticDraw);
 
@@ -244,11 +241,8 @@ namespace OpenTK_PathTracer
                 PostProcesser.SetSize(Width, Height);
                 Render.GUI.Final.SetSize(Width, Height);
 
-                projection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(FOV), Width / (float)Height, nearFarPlane.X, nearFarPlane.Y);
-                inverseProjection = projection.Inverted();
-                BasicDataUBO.BufferOffset = 0;
-                BasicDataUBO.Append(Vector4.SizeInBytes * 4 * 2, new Matrix4[] { projection, inverseProjection });
-                BasicDataUBO.Append(Vector4.SizeInBytes, nearFarPlane);
+                inverseProjection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(FOV), Width / (float)Height, nearFarPlane.X, nearFarPlane.Y).Inverted();
+                BasicDataUBO.SubData(0, Vector4.SizeInBytes * 4, inverseProjection);
                 lastWidth = Width; lastHeight = Height;
             }
             base.OnResize(e);

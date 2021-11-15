@@ -58,14 +58,9 @@ struct Ray
 
 layout(std140, binding = 0) uniform BasicDataUBO
 {
-	mat4 Projection;
     mat4 InvProjection;
-    vec2 NearFar;
-	mat4 View;
 	mat4 InvView;
-    mat4 ProjectionView;
 	vec3 ViewPos;
-    vec3 ViewDir;
 } basicDataUBO;
 
 layout(std140, binding = 1) uniform GameObjectsUBO
