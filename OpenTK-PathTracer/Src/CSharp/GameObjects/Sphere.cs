@@ -50,5 +50,10 @@ namespace OpenTK_PathTracer.GameObjects
 
             return true;
         }
+
+        public override string ToString()
+        {
+            return $"Sphere(vec3{Position}, {Radius}, Material(vec3{Material.Albedo}, {Material.SpecularChance}, vec3{Material.Emissiv}, {Material.SpecularRoughness}, vec3{Material.AbsorbanceColor}, {Material.RefractionChance}, {Material.RefractionRoughnes}, {Material.IOR}))";
+        }
     }
 }

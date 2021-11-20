@@ -20,7 +20,7 @@ namespace OpenTK_PathTracer
         public MainWindow() : base(832, 832, new GraphicsMode(0, 0, 0, 0)) {  /*WindowState = WindowState.Maximized;*/  }
 
 
-        public Matrix4 projection, inverseProjection;
+        public Matrix4 inverseProjection;
         Vector2 nearFarPlane = new Vector2(EPSILON, 1000f);
         public int FPS, UPS;
         private int fps, ups;
@@ -38,9 +38,7 @@ namespace OpenTK_PathTracer
 
                 PathTracer.Run();
 
-                Rasterizer.Run(new AABB(Vector3.One, Vector3.One));
-
-                PostProcesser.Run(PathTracer.Result, Rasterizer.Result);
+                PostProcesser.Run(PathTracer.Result);
 
                 GL.Viewport(0, 0, Width, Height);
                 Framebuffer.Clear(0, ClearBufferMask.ColorBufferBit);
@@ -125,7 +123,6 @@ namespace OpenTK_PathTracer
         ShaderProgram finalProgram;
         public BufferObject BasicDataUBO, GameObjectsUBO;
         public PathTracer PathTracer;
-        public Rasterizer Rasterizer;
         public ScreenEffect PostProcesser;
         public AtmosphericScattering AtmosphericScatterer;
         public Texture SkyBox;
@@ -163,7 +160,6 @@ namespace OpenTK_PathTracer
 
             AtmosphericScatterer = new AtmosphericScattering(128, 100, 10, 2.1f, 35.0f, 0.01f, new Vector3(680, 550, 440), new Vector3(0, 500 + 800.0f, 0), new Vector3(20.43f, -201.99f + 800.0f, -20.67f));
             PathTracer = new PathTracer(SkyBox, Width, Height, 13, 1, 20f, 0.14f);
-            Rasterizer = new Rasterizer(Width, Height);
             PostProcesser = new ScreenEffect(new Shader(ShaderType.FragmentShader, "Res/Shaders/PostProcessing/fragment.glsl".GetPathContent()), Width, Height);
 
             finalProgram = new ShaderProgram(new Shader(ShaderType.VertexShader, "Res/Shaders/screenQuad.glsl".GetPathContent()), new Shader(ShaderType.FragmentShader, "Res/Shaders/final.glsl".GetPathContent()));
@@ -224,7 +220,7 @@ namespace OpenTK_PathTracer
 
             GameObjects.AddRange(new Cuboid[] { down, upLight, back, front, right, left, middle });
             #endregion
-            
+
             for (int i = 0; i < GameObjects.Count; i++)
                 GameObjects[i].Upload(GameObjectsUBO);
             
@@ -237,7 +233,6 @@ namespace OpenTK_PathTracer
             if ((lastWidth != Width || lastHeight != Height) && Width != 0 && Height != 0) // dont resize when minimizing and maximizing
             {
                 PathTracer.SetSize(Width, Height);
-                Rasterizer.SetSize(Width, Height);
                 PostProcesser.SetSize(Width, Height);
                 Render.GUI.Final.SetSize(Width, Height);
 

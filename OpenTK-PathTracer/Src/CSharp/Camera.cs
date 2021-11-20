@@ -13,7 +13,7 @@ namespace OpenTK_PathTracer
         public float MovmentSpeed;
         public float MouseSensitivity;
         public Matrix4 View { get; private set; }
-        public Camera(Vector3 position, Vector3 up, float lookX = 0.0f, float lookY = -90.0f, float mouseSensitivity = 0.1f, float speed = 10)
+        public Camera(Vector3 position, Vector3 up, float lookX = -90.0f, float lookY = 0.0f, float mouseSensitivity = 0.1f, float speed = 10)
         {
             LookX = lookX;
             LookY = lookY;

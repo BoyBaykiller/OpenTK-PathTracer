@@ -8,7 +8,7 @@ namespace OpenTK_PathTracer
         {
             try
             {
-                MainWindow mainWindow = new MainWindow();
+                using MainWindow mainWindow = new MainWindow();
                 mainWindow.Run(Math.Min(OpenTK.DisplayDevice.Default.RefreshRate, 144));
             }
             catch (Exception ex)
