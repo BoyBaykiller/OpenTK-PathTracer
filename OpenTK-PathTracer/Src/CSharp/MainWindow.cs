@@ -41,7 +41,7 @@ namespace OpenTK_PathTracer
                 PostProcesser.Run(PathTracer.Result);
 
                 GL.Viewport(0, 0, Width, Height);
-                Framebuffer.Clear(0, ClearBufferMask.ColorBufferBit);
+                Framebuffer.Bind(0);
                 PostProcesser.Result.AttachSampler(0);
                 finalProgram.Use();
                 GL.DrawArrays(PrimitiveType.Quads, 0, 4);

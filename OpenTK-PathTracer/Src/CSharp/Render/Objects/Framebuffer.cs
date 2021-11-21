@@ -9,8 +9,6 @@ namespace OpenTK_PathTracer.Render.Objects
     {
         private static int lastBindedID = -1;
 
-        private int idRBO;
-
         public readonly int ID;
         public Framebuffer()
         {
@@ -27,14 +25,6 @@ namespace OpenTK_PathTracer.Render.Objects
         {
             GL.NamedFramebufferTexture(ID, framebufferAttachment, texture.ID, 0);
         }
-
-        public void SetRenderbuffer(RenderbufferStorage renderbufferStorage, FramebufferAttachment framebufferAttachment, int width, int height)
-        {
-            GL.CreateRenderbuffers(1, out idRBO);
-            GL.NamedRenderbufferStorage(ID, renderbufferStorage, width, height);
-            GL.NamedFramebufferRenderbuffer(ID, framebufferAttachment, RenderbufferTarget.Renderbuffer, idRBO);
-        }
-
         public void SetRenderTarget(params DrawBuffersEnum[] drawBuffersEnums)
         {
             GL.NamedFramebufferDrawBuffers(ID, drawBuffersEnums.Length, drawBuffersEnums);
