@@ -20,7 +20,7 @@ namespace OpenTK_PathTracer.Render
 
             framebuffer.AddRenderTarget(FramebufferAttachment.ColorAttachment0, Result);
             
-            shaderProgram = new ShaderProgram(new Shader(ShaderType.VertexShader, "Res/Shaders/screenQuad.glsl".GetPathContent()), fragmentShader);
+            shaderProgram = new ShaderProgram(new Shader(ShaderType.VertexShader, "res/shaders/screenQuad.glsl".GetPathContent()), fragmentShader);
         }
 
         public void Run(params Texture[] textures)

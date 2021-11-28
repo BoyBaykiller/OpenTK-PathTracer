@@ -44,7 +44,7 @@
   </ItemGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="xcopy /e /y /i &quot;$(ProjectDir)Src\Shaders\&quot; &quot;$(ProjectDir)$(OutDir)\Res\Shaders&quot;&#xD;&#xA;xcopy /e /y /i &quot;$(ProjectDir)Res\&quot; &quot;$(ProjectDir)$(OutDir)\Res&quot;" />
+    <Exec Command="xcopy /e /y /i &quot;$(ProjectDir)res\&quot; &quot;$(ProjectDir)$(OutDir)\res&quot;" />
   </Target>
 
 </Project>

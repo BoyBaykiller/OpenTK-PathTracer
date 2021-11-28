@@ -21,7 +21,7 @@ namespace OpenTK_PathTracer
 
 
         public Matrix4 inverseProjection;
-        Vector2 nearFarPlane = new Vector2(EPSILON, 1000f);
+        private Vector2 nearFarPlane = new Vector2(EPSILON, 1000f);
         public int FPS, UPS;
         private int fps, ups;
 
@@ -58,7 +58,7 @@ namespace OpenTK_PathTracer
             base.OnRenderFrame(e);
         }
 
-        readonly Stopwatch fpsTimer = Stopwatch.StartNew();
+        private readonly Stopwatch fpsTimer = Stopwatch.StartNew();
         protected override void OnUpdateFrame(FrameEventArgs args)
         {
             if (fpsTimer.ElapsedMilliseconds >= 1000)
@@ -120,7 +120,7 @@ namespace OpenTK_PathTracer
         }
 
         public readonly List<BaseGameObject> GameObjects = new List<BaseGameObject>();
-        ShaderProgram finalProgram;
+        private ShaderProgram finalProgram;
         public BufferObject BasicDataUBO, GameObjectsUBO;
         public PathTracer PathTracer;
         public ScreenEffect PostProcesser;
@@ -150,19 +150,19 @@ namespace OpenTK_PathTracer
             SkyBox = new Texture(TextureTarget2d.TextureCubeMap);
             Helper.ParallelLoadCubemapImages(SkyBox, new string[]
             {
-                "Res/Textures/EnvironmentMap/posx.png",
-                "Res/Textures/EnvironmentMap/negx.png",
-                "Res/Textures/EnvironmentMap/posy.png",
-                "Res/Textures/EnvironmentMap/negy.png",
-                "Res/Textures/EnvironmentMap/posz.png",
-                "Res/Textures/EnvironmentMap/negz.png"
+                "res/Textures/EnvironmentMap/posx.png",
+                "res/Textures/EnvironmentMap/negx.png",
+                "res/Textures/EnvironmentMap/posy.png",
+                "res/Textures/EnvironmentMap/negy.png",
+                "res/Textures/EnvironmentMap/posz.png",
+                "res/Textures/EnvironmentMap/negz.png"
             }, (SizedInternalFormat)PixelInternalFormat.Srgb8Alpha8);
 
             AtmosphericScatterer = new AtmosphericScattering(128, 100, 10, 2.1f, 35.0f, 0.01f, new Vector3(680, 550, 440), new Vector3(0, 500 + 800.0f, 0), new Vector3(20.43f, -201.99f + 800.0f, -20.67f));
             PathTracer = new PathTracer(SkyBox, Width, Height, 13, 1, 20f, 0.14f);
-            PostProcesser = new ScreenEffect(new Shader(ShaderType.FragmentShader, "Res/Shaders/PostProcessing/fragment.glsl".GetPathContent()), Width, Height);
+            PostProcesser = new ScreenEffect(new Shader(ShaderType.FragmentShader, "res/shaders/PostProcessing/fragment.glsl".GetPathContent()), Width, Height);
 
-            finalProgram = new ShaderProgram(new Shader(ShaderType.VertexShader, "Res/Shaders/screenQuad.glsl".GetPathContent()), new Shader(ShaderType.FragmentShader, "Res/Shaders/final.glsl".GetPathContent()));
+            finalProgram = new ShaderProgram(new Shader(ShaderType.VertexShader, "res/shaders/screenQuad.glsl".GetPathContent()), new Shader(ShaderType.FragmentShader, "res/shaders/final.glsl".GetPathContent()));
             
             BasicDataUBO = new BufferObject(BufferRangeTarget.UniformBuffer, 0);
             BasicDataUBO.MutableAllocate(Vector4.SizeInBytes * 4 * 2 + Vector4.SizeInBytes, IntPtr.Zero, BufferUsageHint.StaticDraw);
@@ -227,7 +227,7 @@ namespace OpenTK_PathTracer
             base.OnLoad(e);
         }
 
-        int lastWidth = -1, lastHeight = -1;
+        private int lastWidth = -1, lastHeight = -1;
         protected override void OnResize(EventArgs e)
         {
             if ((lastWidth != Width || lastHeight != Height) && Width != 0 && Height != 0) // dont resize when minimizing and maximizing
@@ -256,7 +256,7 @@ namespace OpenTK_PathTracer
 
         protected override void OnClosed(EventArgs e)
         {
-            ImGuiNET.ImGui.SaveIniSettingsToDisk("Res/imgui.ini");
+            ImGuiNET.ImGui.SaveIniSettingsToDisk("res/imgui.ini");
             base.OnClosed(e);
         }
 

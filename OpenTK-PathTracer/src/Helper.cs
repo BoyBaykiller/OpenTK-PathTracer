@@ -11,7 +11,7 @@ namespace OpenTK_PathTracer
 {
     static class Helper
     {
-        public const string SHADER_DIRECTORY_PATH = "Res/Shaders/";
+        public const string SHADER_DIRECTORY_PATH = "res/shaders/";
         public static readonly int APIMajor = (int)char.GetNumericValue(GL.GetString(StringName.Version)[0]);
         public static readonly int APIMinor = (int)char.GetNumericValue(GL.GetString(StringName.Version)[2]);
 

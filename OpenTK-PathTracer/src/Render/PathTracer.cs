@@ -93,11 +93,11 @@ namespace OpenTK_PathTracer
             Result.MutableAllocate(width, height, 1, PixelInternalFormat.Rgba32f);
 
 #if USE_COMPUTE
-            shaderProgram = new ShaderProgram(new Shader(ShaderType.ComputeShader, "Res/Shaders/PathTracing/compute.glsl".GetPathContent()));
+            shaderProgram = new ShaderProgram(new Shader(ShaderType.ComputeShader, "res/shaders/PathTracing/compute.glsl".GetPathContent()));
 #else
             framebuffer = new Framebuffer();
             framebuffer.AddRenderTarget(FramebufferAttachment.ColorAttachment0, Result);
-            shaderProgram = new ShaderProgram(new Shader(ShaderType.VertexShader, "Res/Shaders/screenQuad.glsl".GetPathContent()), new Shader(ShaderType.FragmentShader, "Res/Shaders/PathTracing/fragCompute.glsl".GetPathContent()));
+            shaderProgram = new ShaderProgram(new Shader(ShaderType.VertexShader, "res/shaders/screenQuad.glsl".GetPathContent()), new Shader(ShaderType.FragmentShader, "res/shaders/PathTracing/fragCompute.glsl".GetPathContent()));
 #endif
 
             RayDepth = rayDepth;

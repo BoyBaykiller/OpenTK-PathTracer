@@ -121,7 +121,7 @@ namespace OpenTK_PathTracer.Render
             Result = new Texture(TextureTarget2d.TextureCubeMap);
             Result.MutableAllocate(size, size, 1, PixelInternalFormat.Rgba32f);
 
-            shaderProgram = new ShaderProgram(new Shader(ShaderType.ComputeShader, "Res/Shaders/AtmosphericScattering/compute.glsl".GetPathContent()));
+            shaderProgram = new ShaderProgram(new Shader(ShaderType.ComputeShader, "res/shaders/AtmosphericScattering/compute.glsl".GetPathContent()));
             
             bufferObject = new BufferObject(BufferRangeTarget.UniformBuffer, 3);
             bufferObject.MutableAllocate(Vector4.SizeInBytes * 4 * 7 + Vector4.SizeInBytes, IntPtr.Zero, BufferUsageHint.StaticDraw);
