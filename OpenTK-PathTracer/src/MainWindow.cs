@@ -34,27 +34,27 @@ namespace OpenTK_PathTracer
             if (Focused || IsRenderInBackground)
             {
                 //AtmosphericScatterer.ViewPos = Camera.Position;
-                //AtmosphericScatterer.Run();
+                //AtmosphericScatterer.Render();
 
-                PathTracer.Run();
+                PathTracer.Render();
 
-                PostProcesser.Run(PathTracer.Result);
-
+                PostProcesser.Render(PathTracer.Result);
                 GL.Viewport(0, 0, Width, Height);
                 Framebuffer.Bind(0);
                 PostProcesser.Result.AttachSampler(0);
                 finalProgram.Use();
                 GL.DrawArrays(PrimitiveType.Quads, 0, 4);
-                
+
                 if (Focused)
                 {
-                    Render.GUI.Final.Run(this, (float)e.Time, out bool frameChanged);
+                    Gui.Render(this, (float)e.Time, out bool frameChanged);
                     if (frameChanged)
                         PathTracer.ThisRenderNumFrame = 0;
                 }
                 SwapBuffers();
                 fps++;
             }
+
             base.OnRenderFrame(e);
         }
 
@@ -76,13 +76,13 @@ namespace OpenTK_PathTracer
 
             if (Focused)
             {
-                if (Render.GUI.Final.ImGuiIOPtr.WantCaptureMouse && !CursorVisible)
+                if (Gui.ImGuiIOPtr.WantCaptureMouse && !CursorVisible)
                 {
                     Point _point = PointToScreen(new Point(Width / 2, Height / 2));
                     Mouse.SetPosition(_point.X, _point.Y);
                 }
 
-                Render.GUI.Final.Update(this);
+                Gui.Update(this);
 
                 if (KeyboardManager.IsKeyDown(Key.Escape))
                     Close();
@@ -93,7 +93,7 @@ namespace OpenTK_PathTracer
                 if (KeyboardManager.IsKeyTouched(Key.F11))
                     WindowState = WindowState == WindowState.Normal ? WindowState.Fullscreen : WindowState.Normal;
 
-                if (KeyboardManager.IsKeyTouched(Key.E) && !Render.GUI.Final.ImGuiIOPtr.WantCaptureKeyboard)
+                if (KeyboardManager.IsKeyTouched(Key.E) && !Gui.ImGuiIOPtr.WantCaptureKeyboard)
                 {
                     CursorVisible = !CursorVisible;
                     CursorGrabbed = !CursorGrabbed;
@@ -165,9 +165,9 @@ namespace OpenTK_PathTracer
             finalProgram = new ShaderProgram(new Shader(ShaderType.VertexShader, "res/shaders/screenQuad.glsl".GetPathContent()), new Shader(ShaderType.FragmentShader, "res/shaders/final.glsl".GetPathContent()));
             
             BasicDataUBO = new BufferObject(BufferRangeTarget.UniformBuffer, 0);
-            BasicDataUBO.MutableAllocate(Vector4.SizeInBytes * 4 * 2 + Vector4.SizeInBytes, IntPtr.Zero, BufferUsageHint.StaticDraw);
+            BasicDataUBO.ImmutableAllocate(Vector4.SizeInBytes * 4 * 2 + Vector4.SizeInBytes, IntPtr.Zero, BufferStorageFlags.DynamicStorageBit);
             GameObjectsUBO = new BufferObject(BufferRangeTarget.UniformBuffer, 1);
-            GameObjectsUBO.MutableAllocate(Sphere.GPU_INSTANCE_SIZE * MAX_GAMEOBJECTS_SPHERES + Cuboid.GPU_INSTANCE_SIZE * MAX_GAMEOBJECTS_CUBOIDS, IntPtr.Zero, BufferUsageHint.StaticDraw);
+            GameObjectsUBO.ImmutableAllocate(Sphere.GPU_INSTANCE_SIZE * MAX_GAMEOBJECTS_SPHERES + Cuboid.GPU_INSTANCE_SIZE * MAX_GAMEOBJECTS_CUBOIDS, IntPtr.Zero, BufferStorageFlags.DynamicStorageBit);
 
             float width = 40, height = 25, depth = 25;
             #region SetupSpheres
@@ -223,7 +223,7 @@ namespace OpenTK_PathTracer
 
             for (int i = 0; i < GameObjects.Count; i++)
                 GameObjects[i].Upload(GameObjectsUBO);
-            
+
             base.OnLoad(e);
         }
 
@@ -234,7 +234,7 @@ namespace OpenTK_PathTracer
             {
                 PathTracer.SetSize(Width, Height);
                 PostProcesser.SetSize(Width, Height);
-                Render.GUI.Final.SetSize(Width, Height);
+                Gui.SetSize(Width, Height);
 
                 inverseProjection = Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(FOV), Width / (float)Height, nearFarPlane.X, nearFarPlane.Y).Inverted();
                 BasicDataUBO.SubData(0, Vector4.SizeInBytes * 4, inverseProjection);
@@ -245,7 +245,7 @@ namespace OpenTK_PathTracer
 
         protected override void OnKeyPress(KeyPressEventArgs e)
         {
-            Render.GUI.Final.ImGuiController.PressChar(e.KeyChar);
+            Gui.ImGuiController.PressChar(e.KeyChar);
         }
 
         protected override void OnFocusedChanged(EventArgs e)

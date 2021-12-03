@@ -6,9 +6,9 @@ using OpenTK_PathTracer.GUI;
 using OpenTK_PathTracer.GameObjects;
 using OpenTK_PathTracer.Render.Objects;
 
-namespace OpenTK_PathTracer.Render.GUI
+namespace OpenTK_PathTracer.Render
 {
-    struct Final
+    static class Gui
     {
         public static ImGuiController ImGuiController = new ImGuiController(0, 0, "res/imgui.ini");
         private static BaseGameObject pickedObject;
@@ -17,7 +17,7 @@ namespace OpenTK_PathTracer.Render.GUI
 
         public static ImGuiIOPtr ImGuiIOPtr => ImGui.GetIO();
 
-        public static void Run(MainWindow mainWindow, float frameTime, out bool frameChanged)
+        public static void Render(MainWindow mainWindow, float frameTime, out bool frameChanged)
         {
             ImGuiController.Update(mainWindow, frameTime);
 
@@ -87,20 +87,20 @@ namespace OpenTK_PathTracer.Render.GUI
                         else
                         {
                             mainWindow.PathTracer.EnvironmentMap = mainWindow.AtmosphericScatterer.Result;
-                            mainWindow.AtmosphericScatterer.Run();
+                            mainWindow.AtmosphericScatterer.Render();
                         }
                     }
                     
                     if (IsEnvironmentAtmosphere)
                     {
-                        ImGui.Text($"Computation Time: {MathF.Round(mainWindow.AtmosphericScatterer.Query.ElapsedMilliseconds, 2)} ms");
+                        ImGui.Text($"Computation time: {MathF.Round(mainWindow.AtmosphericScatterer.Query.ElapsedMilliseconds, 2)} ms");
 
                         int tempInt = mainWindow.AtmosphericScatterer.InScatteringSamples;
                         if (ImGui.SliderInt("InScatteringSamples", ref tempInt, 1, 100))
                         {
                             hadInput = true;
                             mainWindow.AtmosphericScatterer.InScatteringSamples = tempInt;
-                            mainWindow.AtmosphericScatterer.Run();
+                            mainWindow.AtmosphericScatterer.Render();
                         }
 
                         tempInt = mainWindow.AtmosphericScatterer.DensitySamples;
@@ -108,7 +108,7 @@ namespace OpenTK_PathTracer.Render.GUI
                         {
                             hadInput = true;
                             mainWindow.AtmosphericScatterer.DensitySamples = tempInt;
-                            mainWindow.AtmosphericScatterer.Run();
+                            mainWindow.AtmosphericScatterer.Render();
                         }
 
                         float temp = mainWindow.AtmosphericScatterer.ScatteringStrength;
@@ -116,7 +116,7 @@ namespace OpenTK_PathTracer.Render.GUI
                         {
                             hadInput = true;
                             mainWindow.AtmosphericScatterer.ScatteringStrength = temp;
-                            mainWindow.AtmosphericScatterer.Run();
+                            mainWindow.AtmosphericScatterer.Render();
                         }
 
                         temp = mainWindow.AtmosphericScatterer.DensityFallOff;
@@ -124,7 +124,7 @@ namespace OpenTK_PathTracer.Render.GUI
                         {
                             hadInput = true;
                             mainWindow.AtmosphericScatterer.DensityFallOff = temp;
-                            mainWindow.AtmosphericScatterer.Run();
+                            mainWindow.AtmosphericScatterer.Render();
                         }
 
                         temp = mainWindow.AtmosphericScatterer.AtmosphereRadius;
@@ -132,7 +132,7 @@ namespace OpenTK_PathTracer.Render.GUI
                         {
                             hadInput = true;
                             mainWindow.AtmosphericScatterer.AtmosphereRadius = temp;
-                            mainWindow.AtmosphericScatterer.Run();
+                            mainWindow.AtmosphericScatterer.Render();
                         }
 
                         System.Numerics.Vector3 nVector3;
@@ -141,7 +141,7 @@ namespace OpenTK_PathTracer.Render.GUI
                         {
                             hadInput = true;
                             mainWindow.AtmosphericScatterer.WaveLengths = NVector3ToVector3(nVector3);
-                            mainWindow.AtmosphericScatterer.Run();
+                            mainWindow.AtmosphericScatterer.Render();
                         }
                     }
 
@@ -264,9 +264,6 @@ namespace OpenTK_PathTracer.Render.GUI
 
         private static Vector3 NVector3ToVector3(System.Numerics.Vector3 v) => new Vector3(v.X, v.Y, v.Z);
         private static System.Numerics.Vector3 Vector3ToNVector3(Vector3 v) => new System.Numerics.Vector3(v.X, v.Y, v.Z);
-
-        private static Vector2 NVector2ToVector2(System.Numerics.Vector2 v) => new Vector2(v.X, v.Y);
-        private static System.Numerics.Vector2 Vector2ToNVector2(Vector2 v) => new System.Numerics.Vector2(v.X, v.Y);
 
         public static void SetSize(int width, int height)
         {

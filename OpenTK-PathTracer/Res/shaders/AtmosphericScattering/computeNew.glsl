@@ -28,26 +28,6 @@ Ray GetWorldSpaceRay(mat4 inverseProj, mat4 inverseView, vec3 viewPos, vec2 norm
 bool IsInside(vec2 pos, vec2 size);
 
 
-const vec3 PLANET_POSITION = vec3(0, 0, 0);
-const float PLANET_RADIUS = 600;
-const vec3 LIGHT_DIR = vec3(0, -1, 0);
-const float MIE_STRENGTH = 0.76;
-const float MAX_RAYLEIGH_HEIGHT = 100;
-const float MAX_MIE_HEIGHT = 100;
-const float HEIGHT_ABSORBTION = 10000;
-uniform float atmosphereRad;
-
-uniform vec3 lightPos;
-uniform vec3 viewPos;
-
-uniform float densityFallOff;
-
-uniform int inScatteringSamples;
-uniform int densitySamples;
-uniform float scatteringStrength;
-
-uniform vec3 waveLengths;
-vec3 ScatteringCoefficients;
 
 void main()
 {
@@ -62,6 +42,12 @@ void main()
     
     imageStore(ImgResult, imgCoord, vec4(scattered, 1.0));
 }
+
+const float MIE_STRENGTH = 0.76;
+const float MAX_MIE_HEIGHT = 1000
+const float MAX_RAYLEIGH_HEIGHT = 1000;
+const vec3 PLANET_POSITION = vec3(0.0);
+const vec3 LIGHT_DIR = vec3(0.0, -1.0, 0.0);
 
 vec3 CalculateScattering(Ray ray)
 {

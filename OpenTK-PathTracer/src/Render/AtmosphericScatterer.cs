@@ -140,8 +140,8 @@ namespace OpenTK_PathTracer.Render
                 Camera.GenerateMatrix(Vector3.Zero, new Vector3(0.0f, 0.0f, -1.0f), new Vector3(0.0f, -1.0f, 0.0f)), // NegativeZ
             };
 
-            bufferObject.Append(Vector4.SizeInBytes * 4, invProjection);
-            bufferObject.Append(Vector4.SizeInBytes * 4 * invViews.Length, invViews);
+            bufferObject.SubData(0, Vector4.SizeInBytes * 4, invProjection);
+            bufferObject.SubData(Vector4.SizeInBytes * 4, Vector4.SizeInBytes * 4 * invViews.Length, invViews);
 
             InScatteringSamples = inScatteringSamples;
             DensitySamples = densitySamples;
@@ -158,14 +158,14 @@ namespace OpenTK_PathTracer.Render
         /// This method computes a whole cubemap rather than just whats visible. It is meant for precomputation and should not be called frequently for performance reasons
         /// </summary>
         /// <param name="renderParams"></param>
-        public void Run()
+        public void Render()
         {
             Query.Start();
 
             Result.AttachImage(0, 0, true, 0, TextureAccess.WriteOnly, SizedInternalFormat.Rgba32f);
             shaderProgram.Use();
 
-            GL.DispatchCompute((int)MathF.Ceiling(Result.Width / 8.0f), (int)MathF.Ceiling(Result.Width / 8.0f), 6);
+            GL.DispatchCompute((Result.Width + 8 - 1) / 8, (Result.Width + 8 - 1) / 8, 6);
             GL.MemoryBarrier(MemoryBarrierFlags.TextureFetchBarrierBit);
 
             Query.StopAndReset();

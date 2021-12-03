@@ -9,12 +9,16 @@ vec3 LinearToInverseGamma(vec3 rgb, float gamma);
 vec3 ACESFilm(vec3 x);
 
 
-in vec2 TexCoord;
+layout(location = 3) in struct
+{
+    vec2 TexCoord;
+} inData;
+
 void main()
 {
-    vec3 color = texture(Sampler0, TexCoord).rgb;
-    color += texture(Sampler1, TexCoord).rgb;
-    //color += texture(Sampler2, TexCoord).rgb;
+    vec3 color = texture(Sampler0, inData.TexCoord).rgb;
+    color += texture(Sampler1, inData.TexCoord).rgb;
+    //color += texture(Sampler2, inData.TexCoord).rgb;
     
     color = ACESFilm(color);
     color = LinearToInverseGamma(color, 2.4);

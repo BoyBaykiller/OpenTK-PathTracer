@@ -109,7 +109,7 @@ namespace OpenTK_PathTracer
 
         public int Samples => ThisRenderNumFrame * SPP;
         public int ThisRenderNumFrame;
-        public void Run()
+        public void Render()
         {
             shaderProgram.Use();
             shaderProgram.Upload(0, ThisRenderNumFrame++);

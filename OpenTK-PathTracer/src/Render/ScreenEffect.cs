@@ -11,7 +11,7 @@ namespace OpenTK_PathTracer.Render
         public ScreenEffect(Shader fragmentShader, int width, int height)
         {
             if (fragmentShader.ShaderType != ShaderType.FragmentShader)
-                throw new System.ArgumentException("ScreenEffect: Only pass in shaders of type FragmentShader");
+                throw new System.ArgumentException($"Only pass in shaders of type {ShaderType.FragmentShader}");
 
             framebuffer = new Framebuffer();
 
@@ -23,7 +23,7 @@ namespace OpenTK_PathTracer.Render
             shaderProgram = new ShaderProgram(new Shader(ShaderType.VertexShader, "res/shaders/screenQuad.glsl".GetPathContent()), fragmentShader);
         }
 
-        public void Run(params Texture[] textures)
+        public void Render(params Texture[] textures)
         {
             framebuffer.Bind();
             shaderProgram.Use();

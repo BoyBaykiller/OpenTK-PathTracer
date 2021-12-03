@@ -28,9 +28,9 @@ namespace OpenTK_PathTracer.Render.Objects
         public readonly int ID;
         public readonly TextureTarget Target;
         public readonly TextureDimension Dimension;
-        public int Width { get; private set; } = 1;
-        public int Height { get; private set; } = 1;
-        public int Depth { get; private set; } = 1;
+        public int Width { get; private set; }
+        public int Height { get; private set; }
+        public int Depth { get; private set; }
         public PixelInternalFormat PixelInternalFormat { get; private set; }
 
         public Texture(TextureTarget3d textureTarget3D)

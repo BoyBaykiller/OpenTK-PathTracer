@@ -3,10 +3,10 @@
 I am presenting a noisy, yet fully [Path Traced](https://de.wikipedia.org/wiki/Path_Tracing) renderer written in C#.
 
 The calculations and rendering are done in real time using OpenGL.  
-I upload the whole Scene (only consisting out of Cuboids and Spheres for now) to a UBO which is then accessed in a Compute Shader where all the Path Tracing happens.
+I upload the whole Scene to a UBO which is then accessed in a Compute Shader where all the Path Tracing happens.
 Due to the realistic nature of Path Tracers various effects like Soft Shadows, Reflections or Ambient Occlusion emerge automatically without explicitly adding code for any of these effects like you would have to do in a traditional rasterizer.
 
-The renderer also features [Depth of Field](https://en.wikipedia.org/wiki/Depth_of_field), which can be controlled with two variables at runtime through [ImGui](https://github.com/ocornut/imgui).
+The renderer also features [Depth of Field](https://en.wikipedia.org/wiki/Depth_of_field), which can be controlled with two variables at runtime through [ImGui](https://github.com/mellinoe/ImGui.NET).
 `FocalLength` is the distance an object appears in focus.
 `ApertureDiameter` controlls how strongly objects out of focus are blured.
 

@@ -13,14 +13,15 @@ namespace OpenTK_PathTracer
             }
             catch (Exception ex)
             {
-                int line = new StackTrace(ex, true).GetFrame(0).GetFileLineNumber();
-                string fileName = System.IO.Path.GetFileName(new StackTrace(ex, true).GetFrame(0).GetFileName());
+                StackFrame frame = new StackTrace(ex, true).GetFrame(0);
+                int line = frame.GetFileLineNumber();
+                string fileName = System.IO.Path.GetFileName(frame.GetFileName());
                 Console.WriteLine("\n====== Exception ======");
                 Console.WriteLine($"Type: {ex.GetType().Name}");
                 Console.WriteLine($"Filename: {fileName}");
                 Console.WriteLine($"Line: {line}");
                 Console.WriteLine($"Message: {ex.Message}");
-                Console.WriteLine("==== Enter to Exit ====");
+                Console.WriteLine("===== Enter to exit =====");
                 Console.ReadLine();
             }
         }
