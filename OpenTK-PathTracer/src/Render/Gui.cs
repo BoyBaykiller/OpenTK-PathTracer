@@ -35,10 +35,10 @@ namespace OpenTK_PathTracer.Render
                 if (ImGui.CollapsingHeader("PathTracing"))
                 {
                     ImGui.Text($"VSync: {mainWindow.VSync}");
-                    ImGui.Text($"FPS: {mainWindow.FPS}"); ImGui.SameLine(); ImGui.Text($"SPS: {mainWindow.FPS * mainWindow.PathTracer.SPP}"); ImGui.SameLine(); ImGui.Text($"UPS: {mainWindow.UPS}"); 
+                    ImGui.Text($"FPS: {mainWindow.FPS}"); ImGui.SameLine(); ImGui.Text($"UPS: {mainWindow.UPS}"); ImGui.SameLine(); ImGui.Text($"Samples/Pixel/Second: {mainWindow.FPS * mainWindow.PathTracer.SPP}");
                     ImGui.Checkbox("RenderInBackground", ref mainWindow.IsRenderInBackground);
                     int temp = mainWindow.PathTracer.SPP;
-                    if (ImGui.SliderInt("SPP", ref temp, 1, 10))
+                    if (ImGui.SliderInt("Samples/Pixel", ref temp, 1, 10))
                     {
                         frameChanged = true;
                         mainWindow.PathTracer.SPP = temp;
@@ -46,7 +46,7 @@ namespace OpenTK_PathTracer.Render
 
 
                     temp = mainWindow.PathTracer.RayDepth;
-                    if (ImGui.SliderInt("RayDepth", ref temp, 1, 50))
+                    if (ImGui.SliderInt("MaxRayDepth", ref temp, 1, 50))
                     {
                         frameChanged = true;
                         mainWindow.PathTracer.RayDepth = temp;
@@ -242,7 +242,7 @@ namespace OpenTK_PathTracer.Render
                     //    int start = pickedObject.BufferOffset + Sphere.GPU_INSTANCE_SIZE;
                     //    int bufferSpheresEnd = Sphere.GPU_INSTANCE_SIZE * mainWindow.PathTracer.NumSpheres - start;
 
-                    //    /// Shift following Spheres backwards to override the picked one (just using the last sphere to overriding the picked sphere should work as well !?)
+                    //    /// Shift following Spheres backwards to override the picked one (just using the last sphere to override the picked sphere should work as well !?)
                     //    mainWindow.GameObjectsUBO.GetSubData(start, bufferSpheresEnd, out IntPtr followingSphereData);
                     //    mainWindow.GameObjectsUBO.SubData(pickedObject.BufferOffset, bufferSpheresEnd, followingSphereData); // override selected sphere
                     //    System.Runtime.InteropServices.Marshal.FreeHGlobal(followingSphereData);

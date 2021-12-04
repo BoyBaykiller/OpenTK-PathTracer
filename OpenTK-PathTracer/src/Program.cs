@@ -9,17 +9,15 @@ namespace OpenTK_PathTracer
             try
             {
                 using MainWindow mainWindow = new MainWindow();
-                mainWindow.Run(Math.Min(OpenTK.DisplayDevice.Default.RefreshRate, 144));
+                mainWindow.Run(OpenTK.DisplayDevice.Default.RefreshRate);
             }
             catch (Exception ex)
             {
                 StackFrame frame = new StackTrace(ex, true).GetFrame(0);
-                int line = frame.GetFileLineNumber();
-                string fileName = System.IO.Path.GetFileName(frame.GetFileName());
                 Console.WriteLine("\n====== Exception ======");
                 Console.WriteLine($"Type: {ex.GetType().Name}");
-                Console.WriteLine($"Filename: {fileName}");
-                Console.WriteLine($"Line: {line}");
+                Console.WriteLine($"Filename: {System.IO.Path.GetFileName(frame.GetFileName())}");
+                Console.WriteLine($"Line: {frame.GetFileLineNumber()}");
                 Console.WriteLine($"Message: {ex.Message}");
                 Console.WriteLine("===== Enter to exit =====");
                 Console.ReadLine();

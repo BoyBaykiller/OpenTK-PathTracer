@@ -156,9 +156,8 @@ vec3 Radiance(Ray ray)
                 
                 throughput *= hitInfo.Material.Albedo;
             }
-
             throughput /= rayProbability;
-            
+
             // Russian Roulette, unbiased method to terminate rays and therefore lower render times (also reduces fireflies)
             {
                 float p = max(throughput.x, max(throughput.y, throughput.z));
@@ -192,7 +191,6 @@ float BSDF(inout Ray ray, HitInfo hitInfo, out bool isRefractive)
 
     vec3 diffuseRay = CosineSampleHemisphere(hitInfo.Normal);
     float rayProbability = 1.0;
-    //float isDiffuse = 1.0 - isSpecular - isRefractive;
     
     float raySelectRoll = GetRandomFloat01();
     if (specularChance > raySelectRoll)

@@ -63,15 +63,16 @@ namespace OpenTK_PathTracer
             if (KeyboardManager.IsKeyDown(Key.A))
                 acceleration -= Vector3.Cross(ViewDir, Up).Normalized();
 
-            
-            Velocity += KeyboardManager.IsKeyDown(Key.LShift) ? acceleration * 5 : (KeyboardManager.IsKeyDown(Key.LControl) ? acceleration * 0.35f : acceleration);
-            if (Vector3.Dot(Velocity, Velocity) < 0.01f)
-                Velocity = Vector3.Zero;
-            else
+            Velocity += KeyboardManager.IsKeyDown(Key.LShift) ? acceleration * 5.0f : (KeyboardManager.IsKeyDown(Key.LControl) ? acceleration * 0.35f : acceleration);
+            if (acceleration != Vector3.Zero || Velocity != Vector3.Zero)
                 frameChanged = true;
 
-            Position += Velocity * dT;
+            if (Vector3.Dot(Velocity, Velocity) < 0.01f)
+                Velocity = Vector3.Zero;
+
             Velocity *= 0.95f;
+            Velocity += acceleration * dT;
+            Position += Velocity * dT;
             View = GenerateMatrix(Position, ViewDir, Up);
         }
 

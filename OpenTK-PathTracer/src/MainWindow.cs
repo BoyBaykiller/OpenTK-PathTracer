@@ -59,7 +59,7 @@ namespace OpenTK_PathTracer
         }
 
         private readonly Stopwatch fpsTimer = Stopwatch.StartNew();
-        protected override void OnUpdateFrame(FrameEventArgs args)
+        protected override void OnUpdateFrame(FrameEventArgs e)
         {
             if (fpsTimer.ElapsedMilliseconds >= 1000)
             {
@@ -107,7 +107,7 @@ namespace OpenTK_PathTracer
 
                 if (!CursorVisible)
                 {
-                    Camera.ProcessInputs((float)args.Time, out bool frameChanged);
+                    Camera.ProcessInputs((float)e.Time, out bool frameChanged);
                     if (frameChanged)
                         PathTracer.ThisRenderNumFrame = 0;
                 }
@@ -115,8 +115,9 @@ namespace OpenTK_PathTracer
                 BasicDataUBO.SubData(Vector4.SizeInBytes * 4, Vector4.SizeInBytes * 4, Camera.View.Inverted());
                 BasicDataUBO.SubData(Vector4.SizeInBytes * 8, Vector4.SizeInBytes, Camera.Position);
             }
+
             ups++;
-            base.OnUpdateFrame(args);
+            base.OnUpdateFrame(e);
         }
 
         public readonly List<BaseGameObject> GameObjects = new List<BaseGameObject>();
@@ -161,7 +162,6 @@ namespace OpenTK_PathTracer
             AtmosphericScatterer = new AtmosphericScattering(128, 100, 10, 2.1f, 35.0f, 0.01f, new Vector3(680, 550, 440), new Vector3(0, 500 + 800.0f, 0), new Vector3(20.43f, -201.99f + 800.0f, -20.67f));
             PathTracer = new PathTracer(SkyBox, Width, Height, 13, 1, 20f, 0.14f);
             PostProcesser = new ScreenEffect(new Shader(ShaderType.FragmentShader, "res/shaders/PostProcessing/fragment.glsl".GetPathContent()), Width, Height);
-
             finalProgram = new ShaderProgram(new Shader(ShaderType.VertexShader, "res/shaders/screenQuad.glsl".GetPathContent()), new Shader(ShaderType.FragmentShader, "res/shaders/final.glsl".GetPathContent()));
             
             BasicDataUBO = new BufferObject(BufferRangeTarget.UniformBuffer, 0);

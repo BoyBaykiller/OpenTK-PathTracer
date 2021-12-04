@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "OpenTK-PathTracer": {
+      "commandName": "Project",
+      "workingDirectory": "$(ProjectDir)"
+    }
+  }
+}
