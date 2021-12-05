@@ -2,7 +2,7 @@
 #define FLOAT_MAX 3.4028235e+38
 #define FLOAT_MIN -3.4028235e+38
 #define EPSILON 0.001
-#define PI 3.1415926586            
+#define PI 3.1415926586
 // Example shader include: #include PathTracing/fragCompute
 
 layout(location = 0) out vec4 FragColor;
@@ -127,7 +127,7 @@ void main()
 vec3 Radiance(Ray ray)
 {
     vec3 throughput = vec3(1.0);
-    vec3 resultColor = vec3(0.0);
+    vec3 radiance = vec3(0.0);
 
     HitInfo hitInfo;
     bool isRefractive;
@@ -148,7 +148,7 @@ vec3 Radiance(Ray ray)
             // and a bool indicating wheter the ray penetrates into the medium
             rayProbability = BSDF(ray, hitInfo, isRefractive);
 
-            resultColor += hitInfo.Material.Emissiv * throughput;
+            radiance += hitInfo.Material.Emissiv * throughput;
             if (!isRefractive)
             {
                 // The cosine term is already taken into account by the CosineSampleHemisphere function. Its weighting the random rays to a cosine distibution
@@ -156,7 +156,6 @@ vec3 Radiance(Ray ray)
                 
                 throughput *= hitInfo.Material.Albedo;
             }
-
             throughput /= rayProbability;
             
             // Russian Roulette, unbiased method to terminate rays and therefore lower render times (also reduces fireflies)
@@ -170,11 +169,11 @@ vec3 Radiance(Ray ray)
         }
         else
         {
-            resultColor += texture(SamplerEnvironment, ray.Direction).rgb * throughput;
+            radiance += texture(SamplerEnvironment, ray.Direction).rgb * throughput;
             break;
         }
     }
-    return resultColor;
+    return radiance;
 }
 
 float BSDF(inout Ray ray, HitInfo hitInfo, out bool isRefractive)

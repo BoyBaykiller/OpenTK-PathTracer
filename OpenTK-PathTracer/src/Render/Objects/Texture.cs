@@ -323,9 +323,6 @@ namespace OpenTK_PathTracer.Render.Objects
         {
             GL.GetTextureLevelParameter(ID, mipmapLevel, GetTextureParameter.TextureWidth, out width);
             GL.GetTextureLevelParameter(ID, mipmapLevel, GetTextureParameter.TextureHeight, out height);
-            
-            if (width * height != 0)
-                throw new ArgumentException($"Can not get size from Texture {ID} at level {mipmapLevel}");
         }
 
         public int GetPixelTypeComponentSize(PixelTypeSize pixelTypeSize, int mipmapLevel = 0)

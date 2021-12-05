@@ -70,7 +70,7 @@ namespace OpenTK_PathTracer
                 ups = 0;
                 fpsTimer.Restart();
             }
-            ThreadManager.InvokeQueuedActions();
+
             KeyboardManager.Update();
             MouseManager.Update();
 
