@@ -135,6 +135,9 @@ namespace OpenTK_PathTracer
             if (!Helper.IsCoreExtensionAvailable("GL_ARB_direct_state_access", 4, 5))
                 throw new NotSupportedException("Your system does not support GL_ARB_direct_state_access");
 
+            if (!Helper.IsCoreExtensionAvailable("GL_ARB_compute_shader", 4, 3))
+                throw new NotSupportedException("Your system does not support GL_ARB_compute_shader");
+
             if (!Helper.IsCoreExtensionAvailable("GL_ARB_texture_storage", 4, 2))
                 throw new NotSupportedException("Your system does not support GL_ARB_texture_storage");
 

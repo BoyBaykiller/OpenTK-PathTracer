@@ -5,7 +5,6 @@ namespace OpenTK_PathTracer.GameObjects
 {
     class Sphere : BaseGameObject
     {
-        public static Sphere Zero => new Sphere(position: Vector3.Zero, radius: 0.5f, instance: 0, Material.Zero);
         public const int GPU_INSTANCE_SIZE = 16 + Material.GPU_INSTANCE_SIZE;
         
         public int Instance;
@@ -20,16 +19,15 @@ namespace OpenTK_PathTracer.GameObjects
 
         public override int BufferOffset => 0 + Instance * GPU_INSTANCE_SIZE;
 
-        public override Vector3 Min => Position - new Vector3(Radius);
-        public override Vector3 Max => Position + new Vector3(Radius);
-
-        private readonly Vector4[] gpuData = new Vector4[1];
+        private readonly Vector4[] gpuData = new Vector4[GPU_INSTANCE_SIZE / Vector4.SizeInBytes];
         public override Vector4[] GetGPUFriendlyData()
         {
             gpuData[0].Xyz = Position;
             gpuData[0].W = Radius;
-            
-            return gpuData.AddArray(Material.GetGPUFriendlyData());
+
+            Array.Copy(Material.GetGPUFriendlyData(), 0, gpuData, 1, gpuData.Length - 1);
+
+            return gpuData;
         }
 
         public override bool IntersectsRay(Ray ray, out float t1, out float t2)
@@ -49,11 +47,6 @@ namespace OpenTK_PathTracer.GameObjects
             t2 = -b + squareRoot;
 
             return true;
-        }
-
-        public override string ToString()
-        {
-            return $"Sphere(vec3{Position}, {Radius}, Material(vec3{Material.Albedo}, {Material.SpecularChance}, vec3{Material.Emissiv}, {Material.SpecularRoughness}, vec3{Material.AbsorbanceColor}, {Material.RefractionChance}, {Material.RefractionRoughnes}, {Material.IOR}))";
         }
     }
 }

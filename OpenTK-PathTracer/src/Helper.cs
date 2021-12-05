@@ -15,16 +15,6 @@ namespace OpenTK_PathTracer
         public static readonly int APIMajor = (int)char.GetNumericValue(GL.GetString(StringName.Version)[0]);
         public static readonly int APIMinor = (int)char.GetNumericValue(GL.GetString(StringName.Version)[2]);
 
-        public static T[] AddArray<T>(this T[] arr0, T[] arr1) where T : struct
-        {
-            int oldLength = arr0.Length;
-            Array.Resize(ref arr0, arr0.Length + arr1.Length);
-            for (int i = 0; i < arr1.Length; i++)
-                arr0[i + oldLength] = arr1[i];
-
-            return arr0;
-        }
-
         public static string GetPathContent(this string path)
         {
             if (!File.Exists(path))
@@ -54,6 +44,7 @@ namespace OpenTK_PathTracer
             }).Wait();
             if (!bitmaps.All(i => i.Width == i.Height && i.Width == bitmaps[0].Width))
                 throw new ArgumentException($"Individual cubemap textures must be squares and every texture must be of the same size");
+            
             int size = bitmaps[0].Width;
             texture.ImmutableAllocate(size, size, 1, sizedInternalFormat);
             for (int i = 0; i < 6; i++)
@@ -65,18 +56,18 @@ namespace OpenTK_PathTracer
             }
         }
 
-        private static IEnumerable<string> GetExtensions()
+        private static HashSet<string> GetExtensions()
         {
+            HashSet<string> hashSet = new HashSet<string>();
             for (int i = 0; i < GL.GetInteger(GetPName.NumExtensions); i++)
-                yield return GL.GetString(StringNameIndexed.Extensions, i);
+                hashSet.Add(GL.GetString(StringNameIndexed.Extensions, i));
+
+            return hashSet;
         }
 
         private static readonly HashSet<string> glExtensions = new HashSet<string>(GetExtensions());
 
 
-        /// <summary>
-        /// Extensions are not part of any GL specification. Some of them are widely implemented on any hardware, others are supported only on specific vendors like NVIDIA and newer hardware.
-        /// </summary>
         /// <param name="extension">The extension to check against. Examples: GL_ARB_bindless_texture or WGL_EXT_swap_control</param>
         /// <returns>True if the extension is available</returns>
         public static bool IsExtensionsAvailable(string extension)
@@ -84,10 +75,6 @@ namespace OpenTK_PathTracer
             return glExtensions.Contains(extension);
         }
 
-        /// <summary>
-        /// Core Extensions are those which are core in a specific version and are very likely to be supported in following releases as well. There functionality may also be available in lower GL versions.
-        /// See all core extensions <see href="https://www.khronos.org/opengl/wiki/History_of_OpenGL#Summary_of_version_changes">here</see>
-        /// </summary>
         /// <param name="extension">The extension to check against. Examples: GL_ARB_direct_state_access or GL_ARB_compute_shader</param>
         /// <param name="firstMajor">The major API version the extension became part of the core profile</param>
         /// <param name="firstMinor">The minor API version the extension became part of the core profile</param>
