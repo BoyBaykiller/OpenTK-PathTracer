@@ -341,7 +341,7 @@ float GetRandomFloat01()
     return float(GetPCGHash(rndSeed)) / 4294967296.0;
 }
 
-// Assumes t2 > t1
+// Assumes t2 > t1 && t2 > 0.0
 float GetSmallestPositive(float t1, float t2)
 {
     return t1 < 0 ? t2 : t1;
