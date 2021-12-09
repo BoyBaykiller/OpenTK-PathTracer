@@ -33,8 +33,10 @@ namespace OpenTK_PathTracer
         {
             if (Focused || IsRenderInBackground)
             {
-                //AtmosphericScatterer.ViewPos = Camera.Position;
-                //AtmosphericScatterer.Render();
+                //if (Gui.IsEnvironmentAtmosphere)
+                //{
+                //    AtmosphericScatterer.Render();
+                //}
 
                 PathTracer.Render();
 
@@ -125,7 +127,7 @@ namespace OpenTK_PathTracer
         public BufferObject BasicDataUBO, GameObjectsUBO;
         public PathTracer PathTracer;
         public ScreenEffect PostProcesser;
-        public AtmosphericScattering AtmosphericScatterer;
+        public AtmosphericScatterer AtmosphericScatterer;
         public Texture SkyBox;
         protected override void OnLoad(EventArgs e)
         {
@@ -162,7 +164,8 @@ namespace OpenTK_PathTracer
                 "res/Textures/EnvironmentMap/negz.png"
             }, (SizedInternalFormat)PixelInternalFormat.Srgb8Alpha8);
 
-            AtmosphericScatterer = new AtmosphericScattering(128, 100, 10, 2.1f, 35.0f, 0.01f, new Vector3(680, 550, 440), new Vector3(0, 500 + 800.0f, 0), new Vector3(20.43f, -201.99f + 800.0f, -20.67f));
+            AtmosphericScatterer = new AtmosphericScatterer(512);
+
             PathTracer = new PathTracer(SkyBox, Width, Height, 13, 1, 20f, 0.14f);
             PostProcesser = new ScreenEffect(new Shader(ShaderType.FragmentShader, "res/shaders/PostProcessing/fragment.glsl".GetPathContent()), Width, Height);
             finalProgram = new ShaderProgram(new Shader(ShaderType.VertexShader, "res/shaders/screenQuad.glsl".GetPathContent()), new Shader(ShaderType.FragmentShader, "res/shaders/final.glsl".GetPathContent()));

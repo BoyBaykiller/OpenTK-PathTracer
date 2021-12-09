@@ -1,48 +1,31 @@
+// Source: https://github.com/wwwtyro/glsl-atmosphere
+// I only adapted his code to a compute shader.
+// The actual atmospheric scattering code is copied from the given source
+
 #version 430 core
-#define FLOAT_MAX 3.4028235e+38
-#define FLOAT_MIN -3.4028235e+38
-#define EPSILON 0.0001
-#define PI 3.1415926535898
+#define PI 3.14159265
 
 layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 
 layout(binding = 0, rgba32f) uniform writeonly restrict imageCube ImgResult;
 
-struct Ray 
-{
-    vec3 Origin;
-    vec3 Direction;
-};
-
-layout (std140, binding = 3) uniform AtmosphericDataUBO
+layout (std140, binding = 2) uniform AtmosphericDataUBO
 {
     mat4 InvProjection;
     mat4[6] InvView;
 } atmoDataUBO;
 
-vec3 CalculateScattering(Ray ray, int samples);
-float AvgDensityOver(vec3 start, vec3 end, int samples);
-float DensityAtPoint(vec3 point);
-bool RaySphereIntersect(Ray ray, vec3 position, float radius, out float t1, out float t2);
-Ray GetWorldSpaceRay(mat4 inverseProj, mat4 inverseView, vec3 viewPos, vec2 normalizedDeviceCoors);
+vec2 Rsi(vec3 r0, vec3 rd, float sr);
+vec3 Atmosphere(vec3 r, vec3 r0, vec3 pSun, float iSun, float rPlanet, float rAtmos, vec3 kRlh, float kMie, float shRlh, float shMie, float g);
 bool IsInside(vec2 pos, vec2 size);
-
-
-const vec3 PlanetPos = vec3(0, 0, 0);
-const float PlanetRad = 600;
-uniform float atmosphereRad;
+vec3 GetWorldSpaceRay(mat4 inverseProj, mat4 inverseView, vec2 normalizedDeviceCoords);
 
 uniform vec3 lightPos;
-uniform vec3 viewPos;
 
-uniform float densityFallOff;
+uniform float lightIntensity;
 
-uniform int inScatteringSamples;
-uniform int densitySamples;
-uniform float scatteringStrength;
-
-uniform vec3 waveLengths;
-vec3 ScatteringCoefficients;
+uniform int iSteps;
+uniform int jSteps;
 
 void main()
 {
@@ -53,103 +36,136 @@ void main()
     
     vec2 ndc = vec2(imgCoord.xy) / imgResultSize * 2.0 - 1.0;
     
-    Ray rayEyeToWorld = GetWorldSpaceRay(atmoDataUBO.InvProjection, atmoDataUBO.InvView[imgCoord.z], viewPos, ndc);
-    vec3 scattered = CalculateScattering(rayEyeToWorld, inScatteringSamples);
+    vec3 eyeToWorld = GetWorldSpaceRay(atmoDataUBO.InvProjection, atmoDataUBO.InvView[imgCoord.z], ndc);
     
-    imageStore(ImgResult, imgCoord, vec4(scattered, 1.0));
+    vec3 color = Atmosphere(
+        eyeToWorld,                     // normalized ray direction
+        vec3(0, 6372e3, 0),             // ray origin
+        lightPos,                       // position of the sun
+        lightIntensity,                 // intensity of the sun
+        6371e3,                         // radius of the planet in meters
+        6471e3,                         // radius of the atmosphere in meters
+        vec3(5.5e-6, 13.0e-6, 22.4e-6), // Rayleigh scattering coefficient
+        21e-6,                          // Mie scattering coefficient
+        8e3,                            // Rayleigh scale height
+        1.2e3,                          // Mie scale height
+        0.758                           // Mie preferred scattering direction
+    );
+
+    imageStore(ImgResult, imgCoord, vec4(color, 1.0));
 }
 
+vec2 Rsi(vec3 r0, vec3 rd, float sr) {
+    // ray-sphere intersection that assumes
+    // the sphere is centered at the origin.
+    // No intersection when result.x > result.y
+    float a = dot(rd, rd);
+    float b = 2.0 * dot(rd, r0);
+    float c = dot(r0, r0) - (sr * sr);
+    float d = (b*b) - 4.0*a*c;
+    if (d < 0.0) return vec2(1e5,-1e5);
+    return vec2(
+        (-b - sqrt(d))/(2.0*a),
+        (-b + sqrt(d))/(2.0*a)
+    );
+}
 
-vec3 CalculateScattering(Ray ray, int samples)
-{
-    ScatteringCoefficients = vec3(pow(400 / max(waveLengths.x, EPSILON), 4), pow(400 / max(waveLengths.y, EPSILON), 4), pow(400 / max(waveLengths.z, EPSILON), 4)) * scatteringStrength;
-    vec3 color = vec3(0);
-    float t1, t2;
-    if (!(RaySphereIntersect(ray, PlanetPos, PlanetRad + atmosphereRad, t1, t2) && t2 > 0))
-        return color;
+vec3 Atmosphere(vec3 r, vec3 r0, vec3 pSun, float iSun, float rPlanet, float rAtmos, vec3 kRlh, float kMie, float shRlh, float shMie, float g) {
+    // Normalize the sun and view directions.
+    pSun = normalize(pSun);
+    r = normalize(r);
 
-    float planetT1, planetT2;
-    RaySphereIntersect(ray, PlanetPos, PlanetRad, planetT1, planetT2);
-    
-    t2 = min(planetT1, t2); // if also hit planet set t2 to planetT1
+    // Calculate the step size of the primary ray.
+    vec2 p = Rsi(r0, r, rAtmos);
+    if (p.x > p.y) return vec3(0,0,0);
+    p.y = min(p.y, Rsi(r0, r, rPlanet).x);
+    float iStepSize = (p.y - p.x) / float(iSteps);
 
+    // Initialize the primary ray time.
+    float iTime = 0.0;
 
-    vec3 viewPos = t1 < 0 ? ray.Origin : (ray.Origin + ray.Direction * t1);
-    ray.Origin = viewPos + EPSILON;
-    
-    vec3 deltaStep = ((ray.Origin + ray.Direction * t2) - ray.Origin) / samples;
+    // Initialize accumulators for Rayleigh and Mie scattering.
+    vec3 totalRlh = vec3(0,0,0);
+    vec3 totalMie = vec3(0,0,0);
 
-    vec3 scatteredLight = vec3(0);
-    for (int i = 0; i < samples; i++)
-    {
-        ray.Direction = normalize(lightPos - ray.Origin);
-        RaySphereIntersect(ray, PlanetPos, PlanetRad + atmosphereRad, t1, t2);
-    
-        float avgDensityAlongRay = AvgDensityOver(ray.Origin, ray.Origin + ray.Direction * t2, densitySamples);
-        float avgDensityAlongViewRay = AvgDensityOver(viewPos, ray.Origin, densitySamples);
-        vec3 transmitted = exp((-avgDensityAlongRay - avgDensityAlongViewRay) * ScatteringCoefficients); // combines transmittance from Densityray and ViewRay
+    // Initialize optical depth accumulators for the primary ray.
+    float iOdRlh = 0.0;
+    float iOdMie = 0.0;
 
-        float localDensity = DensityAtPoint(ray.Origin);
+    // Calculate the Rayleigh and Mie phases.
+    float mu = dot(r, pSun);
+    float mumu = mu * mu;
+    float gg = g * g;
+    float pRlh = 3.0 / (16.0 * PI) * (1.0 + mumu);
+    float pMie = 3.0 / (8.0 * PI) * ((1.0 - gg) * (mumu + 1.0)) / (pow(1.0 + gg - 2.0 * mu * g, 1.5) * (2.0 + gg));
 
-        scatteredLight += localDensity * transmitted * ScatteringCoefficients;
-        
-        ray.Origin += deltaStep;
+    // Sample the primary ray.
+    for (int i = 0; i < iSteps; i++) {
+
+        // Calculate the primary ray sample position.
+        vec3 iPos = r0 + r * (iTime + iStepSize * 0.5);
+
+        // Calculate the height of the sample.
+        float iHeight = length(iPos) - rPlanet;
+
+        // Calculate the optical depth of the Rayleigh and Mie scattering for this step.
+        float odStepRlh = exp(-iHeight / shRlh) * iStepSize;
+        float odStepMie = exp(-iHeight / shMie) * iStepSize;
+
+        // Accumulate optical depth.
+        iOdRlh += odStepRlh;
+        iOdMie += odStepMie;
+
+        // Calculate the step size of the secondary ray.
+        float jStepSize = Rsi(iPos, pSun, rAtmos).y / float(jSteps);
+
+        // Initialize the secondary ray time.
+        float jTime = 0.0;
+
+        // Initialize optical depth accumulators for the secondary ray.
+        float jOdRlh = 0.0;
+        float jOdMie = 0.0;
+
+        // Sample the secondary ray.
+        for (int j = 0; j < jSteps; j++) {
+
+            // Calculate the secondary ray sample position.
+            vec3 jPos = iPos + pSun * (jTime + jStepSize * 0.5);
+
+            // Calculate the height of the sample.
+            float jHeight = length(jPos) - rPlanet;
+
+            // Accumulate the optical depth.
+            jOdRlh += exp(-jHeight / shRlh) * jStepSize;
+            jOdMie += exp(-jHeight / shMie) * jStepSize;
+
+            // Increment the secondary ray time.
+            jTime += jStepSize;
+        }
+
+        // Calculate attenuation.
+        vec3 attn = exp(-(kMie * (iOdMie + jOdMie) + kRlh * (iOdRlh + jOdRlh)));
+
+        // Accumulate scattering.
+        totalRlh += odStepRlh * attn;
+        totalMie += odStepMie * attn;
+
+        // Increment the primary ray time.
+        iTime += iStepSize;
     }
-    return scatteredLight / samples;
-}
 
-float AvgDensityOver(vec3 start, vec3 end, int samples) // Physics terminology: "Optical Depth"
-{   
-    // Take integral over DensityAtPoint() from start to end. I dont think there exists a closed-form solution so we are simply going to make an approxiamtion using riemann sum
-
-    vec3 rayPos = start;
-    vec3 deltaStep = (end - start) / samples;
-    float density = 0.0;
-    
-    for (int i = 0; i < samples; i++)
-    {
-        density += DensityAtPoint(rayPos);
-        rayPos += deltaStep;
-    }
-    
-    return density / samples;
-}
-
-float DensityAtPoint(vec3 point)
-{
-    float height = length(point - PlanetPos) - PlanetRad;
-    float height01 = height / (atmosphereRad - PlanetRad); // 0 at Planetshell, 1 at outer atmosphere
-    
-    return exp(-height01 * densityFallOff) * (1 - height01); // 1 at Planetshell, 0 at outer atmosphere
-}
-
-bool RaySphereIntersect(Ray ray, vec3 position, float radius, out float t1, out float t2)
-{
-    // Source: https://antongerdelan.net/opengl/raycasting.html
-    t1 = t2 = FLOAT_MAX;
-
-    vec3 sphereToRay = ray.Origin - position;
-    float b = dot(ray.Direction, sphereToRay);
-    float c = dot(sphereToRay, sphereToRay) - radius * radius;
-    float discriminant = b * b - c;
-    if (discriminant < 0)
-        return false;
-
-    float squareRoot = sqrt(discriminant);
-    t1 = -b - squareRoot;
-    t2 = -b + squareRoot;
-
-    return true;
-}
-
-Ray GetWorldSpaceRay(mat4 inverseProj, mat4 inverseView, vec3 viewPos, vec2 normalizedDeviceCoors)
-{
-    vec4 rayEye = inverseProj * vec4(normalizedDeviceCoors.xy, -1.0, 0.0);
-    rayEye.zw = vec2(-1.0, 0.0);
-    return Ray(viewPos, normalize((inverseView * rayEye).xyz));
+    // Calculate and return the final color.
+    return iSun * (pRlh * kRlh * totalRlh + pMie * kMie * totalMie);
 }
 
 bool IsInside(vec2 pos, vec2 size)
 {
     return pos.x < size.x && pos.y < size.y;
+}
+
+vec3 GetWorldSpaceRay(mat4 inverseProj, mat4 inverseView, vec2 normalizedDeviceCoords)
+{
+    vec4 rayEye = inverseProj * vec4(normalizedDeviceCoords.xy, -1.0, 0.0);
+    rayEye.zw = vec2(-1.0, 0.0);
+    return normalize((inverseView * rayEye).xyz);
 }

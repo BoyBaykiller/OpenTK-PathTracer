@@ -13,7 +13,7 @@ namespace OpenTK_PathTracer.Render
         public static ImGuiController ImGuiController = new ImGuiController(0, 0, "res/imgui.ini");
         private static BaseGameObject pickedObject;
 
-        private static bool IsEnvironmentAtmosphere = false;
+        public static bool IsEnvironmentAtmosphere = false;
 
         public static ImGuiIOPtr ImGuiIOPtr => ImGui.GetIO();
 
@@ -90,57 +90,40 @@ namespace OpenTK_PathTracer.Render
                             mainWindow.AtmosphericScatterer.Render();
                         }
                     }
-                    
+
                     if (IsEnvironmentAtmosphere)
                     {
-                        ImGui.Text($"Computation time: {MathF.Round(mainWindow.AtmosphericScatterer.Query.ElapsedMilliseconds, 2)} ms");
+                        ImGui.Text($"Computation time: {MathF.Round(mainWindow.AtmosphericScatterer.Timer.ElapsedMilliseconds, 2)} ms");
 
-                        int tempInt = mainWindow.AtmosphericScatterer.InScatteringSamples;
+                        int tempInt = mainWindow.AtmosphericScatterer.ISteps;
                         if (ImGui.SliderInt("InScatteringSamples", ref tempInt, 1, 100))
                         {
                             hadInput = true;
-                            mainWindow.AtmosphericScatterer.InScatteringSamples = tempInt;
+                            mainWindow.AtmosphericScatterer.ISteps = tempInt;
                             mainWindow.AtmosphericScatterer.Render();
                         }
 
-                        tempInt = mainWindow.AtmosphericScatterer.DensitySamples;
+                        tempInt = mainWindow.AtmosphericScatterer.JSteps;
                         if (ImGui.SliderInt("DensitySamples", ref tempInt, 1, 40))
                         {
                             hadInput = true;
-                            mainWindow.AtmosphericScatterer.DensitySamples = tempInt;
+                            mainWindow.AtmosphericScatterer.JSteps = tempInt;
                             mainWindow.AtmosphericScatterer.Render();
                         }
 
-                        float temp = mainWindow.AtmosphericScatterer.ScatteringStrength;
-                        if (ImGui.DragFloat("ScatteringStrength", ref temp, 0.15f, 0.1f, 10))
+                        float tempFloat = mainWindow.AtmosphericScatterer.Time;
+                        if (ImGui.DragFloat("Time", ref tempFloat, 0.005f))
                         {
                             hadInput = true;
-                            mainWindow.AtmosphericScatterer.ScatteringStrength = temp;
+                            mainWindow.AtmosphericScatterer.Time = tempFloat;
                             mainWindow.AtmosphericScatterer.Render();
                         }
 
-                        temp = mainWindow.AtmosphericScatterer.DensityFallOff;
-                        if (ImGui.DragFloat("DensityFallOff", ref temp, 0.5f, 0.1f, 40))
+                        tempFloat = mainWindow.AtmosphericScatterer.LightIntensity;
+                        if (ImGui.DragFloat("Intensity", ref tempFloat, 0.2f))
                         {
                             hadInput = true;
-                            mainWindow.AtmosphericScatterer.DensityFallOff = temp;
-                            mainWindow.AtmosphericScatterer.Render();
-                        }
-
-                        temp = mainWindow.AtmosphericScatterer.AtmosphereRadius;
-                        if (ImGui.DragFloat("AtmosphereRadius", ref temp, 0.2f, 0.1f, 100))
-                        {
-                            hadInput = true;
-                            mainWindow.AtmosphericScatterer.AtmosphereRadius = temp;
-                            mainWindow.AtmosphericScatterer.Render();
-                        }
-
-                        System.Numerics.Vector3 nVector3;
-                        nVector3 = Vector3ToNVector3(mainWindow.AtmosphericScatterer.WaveLengths);
-                        if (ImGui.InputFloat3("Wavelength (nm)", ref nVector3))
-                        {
-                            hadInput = true;
-                            mainWindow.AtmosphericScatterer.WaveLengths = NVector3ToVector3(nVector3);
+                            mainWindow.AtmosphericScatterer.LightIntensity = tempFloat;
                             mainWindow.AtmosphericScatterer.Render();
                         }
                     }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+
 namespace OpenTK_PathTracer
 {
     class Program
@@ -9,7 +10,7 @@ namespace OpenTK_PathTracer
             try
             {
                 using MainWindow mainWindow = new MainWindow();
-                mainWindow.Run(OpenTK.DisplayDevice.Default.RefreshRate);
+                mainWindow.Run(Math.Min(OpenTK.DisplayDevice.Default.RefreshRate, 144));
             }
             catch (Exception ex)
             {

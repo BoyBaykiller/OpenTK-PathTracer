@@ -2,7 +2,7 @@
 #define FLOAT_MAX 3.4028235e+38
 #define FLOAT_MIN -3.4028235e+38
 #define EPSILON 0.001
-#define PI 3.1415926586
+#define PI 3.14159265
 // Example shader include: #include PathTracing/fragCompute
 
 layout(local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
