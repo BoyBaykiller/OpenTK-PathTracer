@@ -78,7 +78,7 @@ namespace OpenTK_PathTracer
 
             if (Focused)
             {
-                if (Gui.ImGuiIOPtr.WantCaptureMouse && !CursorVisible)
+                if (ImGuiNET.ImGui.GetIO().WantCaptureMouse && !CursorVisible)
                 {
                     Point _point = PointToScreen(new Point(Width / 2, Height / 2));
                     Mouse.SetPosition(_point.X, _point.Y);
@@ -95,7 +95,7 @@ namespace OpenTK_PathTracer
                 if (KeyboardManager.IsKeyTouched(Key.F11))
                     WindowState = WindowState == WindowState.Normal ? WindowState.Fullscreen : WindowState.Normal;
 
-                if (KeyboardManager.IsKeyTouched(Key.E) && !Gui.ImGuiIOPtr.WantCaptureKeyboard)
+                if (KeyboardManager.IsKeyTouched(Key.E) && !ImGuiNET.ImGui.GetIO().WantCaptureKeyboard)
                 {
                     CursorVisible = !CursorVisible;
                     CursorGrabbed = !CursorGrabbed;
@@ -165,7 +165,7 @@ namespace OpenTK_PathTracer
             }, (SizedInternalFormat)PixelInternalFormat.Srgb8Alpha8);
 
             AtmosphericScatterer = new AtmosphericScatterer(512);
-
+            
             PathTracer = new PathTracer(SkyBox, Width, Height, 13, 1, 20f, 0.14f);
             PostProcesser = new ScreenEffect(new Shader(ShaderType.FragmentShader, "res/shaders/PostProcessing/fragment.glsl".GetPathContent()), Width, Height);
             finalProgram = new ShaderProgram(new Shader(ShaderType.VertexShader, "res/shaders/screenQuad.glsl".GetPathContent()), new Shader(ShaderType.FragmentShader, "res/shaders/final.glsl".GetPathContent()));

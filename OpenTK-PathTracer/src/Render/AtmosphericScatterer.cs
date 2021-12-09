@@ -87,7 +87,7 @@ namespace OpenTK_PathTracer.Render
             bufferObject.SubData(0, Vector4.SizeInBytes * 4, invProjection);
             bufferObject.SubData(Vector4.SizeInBytes * 4, Vector4.SizeInBytes * 4 * invViews.Length, invViews);
 
-            Time = 0.0f;
+            Time = 0.005f;
             ISteps = 16; // Fix: Over 16 causes artifacts !?
             JSteps = 20;
             LightIntensity = 15.0f;
@@ -111,15 +111,9 @@ namespace OpenTK_PathTracer.Render
             Timer.StopAndReset();
         }
 
-        public void SetSize(int width, int height)
+        public void SetSize(int size)
         {
-            if (width != height)
-            {
-                Console.WriteLine($"Cubemaps must be squares");
-                return;
-            }
-
-            Result.MutableAllocate(width, width, 1, Result.PixelInternalFormat);
+            Result.MutableAllocate(size, size, 1, Result.PixelInternalFormat);
         }
     }
 }

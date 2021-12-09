@@ -15,8 +15,6 @@ namespace OpenTK_PathTracer.Render
 
         public static bool IsEnvironmentAtmosphere = false;
 
-        public static ImGuiIOPtr ImGuiIOPtr => ImGui.GetIO();
-
         public static void Render(MainWindow mainWindow, float frameTime, out bool frameChanged)
         {
             ImGuiController.Update(mainWindow, frameTime);
@@ -94,6 +92,27 @@ namespace OpenTK_PathTracer.Render
                     if (IsEnvironmentAtmosphere)
                     {
                         ImGui.Text($"Computation time: {MathF.Round(mainWindow.AtmosphericScatterer.Timer.ElapsedMilliseconds, 2)} ms");
+
+                        string[] resolutions = new string[] { "2048", "1024", "512", "256", "128", "64", "32" };
+                        string current = mainWindow.AtmosphericScatterer.Result.Width.ToString();
+                        if (ImGui.BeginCombo("##combo", current))
+                        {
+                            for (int i = 0; i < resolutions.Length; i++)
+                            {
+                                bool isSelected = current == resolutions[i];
+                                if (ImGui.Selectable(resolutions[i], isSelected))
+                                {
+                                    hadInput = true;
+                                    current = resolutions[i];
+                                    mainWindow.AtmosphericScatterer.SetSize(Convert.ToInt32(current));
+                                    mainWindow.AtmosphericScatterer.Render();
+                                }
+
+                                if (isSelected)
+                                    ImGui.SetItemDefaultFocus();
+                            }
+                            ImGui.EndCombo();
+                        }
 
                         int tempInt = mainWindow.AtmosphericScatterer.ISteps;
                         if (ImGui.SliderInt("InScatteringSamples", ref tempInt, 1, 100))
@@ -206,7 +225,7 @@ namespace OpenTK_PathTracer.Render
 
         public static void Update(MainWindow mainWindow)
         {
-            if (mainWindow.CursorVisible && !ImGuiIOPtr.WantCaptureMouse)
+            if (mainWindow.CursorVisible && !ImGui.GetIO().WantCaptureMouse)
             {
                 if (MouseManager.IsButtonTouched(MouseButton.Left))
                 {
