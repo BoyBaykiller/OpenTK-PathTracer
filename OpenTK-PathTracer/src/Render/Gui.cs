@@ -13,7 +13,7 @@ namespace OpenTK_PathTracer.Render
         public static ImGuiController ImGuiController = new ImGuiController(0, 0, "res/imgui.ini");
         private static BaseGameObject pickedObject;
 
-        public static bool IsEnvironmentAtmosphere = false;
+        public static bool IsEnvironmentAtmosphere;
 
         public static void Render(MainWindow mainWindow, float frameTime, out bool frameChanged)
         {
@@ -75,18 +75,14 @@ namespace OpenTK_PathTracer.Render
                 {
                     bool hadInput = false;
 
+                    IsEnvironmentAtmosphere = mainWindow.PathTracer.EnvironmentMap == mainWindow.AtmosphericScatterer.Result;
                     if (ImGui.Checkbox("Atmosphere", ref IsEnvironmentAtmosphere))
                     {
                         hadInput = true;
                         if (!IsEnvironmentAtmosphere)
-                        {
                             mainWindow.PathTracer.EnvironmentMap = mainWindow.SkyBox;
-                        }
                         else
-                        {
                             mainWindow.PathTracer.EnvironmentMap = mainWindow.AtmosphericScatterer.Result;
-                            mainWindow.AtmosphericScatterer.Render();
-                        }
                     }
 
                     if (IsEnvironmentAtmosphere)
