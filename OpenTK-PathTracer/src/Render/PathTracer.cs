@@ -107,12 +107,12 @@ namespace OpenTK_PathTracer
             EnvironmentMap = environmentMap;
         }
 
-        public int Samples => ThisRenderNumFrame * SPP;
-        public int ThisRenderNumFrame;
+        public int Samples => thisRenderNumFrame * SPP;
+        private int thisRenderNumFrame;
         public void Render()
         {
             shaderProgram.Use();
-            shaderProgram.Upload(0, ThisRenderNumFrame++);
+            shaderProgram.Upload(0, thisRenderNumFrame++);
             EnvironmentMap.AttachSampler(1);
 #if USE_COMPUTE
             Result.AttachImage(0, 0, false, 0, TextureAccess.ReadWrite, SizedInternalFormat.Rgba32f);
@@ -128,8 +128,13 @@ namespace OpenTK_PathTracer
 
         public void SetSize(int width, int height)
         {
-            ThisRenderNumFrame = 0;
+            thisRenderNumFrame = 0;
             Result.MutableAllocate(width, height, 1, Result.PixelInternalFormat);
+        }
+
+        public void ResetRenderer()
+        {
+            thisRenderNumFrame = 0;
         }
     }
 }

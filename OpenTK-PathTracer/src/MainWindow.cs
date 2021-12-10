@@ -25,7 +25,7 @@ namespace OpenTK_PathTracer
         public int FPS, UPS;
         private int fps, ups;
 
-        public readonly Camera Camera = new Camera(new Vector3(-18.93f, -5.07f, -17.75f), new Vector3(0, 1, 0), 6.7f, 3.5f); // new Vector3(-9, 12, 4) || new Vector3(-11, 9.3f, -9.7f)
+        public readonly Camera Camera = new Camera(new Vector3(-17.14f, 3.53f, -8.62f), new Vector3(0, 1, 0), -32.2f, 0.8f); // new Vector3(-9, 12, 4) || new Vector3(-11, 9.3f, -9.7f)
 
 
         public bool IsRenderInBackground = true;
@@ -51,7 +51,7 @@ namespace OpenTK_PathTracer
                 {
                     Gui.Render(this, (float)e.Time, out bool frameChanged);
                     if (frameChanged)
-                        PathTracer.ThisRenderNumFrame = 0;
+                        PathTracer.ResetRenderer();
                 }
                 SwapBuffers();
                 fps++;
@@ -73,11 +73,12 @@ namespace OpenTK_PathTracer
                 fpsTimer.Restart();
             }
 
-            KeyboardManager.Update();
-            MouseManager.Update();
 
             if (Focused)
             {
+                KeyboardManager.Update();
+                MouseManager.Update();
+
                 if (ImGuiNET.ImGui.GetIO().WantCaptureMouse && !CursorVisible)
                 {
                     Point _point = PointToScreen(new Point(Width / 2, Height / 2));
@@ -89,7 +90,7 @@ namespace OpenTK_PathTracer
                 if (KeyboardManager.IsKeyDown(Key.Escape))
                     Close();
 
-                if (KeyboardManager.IsKeyTouched(Key.V))
+                if (KeyboardManager.IsKeyTouched(Key.V) && !ImGuiNET.ImGui.GetIO().WantCaptureKeyboard)
                     VSync = VSync == VSyncMode.Off ? VSyncMode.On : VSyncMode.Off;
 
                 if (KeyboardManager.IsKeyTouched(Key.F11))
@@ -107,11 +108,17 @@ namespace OpenTK_PathTracer
                     }
                 }
 
+                if (KeyboardManager.IsKeyTouched(Key.R) && !ImGuiNET.ImGui.GetIO().WantCaptureKeyboard)
+                {
+                    LoadScene();
+                    PathTracer.ResetRenderer();
+                }
+
                 if (!CursorVisible)
                 {
                     Camera.ProcessInputs((float)e.Time, out bool frameChanged);
                     if (frameChanged)
-                        PathTracer.ThisRenderNumFrame = 0;
+                        PathTracer.ResetRenderer();
                 }
 
                 BasicDataUBO.SubData(Vector4.SizeInBytes * 4, Vector4.SizeInBytes * 4, Camera.View.Inverted());
@@ -137,6 +144,9 @@ namespace OpenTK_PathTracer
             if (!Helper.IsCoreExtensionAvailable("GL_ARB_direct_state_access", 4, 5))
                 throw new NotSupportedException("Your system does not support GL_ARB_direct_state_access");
 
+            if (!Helper.IsCoreExtensionAvailable("GL_ARB_buffer_storage", 4, 4))
+                throw new NotSupportedException("Your system does not support GL_ARB_buffer_storage");
+
             if (!Helper.IsCoreExtensionAvailable("GL_ARB_compute_shader", 4, 3))
                 throw new NotSupportedException("Your system does not support GL_ARB_compute_shader");
 
@@ -153,6 +163,9 @@ namespace OpenTK_PathTracer
             CursorVisible = false;
             CursorGrabbed = true;
 
+            AtmosphericScatterer = new AtmosphericScatterer(256);
+            AtmosphericScatterer.Render();
+
             SkyBox = new Texture(TextureTarget2d.TextureCubeMap);
             Helper.ParallelLoadCubemapImages(SkyBox, new string[]
             {
@@ -164,9 +177,7 @@ namespace OpenTK_PathTracer
                 "res/Textures/EnvironmentMap/negz.png"
             }, (SizedInternalFormat)PixelInternalFormat.Srgb8Alpha8);
 
-            AtmosphericScatterer = new AtmosphericScatterer(512);
-            
-            PathTracer = new PathTracer(SkyBox, Width, Height, 13, 1, 20f, 0.14f);
+            PathTracer = new PathTracer(AtmosphericScatterer.Result, Width, Height, 13, 1, 20f, 0.14f);
             PostProcesser = new ScreenEffect(new Shader(ShaderType.FragmentShader, "res/shaders/PostProcessing/fragment.glsl".GetPathContent()), Width, Height);
             finalProgram = new ShaderProgram(new Shader(ShaderType.VertexShader, "res/shaders/screenQuad.glsl".GetPathContent()), new Shader(ShaderType.FragmentShader, "res/shaders/final.glsl".GetPathContent()));
             
@@ -175,7 +186,16 @@ namespace OpenTK_PathTracer
             GameObjectsUBO = new BufferObject(BufferRangeTarget.UniformBuffer, 1);
             GameObjectsUBO.ImmutableAllocate(Sphere.GPU_INSTANCE_SIZE * MAX_GAMEOBJECTS_SPHERES + Cuboid.GPU_INSTANCE_SIZE * MAX_GAMEOBJECTS_CUBOIDS, IntPtr.Zero, BufferStorageFlags.DynamicStorageBit);
 
-            float width = 40, height = 25, depth = 25;
+            LoadScene();
+
+            base.OnLoad(e);
+        }
+
+        public void LoadScene()
+        {
+            float width = 40.0f, height = 25.0f, depth = 25.0f;
+            PathTracer.NumSpheres = 0;
+            PathTracer.NumCuboids = 0;
             #region SetupSpheres
             int balls = 6;
             float radius = 1.3f;
@@ -183,7 +203,7 @@ namespace OpenTK_PathTracer
             for (float x = 0; x < balls; x++)
                 for (float y = 0; y < balls; y++)
                     GameObjects.Add(new Sphere(new Vector3(dimensions.X / balls * x * 1.1f - dimensions.X / 2, (dimensions.Y / balls) * y - dimensions.Y / 2 + radius, -5), radius, PathTracer.NumSpheres++, new Material(albedo: new Vector3(0.59f, 0.59f, 0.99f), emissiv: new Vector3(0), refractionColor: Vector3.Zero, specularChance: x / (balls - 1), specularRoughness: y / (balls - 1), indexOfRefraction: 1f, refractionChance: 0.0f, refractionRoughnes: 0.1f)));
-            
+
             Vector3 delta = dimensions / balls;
             for (float x = 0; x < balls; x++)
             {
@@ -208,29 +228,27 @@ namespace OpenTK_PathTracer
                 GameObjects.Add(new Sphere(position, radius, PathTracer.NumSpheres++, material1));
             }
             #endregion
-            
+
             #region SetupCuboids
-            
-            Cuboid down = new Cuboid(new Vector3(0, -height / 2, -10), new Vector3(width, EPSILON, depth), PathTracer.NumCuboids++, new Material(albedo: new Vector3(0.2f, 0.04f, 0.04f), emissiv: new Vector3(0.0f), refractionColor: Vector3.Zero, specularChance: 0.0f, specularRoughness: 0.051f, indexOfRefraction: 1.0f, refractionChance: 0.0f, refractionRoughnes: 0.0f));
 
-            //Cuboid up = new Cuboid(new Vector3(down.Position.X, down.Position.Y + height, down.Position.Z - down.Dimensions.Z / 4f), new Vector3(down.Dimensions.X, EPSILON, down.Dimensions.Z / 2), PathTracer.NumCuboids++, new Material(albedo: new Vector3(0.6f), emissiv: new Vector3(0.0f), refractionColor: Vector3.Zero, specularChance: 0.023f, specularRoughness: 0.051f, indexOfRefraction: 1f, refractionChance: 0.0f, refractionRoughnes: 0));
-            Cuboid upLight = new Cuboid(new Vector3(0, 20.5f - EPSILON, 6), new Vector3(down.Dimensions.X * 0.3f, EPSILON, down.Dimensions.Z * 0.3f), PathTracer.NumCuboids++, new Material(albedo: new Vector3(0.04f), emissiv: new Vector3(0.917f, 0.945f, 0.513f) * 5f, refractionColor: Vector3.Zero, specularChance: 0.0f, specularRoughness: 0.0f, indexOfRefraction: 1.0f, refractionChance: 0.0f, refractionRoughnes: 0.0f));
+            Cuboid down = new Cuboid(new Vector3(0.0f, -height / 2.0f, -10.0f), new Vector3(width, EPSILON, depth), PathTracer.NumCuboids++, new Material(albedo: new Vector3(0.2f, 0.04f, 0.04f), emissiv: new Vector3(0.0f), refractionColor: Vector3.Zero, specularChance: 0.0f, specularRoughness: 0.051f, indexOfRefraction: 1.0f, refractionChance: 0.0f, refractionRoughnes: 0.0f));
 
-            Cuboid back = new Cuboid(new Vector3(down.Position.X, down.Position.Y + height / 2, down.Position.Z - depth / 2), new Vector3(width, height, EPSILON), PathTracer.NumCuboids++, new Material(albedo: new Vector3(1.0f), emissiv: new Vector3(0.0f), refractionColor: Vector3.Zero, specularChance: 0.0f, specularRoughness: 0.0f, indexOfRefraction: 1.0f, refractionChance: 0.0f, refractionRoughnes: 0.0f));
-            Cuboid front = new Cuboid(new Vector3(down.Position.X, down.Position.Y + height / 2 + EPSILON, down.Position.Z + depth / 2 - 0.3f / 2), new Vector3(width, height - EPSILON * 2, 0.3f), PathTracer.NumCuboids++, new Material(albedo: new Vector3(1f), emissiv: Vector3.Zero, refractionColor: new Vector3(0.01f), specularChance: 0.04f, specularRoughness: 0f, indexOfRefraction: 1f, refractionChance: 0.954f, refractionRoughnes: 0));
+            //Cuboid up = new Cuboid(new Vector3(down.Position.X, down.Position.Y + height, down.Position.Z - down.Dimensions.Z / 4f), new Vector3(down.Dimensions.X, EPSILON, down.Dimensions.Z / 2), PathTracer.NumCuboids++, new Material(albedo: new Vector3(0.6f), emissiv: new Vector3(0.0f), refractionColor: Vector3.Zero, specularChance: 0.023f, specularRoughness: 0.051f, indexOfRefraction: 1.0f, refractionChance: 0.0f, refractionRoughnes: 0.0f));
+            Cuboid upLight = new Cuboid(new Vector3(0.0f, 18.495f - EPSILON, -4.0f), new Vector3(down.Dimensions.X * 0.3f, EPSILON, down.Dimensions.Z * 0.3f), PathTracer.NumCuboids++, new Material(albedo: new Vector3(0.04f), emissiv: new Vector3(0.917f, 0.945f, 0.513f) * 5f, refractionColor: Vector3.Zero, specularChance: 0.0f, specularRoughness: 0.0f, indexOfRefraction: 1.0f, refractionChance: 0.0f, refractionRoughnes: 0.0f));
 
-            Cuboid right = new Cuboid(new Vector3(down.Position.X + width / 2, down.Position.Y + height / 2, down.Position.Z), new Vector3(EPSILON, height, depth), PathTracer.NumCuboids++, new Material(albedo: new Vector3(0.8f, 0.8f, 0.4f), emissiv: new Vector3(0.0f), refractionColor: Vector3.Zero, specularChance: 1.0f, specularRoughness: 0.0f, indexOfRefraction: 1.0f, refractionChance: 0.0f, refractionRoughnes: 0.0f));
-            Cuboid left = new Cuboid(new Vector3(down.Position.X - width / 2, down.Position.Y + height / 2, down.Position.Z), new Vector3(EPSILON, height, depth), PathTracer.NumCuboids++, new Material(albedo: new Vector3(0.24f, 0.6f, 0.24f), emissiv: new Vector3(0.0f), refractionColor: Vector3.Zero, specularChance: 0.0f, specularRoughness: 0.0f, indexOfRefraction: 1.0f, refractionChance: 0.0f, refractionRoughnes: 0.0f));
+            Cuboid back = new Cuboid(new Vector3(down.Position.X, down.Position.Y + height / 2, down.Position.Z + depth / 2 - 5f), new Vector3(width, height, EPSILON), PathTracer.NumCuboids++, new Material(albedo: new Vector3(0.37109375f, 0.67578125f, 0.3359375f), emissiv: new Vector3(0.0f), refractionColor: Vector3.Zero, specularChance: 0.0f, specularRoughness: 0.0f, indexOfRefraction: 1.0f, refractionChance: 0.0f, refractionRoughnes: 0.0f));
+            Cuboid front = new Cuboid(new Vector3(down.Position.X, down.Position.Y + height / 2 + EPSILON, down.Position.Z - depth / 2), new Vector3(width, height - EPSILON * 2, 0.3f), PathTracer.NumCuboids++, new Material(albedo: new Vector3(1f), emissiv: Vector3.Zero, refractionColor: new Vector3(0.01f), specularChance: 0.04f, specularRoughness: 0.0f, indexOfRefraction: 1f, refractionChance: 0.954f, refractionRoughnes: 0.0f));
 
-            Cuboid middle = new Cuboid(new Vector3(-15f, -10.5f + EPSILON, -15), new Vector3(3f, 6, 3f), PathTracer.NumCuboids++, new Material(albedo: new Vector3(1.0f), emissiv: new Vector3(0.0f), refractionColor: Vector3.Zero, specularChance: 0.0f, specularRoughness: 0.0f, indexOfRefraction: 1.0f, refractionChance: 0.0f, refractionRoughnes: 0));
+            Cuboid right = new Cuboid(new Vector3(down.Position.X + width / 2, down.Position.Y + height / 2.0f, down.Position.Z), new Vector3(EPSILON, height, depth), PathTracer.NumCuboids++, new Material(albedo: new Vector3(0.9453125f, 0.75390625f, 0.3046875f), emissiv: new Vector3(0.0f), refractionColor: Vector3.Zero, specularChance: 1.0f, specularRoughness: 0.19f, indexOfRefraction: 1.0f, refractionChance: 0.0f, refractionRoughnes: 0.0f));
+            Cuboid left = new Cuboid(new Vector3(down.Position.X - width / 2, down.Position.Y + height / 2.0f, down.Position.Z), new Vector3(EPSILON, height, depth), PathTracer.NumCuboids++, new Material(albedo: new Vector3(0.074219f, 0.25f, 0.453125f), emissiv: new Vector3(0.0f), refractionColor: Vector3.Zero, specularChance: 0.0f, specularRoughness: 0.0f, indexOfRefraction: 1.0f, refractionChance: 0.0f, refractionRoughnes: 0.0f));
+
+            Cuboid middle = new Cuboid(new Vector3(-15.0f, -10.5f + EPSILON, -15.0f), new Vector3(3.0f, 6.0f, 3.0f), PathTracer.NumCuboids++, new Material(albedo: new Vector3(1.0f), emissiv: new Vector3(0.0f), refractionColor: Vector3.Zero, specularChance: 0.0f, specularRoughness: 0.0f, indexOfRefraction: 1.0f, refractionChance: 0.0f, refractionRoughnes: 0.0f));
 
             GameObjects.AddRange(new Cuboid[] { down, upLight, back, front, right, left, middle });
             #endregion
 
             for (int i = 0; i < GameObjects.Count; i++)
                 GameObjects[i].Upload(GameObjectsUBO);
-
-            base.OnLoad(e);
         }
 
         private int lastWidth = -1, lastHeight = -1;

@@ -87,9 +87,9 @@ namespace OpenTK_PathTracer.Render
             bufferObject.SubData(0, Vector4.SizeInBytes * 4, invProjection);
             bufferObject.SubData(Vector4.SizeInBytes * 4, Vector4.SizeInBytes * 4 * invViews.Length, invViews);
 
-            Time = 0.005f;
-            ISteps = 16; // Fix: Over 16 causes artifacts !?
-            JSteps = 20;
+            Time = 0.5f;
+            ISteps = 50;
+            JSteps = 15;
             LightIntensity = 15.0f;
         }
 

@@ -40,7 +40,7 @@ void main()
     
     vec3 color = Atmosphere(
         eyeToWorld,                     // normalized ray direction
-        vec3(0, 6372e3, 0),             // ray origin
+        vec3(0, 6376e3, 0),             // ray origin
         lightPos,                       // position of the sun
         lightIntensity,                 // intensity of the sun
         6371e3,                         // radius of the planet in meters

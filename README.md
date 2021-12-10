@@ -24,6 +24,7 @@ Also see https://youtu.be/XcIToi0fh5c.
 ### **KeyBoard:**
 * W, A, S, D => Movment
 * E => Toggle cursor visibility
+* R => Reset scene
 * V => Toggle VSync
 * F11 => Toggle fullscreen
 * LShift => Faster movment speed
