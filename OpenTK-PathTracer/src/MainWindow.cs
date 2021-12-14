@@ -81,8 +81,8 @@ namespace OpenTK_PathTracer
 
                 if (ImGuiNET.ImGui.GetIO().WantCaptureMouse && !CursorVisible)
                 {
-                    Point _point = PointToScreen(new Point(Width / 2, Height / 2));
-                    Mouse.SetPosition(_point.X, _point.Y);
+                    Point point = PointToScreen(new Point(Width / 2, Height / 2));
+                    Mouse.SetPosition(point.X, point.Y);
                 }
 
                 Gui.Update(this);

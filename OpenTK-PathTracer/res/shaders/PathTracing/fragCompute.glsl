@@ -7,7 +7,7 @@
 
 layout(location = 0) out vec4 FragColor;
 
-layout(binding = 0, rgba32f) uniform readonly restrict image2D ImgLastFrame;
+layout(binding = 0, rgba32f) readonly restrict uniform image2D ImgLastFrame;
 layout(binding = 1) uniform samplerCube SamplerEnvironment;
 
 struct Material 

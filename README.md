@@ -38,8 +38,8 @@ Also see https://youtu.be/XcIToi0fh5c.
 
 ## **Render Samples**
 
-![img1](https://github.com/JulianStambuk/OpenTK-PathTracer/blob/master/Screenshots/img1.png?raw=true)
+![img1](Screenshots/img1.png?raw=true)
 
-![img2](https://github.com/JulianStambuk/OpenTK-PathTracer/blob/master/Screenshots/img2.png?raw=true)
+![img2](Screenshots/img2.png?raw=true)
 
-![img3](https://github.com/JulianStambuk/OpenTK-PathTracer/blob/master/Screenshots/img3.png?raw=true)
+![img3](Screenshots/img3.png?raw=true)
