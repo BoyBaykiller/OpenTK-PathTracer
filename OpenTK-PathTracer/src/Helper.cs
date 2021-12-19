@@ -12,8 +12,8 @@ namespace OpenTK_PathTracer
     static class Helper
     {
         public const string SHADER_DIRECTORY_PATH = "res/shaders/";
-        public static readonly int APIMajor = (int)char.GetNumericValue(GL.GetString(StringName.Version)[0]);
-        public static readonly int APIMinor = (int)char.GetNumericValue(GL.GetString(StringName.Version)[2]);
+        public static readonly double APIVersion = Convert.ToDouble(GL.GetString(StringName.Version).Substring(0, 3));
+        public static readonly double GLSLVersion = Convert.ToDouble(GL.GetString(StringName.ShadingLanguageVersion));
 
         public static string GetPathContent(this string path)
         {
@@ -68,6 +68,8 @@ namespace OpenTK_PathTracer
         private static readonly HashSet<string> glExtensions = new HashSet<string>(GetExtensions());
 
 
+        /// <summary>
+        /// </summary>
         /// <param name="extension">The extension to check against. Examples: GL_ARB_bindless_texture or WGL_EXT_swap_control</param>
         /// <returns>True if the extension is available</returns>
         public static bool IsExtensionsAvailable(string extension)
@@ -75,19 +77,15 @@ namespace OpenTK_PathTracer
             return glExtensions.Contains(extension);
         }
 
+        /// <summary>
+        /// </summary>
         /// <param name="extension">The extension to check against. Examples: GL_ARB_direct_state_access or GL_ARB_compute_shader</param>
-        /// <param name="firstMajor">The major API version the extension became part of the core profile</param>
-        /// <param name="firstMinor">The minor API version the extension became part of the core profile</param>
-        /// <param name="lastMajor">The last major API version the extension was part of the core profile</param>
-        /// <param name="lastMinor">The last minor API version the extension was part of the core profile</param>
+        /// <param name="first">The major API version the extension became part of the core profile</param>
+        /// <param name="last">The minor API version the extension became part of the core profile</param>
         /// <returns>True if this OpenGL version is in the specified range or the extension is otherwise available</returns>
-        public static bool IsCoreExtensionAvailable(string extension, int firstMajor, int firstMinor, int lastMajor = 4, int lastMinor = 6)
+        public static bool IsCoreExtensionAvailable(string extension, double first, double last)
         {
-            int firstVersion = Convert.ToInt32($"{firstMajor}{firstMinor}");
-            int lastVersion = Convert.ToInt32($"{lastMajor}{lastMinor}");
-            int thisVersion = Convert.ToInt32($"{APIMajor}{APIMinor}");
-
-            return (thisVersion >= firstVersion && thisVersion <= lastVersion) || IsExtensionsAvailable(extension);
+            return (APIVersion >= first && APIVersion <= last) || IsExtensionsAvailable(extension);
         }
     }
 }

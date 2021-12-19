@@ -9,20 +9,14 @@ namespace OpenTK_PathTracer.Render.Objects
         public readonly int ID;
         public int Size { get; private set; }
 
-        public BufferObject(BufferRangeTarget bufferRangeTarget, int bindingIndex)
-        {
-            GL.CreateBuffers(1, out ID);
-            BindBase(bufferRangeTarget, bindingIndex);
-        }
-
         public BufferObject()
         {
             GL.CreateBuffers(1, out ID);
         }
 
-        public void BindBase(BufferRangeTarget bufferRangeTarget, int index)
+        public void BindRange(BufferRangeTarget bufferRangeTarget, int index, int offset, int size)
         {
-            GL.BindBufferBase(bufferRangeTarget, index, ID);
+            GL.BindBufferRange(bufferRangeTarget, index, ID, (IntPtr)offset, size);
         }
 
         public void Bind(BufferTarget bufferTarget)
@@ -31,7 +25,7 @@ namespace OpenTK_PathTracer.Render.Objects
         }
 
         /// <summary>
-        /// Overrides all of this buffers memory with 0
+        /// Sets the content of this buffer to 0
         /// </summary>
         public void Reset()
         {

@@ -138,9 +138,10 @@ namespace OpenTK_PathTracer
         public Texture SkyBox;
         protected override void OnLoad(EventArgs e)
         {
-            Console.WriteLine($"OpenGL: {Helper.APIMajor}.{Helper.APIMinor}");
-            Console.WriteLine($"GLSL: {GL.GetString(StringName.ShadingLanguageVersion)}");
+            Console.WriteLine($"OpenGL: {Helper.APIVersion}");
+            Console.WriteLine($"GLSL: {Helper.GLSLVersion}");
             Console.WriteLine($"GPU: {GL.GetString(StringName.Renderer)}");
+
             if (!Helper.IsCoreExtensionAvailable("GL_ARB_direct_state_access", 4, 5))
                 throw new NotSupportedException("Your system does not support GL_ARB_direct_state_access");
 
@@ -181,10 +182,13 @@ namespace OpenTK_PathTracer
             PostProcesser = new ScreenEffect(new Shader(ShaderType.FragmentShader, "res/shaders/PostProcessing/fragment.glsl".GetPathContent()), Width, Height);
             finalProgram = new ShaderProgram(new Shader(ShaderType.VertexShader, "res/shaders/screenQuad.glsl".GetPathContent()), new Shader(ShaderType.FragmentShader, "res/shaders/final.glsl".GetPathContent()));
             
-            BasicDataUBO = new BufferObject(BufferRangeTarget.UniformBuffer, 0);
+            BasicDataUBO = new BufferObject();
             BasicDataUBO.ImmutableAllocate(Vector4.SizeInBytes * 4 * 2 + Vector4.SizeInBytes, IntPtr.Zero, BufferStorageFlags.DynamicStorageBit);
-            GameObjectsUBO = new BufferObject(BufferRangeTarget.UniformBuffer, 1);
+            BasicDataUBO.BindRange(BufferRangeTarget.UniformBuffer, 0, 0, BasicDataUBO.Size);
+
+            GameObjectsUBO = new BufferObject();
             GameObjectsUBO.ImmutableAllocate(Sphere.GPU_INSTANCE_SIZE * MAX_GAMEOBJECTS_SPHERES + Cuboid.GPU_INSTANCE_SIZE * MAX_GAMEOBJECTS_CUBOIDS, IntPtr.Zero, BufferStorageFlags.DynamicStorageBit);
+            GameObjectsUBO.BindRange(BufferRangeTarget.UniformBuffer, 1, 0, GameObjectsUBO.Size);
 
             LoadScene();
 
@@ -196,6 +200,7 @@ namespace OpenTK_PathTracer
             float width = 40.0f, height = 25.0f, depth = 25.0f;
             PathTracer.NumSpheres = 0;
             PathTracer.NumCuboids = 0;
+            
             #region SetupSpheres
             int balls = 6;
             float radius = 1.3f;
