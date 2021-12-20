@@ -277,8 +277,11 @@ bool RayCuboidIntersect(Ray ray, vec3 aabbMin, vec3 aabbMax, out float t1, out f
     t1 = FLOAT_MIN;
     t2 = FLOAT_MAX;
 
-    vec3 t0s = (aabbMin - ray.Origin) * (1.0 / ray.Direction);
-    vec3 t1s = (aabbMax - ray.Origin) * (1.0 / ray.Direction);
+    // According to the spec https://www.khronos.org/registry/OpenGL/specs/gl/GLSLangSpec.4.30.pdf
+    // " Dividing by 0 results in the appropriately signed IEEE Inf"
+    // So no need for the " * invDir " thing.
+    vec3 t0s = (aabbMin - ray.Origin) / ray.Direction;
+    vec3 t1s = (aabbMax - ray.Origin) / ray.Direction;
 
     vec3 tsmaller = min(t0s, t1s);
     vec3 tbigger = max(t0s, t1s);
