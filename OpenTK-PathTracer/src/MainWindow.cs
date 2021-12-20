@@ -138,21 +138,27 @@ namespace OpenTK_PathTracer
         public Texture SkyBox;
         protected override void OnLoad(EventArgs e)
         {
-            Console.WriteLine($"OpenGL: {Helper.APIVersion}");
-            Console.WriteLine($"GLSL: {Helper.GLSLVersion}");
+            Console.WriteLine($"OpenGL: {GL.GetString(StringName.Renderer)}");
+            Console.WriteLine($"GLSL: {GL.GetString(StringName.ShadingLanguageVersion)}");
             Console.WriteLine($"GPU: {GL.GetString(StringName.Renderer)}");
 
-            if (!Helper.IsCoreExtensionAvailable("GL_ARB_direct_state_access", 4, 5))
-                throw new NotSupportedException("Your system does not support GL_ARB_direct_state_access");
+            // Idk if extension returned by GL.GetString(StringNameIndexed.Extensions, i)
+            // include core extensions. If not the correct way to check for lets say
+            // GL_ARB_direct_state_access (core since 4.5) would be:
+            // IsAvailable(GL_ARB_direct_state_access) || IsGLGreaterEqual(4.5),
+            // hence I only print out a warning
 
-            if (!Helper.IsCoreExtensionAvailable("GL_ARB_buffer_storage", 4, 4))
-                throw new NotSupportedException("Your system does not support GL_ARB_buffer_storage");
+            if (!Helper.IsExtensionsAvailable("GL_ARB_direct_state_access"))
+                Console.WriteLine("Warning GL_ARB_direct_state_access not available");
 
-            if (!Helper.IsCoreExtensionAvailable("GL_ARB_compute_shader", 4, 3))
-                throw new NotSupportedException("Your system does not support GL_ARB_compute_shader");
+            if (!Helper.IsExtensionsAvailable("GL_ARB_buffer_storage"))
+                Console.WriteLine("Warning GL_ARB_buffer_storage not available");
 
-            if (!Helper.IsCoreExtensionAvailable("GL_ARB_texture_storage", 4, 2))
-                throw new NotSupportedException("Your system does not support GL_ARB_texture_storage");
+            if (!Helper.IsExtensionsAvailable("GL_ARB_compute_shader"))
+                Console.WriteLine("Warning GL_ARB_compute_shader not available");
+
+            if (!Helper.IsExtensionsAvailable("GL_ARB_texture_storage"))
+                Console.WriteLine("Warning GL_ARB_texture_storage not available");
 
             GL.DepthMask(false);
             GL.Disable(EnableCap.DepthTest);
