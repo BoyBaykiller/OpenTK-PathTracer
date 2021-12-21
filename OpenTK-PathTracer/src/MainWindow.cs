@@ -17,7 +17,13 @@ namespace OpenTK_PathTracer
         public const int MAX_GAMEOBJECTS_SPHERES = 256, MAX_GAMEOBJECTS_CUBOIDS = 64;
         public const float EPSILON = 0.005f, FOV = 103;
 
-        public MainWindow() : base(832, 832, new GraphicsMode(0, 0, 0, 0)) {  /*WindowState = WindowState.Maximized;*/  }
+        public MainWindow() : base(832, 832,
+            new GraphicsMode(0, 0, 0, 0),
+            string.Empty,
+            GameWindowFlags.Default,
+            DisplayDevice.Default,
+            4, 5,
+            GraphicsContextFlags.Default) {  /*WindowState = WindowState.Maximized;*/  }
 
 
         public Matrix4 inverseProjection;
@@ -45,7 +51,7 @@ namespace OpenTK_PathTracer
                 Framebuffer.Bind(0);
                 PostProcesser.Result.AttachSampler(0);
                 finalProgram.Use();
-                GL.DrawArrays(PrimitiveType.Quads, 0, 4);
+                GL.DrawArrays(PrimitiveType.Triangles, 0, 6);
 
                 if (Focused)
                 {
@@ -138,27 +144,21 @@ namespace OpenTK_PathTracer
         public Texture SkyBox;
         protected override void OnLoad(EventArgs e)
         {
-            Console.WriteLine($"OpenGL: {GL.GetString(StringName.Renderer)}");
+            Console.WriteLine($"OpenGL: {Helper.APIVersion}");
             Console.WriteLine($"GLSL: {GL.GetString(StringName.ShadingLanguageVersion)}");
             Console.WriteLine($"GPU: {GL.GetString(StringName.Renderer)}");
 
-            // Idk if extension returned by GL.GetString(StringNameIndexed.Extensions, i)
-            // include core extensions. If not the correct way to check for lets say
-            // GL_ARB_direct_state_access (core since 4.5) would be:
-            // IsAvailable(GL_ARB_direct_state_access) || IsGLGreaterEqual(4.5),
-            // hence I only print out a warning
+            if (!Helper.IsCoreExtensionAvailable("GL_ARB_direct_state_access", 4.5))
+                throw new NotSupportedException("Your system does not support GL_ARB_direct_state_access");
 
-            if (!Helper.IsExtensionsAvailable("GL_ARB_direct_state_access"))
-                Console.WriteLine("Warning GL_ARB_direct_state_access not available");
+            if (!Helper.IsCoreExtensionAvailable("GL_ARB_buffer_storage", 4.4))
+                throw new NotSupportedException("Your system does not support GL_ARB_buffer_storage");
 
-            if (!Helper.IsExtensionsAvailable("GL_ARB_buffer_storage"))
-                Console.WriteLine("Warning GL_ARB_buffer_storage not available");
+            if (!Helper.IsCoreExtensionAvailable("GL_ARB_compute_shader", 4.3))
+                throw new NotSupportedException("Your system does not support GL_ARB_compute_shader");
 
-            if (!Helper.IsExtensionsAvailable("GL_ARB_compute_shader"))
-                Console.WriteLine("Warning GL_ARB_compute_shader not available");
-
-            if (!Helper.IsExtensionsAvailable("GL_ARB_texture_storage"))
-                Console.WriteLine("Warning GL_ARB_texture_storage not available");
+            if (!Helper.IsCoreExtensionAvailable("GL_ARB_texture_storage", 4.2))
+                throw new NotSupportedException("Your system does not support GL_ARB_texture_storage");
 
             GL.DepthMask(false);
             GL.Disable(EnableCap.DepthTest);

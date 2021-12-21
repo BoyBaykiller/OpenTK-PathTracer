@@ -30,7 +30,7 @@ namespace OpenTK_PathTracer.Render
 
             for (int i = 0; i < textures.Length; i++)
                 textures[i].AttachSampler(i);
-            GL.DrawArrays(PrimitiveType.Quads, 0, 4);
+            GL.DrawArrays(PrimitiveType.Triangles, 0, 6);
         }
 
         public void SetSize(int width, int height)
