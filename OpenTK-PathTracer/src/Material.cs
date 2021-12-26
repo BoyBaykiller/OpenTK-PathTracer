@@ -23,10 +23,10 @@ namespace OpenTK_PathTracer
             Albedo = albedo;
             Emissiv = emissiv;
             AbsorbanceColor = refractionColor;
-            SpecularChance = Math.Clamp(specularChance, 0, 1.0f - RefractionChance);
+            SpecularChance = Math.Clamp(specularChance, 0.0f, 1.0f);
             SpecularRoughness = specularRoughness;
             IOR = Math.Max(indexOfRefraction, 1.0f);
-            RefractionChance = Math.Clamp(refractionChance, 0, 1.0f - SpecularChance);
+            RefractionChance = Math.Clamp(refractionChance, 0.0f, 1.0f - SpecularChance);
             RefractionRoughnes = refractionRoughnes;
         }
 
