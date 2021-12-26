@@ -122,7 +122,7 @@ namespace OpenTK_PathTracer
 #else
             framebuffer.Bind();
             Result.AttachImage(0, 0, false, 0, TextureAccess.ReadOnly, SizedInternalFormat.Rgba32f);
-            GL.DrawArrays(PrimitiveType.Quads, 0, 4);
+            GL.DrawArrays(PrimitiveType.Triangles, 0, 6);
 #endif
         }
 
