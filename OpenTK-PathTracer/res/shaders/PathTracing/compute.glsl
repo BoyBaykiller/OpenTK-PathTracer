@@ -5,7 +5,7 @@
 #define PI 3.14159265
 // Example shader include: #include PathTracing/fragCompute
 
-layout(local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
+layout(local_size_x = 8, local_size_y = 4, local_size_z = 1) in;
 
 layout(binding = 0, rgba32f) restrict uniform image2D ImgResult;
 layout(binding = 1) uniform samplerCube SamplerEnvironment;
@@ -99,7 +99,7 @@ uint rndSeed;
 void main()
 {
     ivec2 imgResultSize = imageSize(ImgResult);
-    ivec2 imgCoord = ivec2(gl_GlobalInvocationID.x / imgResultSize.y, gl_GlobalInvocationID.x % imgResultSize.y);
+    ivec2 imgCoord = ivec2(gl_GlobalInvocationID.xy);
 
     rndSeed = gl_GlobalInvocationID.x * 1973 + gl_GlobalInvocationID.y * 9277 + thisRendererFrame * 2699 | 1;
     vec3 color = vec3(0);
@@ -195,7 +195,9 @@ float BSDF(inout Ray ray, HitInfo hitInfo, out bool isRefractive)
     float raySelectRoll = GetRandomFloat01();
     if (specularChance > raySelectRoll)
     {
-        ray.Direction = normalize(mix(reflect(ray.Direction, hitInfo.Normal), diffuseRay, hitInfo.Material.SpecularRoughness * hitInfo.Material.SpecularRoughness));
+        vec3 reflectionRayDir = reflect(ray.Direction, hitInfo.Normal);
+        reflectionRayDir = normalize(mix(reflectionRayDir, diffuseRay, hitInfo.Material.SpecularRoughness * hitInfo.Material.SpecularRoughness)); 
+        ray.Direction = reflectionRayDir;
         rayProbability = specularChance;
     }
     else if (specularChance + refractionChance > raySelectRoll)
