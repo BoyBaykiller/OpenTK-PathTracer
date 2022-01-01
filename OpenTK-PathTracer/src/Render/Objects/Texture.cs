@@ -1,6 +1,7 @@
 ﻿using System;
-using System.Drawing;
-using System.Drawing.Imaging;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+using SixLabors.ImageSharp.Processing;
 using OpenTK;
 using OpenTK.Graphics.OpenGL4;
 using PixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
@@ -300,20 +301,20 @@ namespace OpenTK_PathTracer.Render.Objects
             return false;
         }
 
-        public Bitmap GetTextureContent(int mipmapLevel = 0)
+        public unsafe Image GetTextureContent(int mipmapLevel = 0)
         {
             GetSizeMipmap(out int width, out int height, mipmapLevel);
 
-            Bitmap bmp = new Bitmap(width, height);
-            BitmapData bmpData = bmp.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.WriteOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-
-            GL.GetTextureImage(ID, mipmapLevel, PixelFormat.Bgra, PixelType.UnsignedByte, GetPixelSize(mipmapLevel) * width * height, bmpData.Scan0);
+            Image<Rgba32> image = new Image<Rgba32>(width, height);
+            fixed (void* ptr = image.GetPixelRowSpan(0))
+            {
+                GL.GetTextureImage(ID, mipmapLevel, PixelFormat.Rgba, PixelType.UnsignedByte, GetPixelSize(mipmapLevel) * width * height, (IntPtr)ptr);
+            }
             GL.Finish();
 
-            bmp.UnlockBits(bmpData);
-            bmp.RotateFlip(RotateFlipType.RotateNoneFlipY);
+            image.Mutate(p => p.Flip(FlipMode.Vertical));
 
-            return bmp;
+            return image;
         }
 
         public void GetSizeMipmap(out int width, out int height, int mipmapLevel = 0)

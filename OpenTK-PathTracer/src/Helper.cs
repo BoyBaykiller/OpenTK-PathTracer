@@ -1,9 +1,10 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-using System.Drawing;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK_PathTracer.Render.Objects;
 
@@ -22,7 +23,7 @@ namespace OpenTK_PathTracer
             return File.ReadAllText(path);
         }
 
-        public static void ParallelLoadCubemapImages(Texture texture, string[] paths, SizedInternalFormat sizedInternalFormat)
+        public static unsafe void ParallelLoadCubemapImages(Texture texture, string[] paths, SizedInternalFormat sizedInternalFormat)
         {
             if (texture.Target != TextureTarget.TextureCubeMap)
                 throw new ArgumentException($"texture must be {TextureTarget.TextureCubeMap}");
@@ -33,25 +34,26 @@ namespace OpenTK_PathTracer
             if (!paths.All(p => File.Exists(p)))
                 throw new FileNotFoundException($"At least on of the specified paths is invalid");
 
-            Bitmap[] bitmaps = new Bitmap[6];
+            Image<Rgba32>[] images = new Image<Rgba32>[6];
             Task.Run(() =>
             {
                 Parallel.For(0, 6, i =>
                 {
-                    bitmaps[i] = new Bitmap(paths[i]);
+                    images[i] = Image.Load<Rgba32>(paths[i]);
                 });
             }).Wait();
-            if (!bitmaps.All(i => i.Width == i.Height && i.Width == bitmaps[0].Width))
+            if (!images.All(i => i.Width == i.Height && i.Width == images[0].Width))
                 throw new ArgumentException($"Individual cubemap textures must be squares and every texture must be of the same size");
             
-            int size = bitmaps[0].Width;
+            int size = images[0].Width;
             texture.ImmutableAllocate(size, size, 1, sizedInternalFormat);
             for (int i = 0; i < 6; i++)
             {
-                System.Drawing.Imaging.BitmapData bitmapData = bitmaps[i].LockBits(new Rectangle(0, 0, size, size), System.Drawing.Imaging.ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-                texture.SubTexture3D(size, size, 1, PixelFormat.Bgra, PixelType.UnsignedByte, bitmapData.Scan0, 0, 0, 0, i);
-                bitmaps[i].UnlockBits(bitmapData);
-                bitmaps[i].Dispose();
+                fixed (void* ptr = images[i].GetPixelRowSpan(0))
+                {
+                    texture.SubTexture3D(size, size, 1, PixelFormat.Rgba, PixelType.UnsignedByte, (IntPtr)ptr, 0, 0, 0, i);
+                    images[i].Dispose();
+                }
             }
         }
 
