@@ -15,14 +15,6 @@ namespace OpenTK_PathTracer
         public const string SHADER_DIRECTORY_PATH = "res/shaders/";
         public static readonly double APIVersion = Convert.ToDouble($"{GL.GetInteger(GetPName.MajorVersion)}{GL.GetInteger(GetPName.MinorVersion)}") / 10.0;
 
-        public static string GetPathContent(this string path)
-        {
-            if (!File.Exists(path))
-                throw new FileNotFoundException($"{path} does not exist");
-
-            return File.ReadAllText(path);
-        }
-
         public static unsafe void ParallelLoadCubemapImages(Texture texture, string[] paths, SizedInternalFormat sizedInternalFormat)
         {
             if (texture.Target != TextureTarget.TextureCubeMap)

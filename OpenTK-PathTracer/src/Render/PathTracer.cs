@@ -1,4 +1,5 @@
 ﻿#define USE_COMPUTE
+using System.IO;
 using OpenTK;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK_PathTracer.Render.Objects;
@@ -83,22 +84,23 @@ namespace OpenTK_PathTracer
 
         public Texture EnvironmentMap;
         public readonly Texture Result;
-#if !USE_COMPUTE
+#if USE_COMPUTE
+        private static readonly ShaderProgram shaderProgram = new ShaderProgram(new Shader(ShaderType.ComputeShader, File.ReadAllText("res/shaders/PathTracing/compute.glsl")));
+#else
         private readonly Framebuffer framebuffer;
+        private static readonly ShaderProgram shaderProgram = new ShaderProgram(
+            new Shader(ShaderType.VertexShader, File.ReadAllText("res/shaders/screenQuad.glsl")),
+            new Shader(ShaderType.FragmentShader, File.ReadAllText("res/shaders/PathTracing/fragCompute.glsl")));
 #endif
-        private readonly ShaderProgram shaderProgram;
         public PathTracer(Texture environmentMap, int width, int height, int rayDepth, int spp, float focalLength, float apertureDiamater)
         {
             Result = new Texture(TextureTarget2d.Texture2D);
             Result.SetFilter(TextureMinFilter.Nearest, TextureMagFilter.Nearest);
             Result.MutableAllocate(width, height, 1, PixelInternalFormat.Rgba32f);
 
-#if USE_COMPUTE
-            shaderProgram = new ShaderProgram(new Shader(ShaderType.ComputeShader, "res/shaders/PathTracing/compute.glsl".GetPathContent()));
-#else
+#if !USE_COMPUTE
             framebuffer = new Framebuffer();
             framebuffer.AddRenderTarget(FramebufferAttachment.ColorAttachment0, Result);
-            shaderProgram = new ShaderProgram(new Shader(ShaderType.VertexShader, "res/shaders/screenQuad.glsl".GetPathContent()), new Shader(ShaderType.FragmentShader, "res/shaders/PathTracing/fragCompute.glsl".GetPathContent()));
 #endif
 
             RayDepth = rayDepth;

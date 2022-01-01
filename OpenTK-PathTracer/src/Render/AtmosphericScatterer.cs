@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using OpenTK;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK_PathTracer.Render.Objects;
@@ -57,7 +58,7 @@ namespace OpenTK_PathTracer.Render
 
         public readonly TimerQuery Timer;
         public readonly Texture Result;
-        private readonly ShaderProgram shaderProgram;
+        private static readonly ShaderProgram shaderProgram = new ShaderProgram(new Shader(ShaderType.ComputeShader, File.ReadAllText("res/shaders/AtmosphericScattering/compute.glsl")));
         private readonly BufferObject bufferObject;
         public AtmosphericScatterer(int size)
         {
@@ -66,8 +67,6 @@ namespace OpenTK_PathTracer.Render
             Result = new Texture(TextureTarget2d.TextureCubeMap);
             Result.SetFilter(TextureMinFilter.Nearest, TextureMagFilter.Linear);
             Result.MutableAllocate(size, size, 1, PixelInternalFormat.Rgba32f);
-
-            shaderProgram = new ShaderProgram(new Shader(ShaderType.ComputeShader, "res/shaders/AtmosphericScattering/compute.glsl".GetPathContent()));
             
             bufferObject = new BufferObject();
             bufferObject.ImmutableAllocate(Vector4.SizeInBytes * 4 * 7 + Vector4.SizeInBytes, IntPtr.Zero, BufferStorageFlags.DynamicStorageBit);

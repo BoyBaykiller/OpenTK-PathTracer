@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Drawing;
+using System.IO;
 using System.Diagnostics;
 using System.Collections.Generic;
 using OpenTK;
@@ -87,7 +87,7 @@ namespace OpenTK_PathTracer
 
                 if (ImGuiNET.ImGui.GetIO().WantCaptureMouse && !CursorVisible)
                 {
-                    Point point = PointToScreen(new Point(Width / 2, Height / 2));
+                    System.Drawing.Point point = PointToScreen(new System.Drawing.Point(Width / 2, Height / 2));
                     Mouse.SetPosition(point.X, point.Y);
                 }
 
@@ -186,8 +186,10 @@ namespace OpenTK_PathTracer
             }, (SizedInternalFormat)PixelInternalFormat.Srgb8Alpha8);
 
             PathTracer = new PathTracer(AtmosphericScatterer.Result, Width, Height, 13, 1, 20f, 0.14f);
-            PostProcesser = new ScreenEffect(new Shader(ShaderType.FragmentShader, "res/shaders/PostProcessing/fragment.glsl".GetPathContent()), Width, Height);
-            finalProgram = new ShaderProgram(new Shader(ShaderType.VertexShader, "res/shaders/screenQuad.glsl".GetPathContent()), new Shader(ShaderType.FragmentShader, "res/shaders/final.glsl".GetPathContent()));
+            PostProcesser = new ScreenEffect(new Shader(ShaderType.FragmentShader, File.ReadAllText("res/shaders/PostProcessing/fragment.glsl")), Width, Height);
+            finalProgram = new ShaderProgram(
+                new Shader(ShaderType.VertexShader, File.ReadAllText("res/shaders/screenQuad.glsl")),
+                new Shader(ShaderType.FragmentShader, File.ReadAllText("res/shaders/final.glsl")));
             
             BasicDataUBO = new BufferObject();
             BasicDataUBO.ImmutableAllocate(Vector4.SizeInBytes * 4 * 2 + Vector4.SizeInBytes, IntPtr.Zero, BufferStorageFlags.DynamicStorageBit);

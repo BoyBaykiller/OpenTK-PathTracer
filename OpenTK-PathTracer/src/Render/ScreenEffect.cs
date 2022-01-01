@@ -1,4 +1,5 @@
-﻿using OpenTK.Graphics.OpenGL4;
+﻿using System.IO;
+using OpenTK.Graphics.OpenGL4;
 using OpenTK_PathTracer.Render.Objects;
 
 namespace OpenTK_PathTracer.Render
@@ -8,6 +9,7 @@ namespace OpenTK_PathTracer.Render
         private readonly Framebuffer framebuffer;
         public readonly Texture Result;
         private readonly ShaderProgram shaderProgram;
+        private static readonly Shader vertexShader = new Shader(ShaderType.VertexShader, File.ReadAllText("res/shaders/screenQuad.glsl"));
         public ScreenEffect(Shader fragmentShader, int width, int height)
         {
             if (fragmentShader.ShaderType != ShaderType.FragmentShader)
@@ -21,7 +23,7 @@ namespace OpenTK_PathTracer.Render
 
             framebuffer.AddRenderTarget(FramebufferAttachment.ColorAttachment0, Result);
             
-            shaderProgram = new ShaderProgram(new Shader(ShaderType.VertexShader, "res/shaders/screenQuad.glsl".GetPathContent()), fragmentShader);
+            shaderProgram = new ShaderProgram(vertexShader, fragmentShader);
         }
 
         public void Render(params Texture[] textures)
