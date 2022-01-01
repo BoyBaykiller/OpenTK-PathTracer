@@ -102,7 +102,7 @@ void main()
     ivec2 imgResultSize = imageSize(ImgLastFrame);
 
     rndSeed = uint(gl_FragCoord.x * 1973 + gl_FragCoord.y * 9277 + thisRendererFrame * 2699) | 1;
-    vec3 color = vec3(0);
+    vec3 irradiance = vec3(0);
     for (int i = 0; i < SPP; i++)
     {   
         vec2 subPixelOffset = vec2(GetRandomFloat01(), GetRandomFloat01()) - 0.5; // integrating over whole pixel eliminates aliasing
@@ -115,13 +115,13 @@ void main()
         rayEyeToWorld.Origin = (basicDataUBO.InvView * vec4(offset, 0.0, 1.0)).xyz;
         rayEyeToWorld.Direction = normalize(focalPoint - rayEyeToWorld.Origin);
 
-        color += Radiance(rayEyeToWorld);
+        irradiance += Radiance(rayEyeToWorld);
     }
-    color /= SPP;
+    irradiance /= SPP;
     vec3 lastFrameColor = imageLoad(ImgLastFrame, ivec2(gl_FragCoord.xy)).rgb;
 
-    color = mix(lastFrameColor, color, 1.0 / (thisRendererFrame + 1));
-    FragColor = vec4(color, 1.0);
+    irradiance = mix(lastFrameColor, irradiance, 1.0 / (thisRendererFrame + 1));
+    FragColor = vec4(irradiance, 1.0);
 }
 
 vec3 Radiance(Ray ray)

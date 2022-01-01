@@ -174,6 +174,7 @@ namespace OpenTK_PathTracer
             AtmosphericScatterer.Render();
 
             SkyBox = new Texture(TextureTarget2d.TextureCubeMap);
+            SkyBox.SetFilter(TextureMinFilter.Nearest, TextureMagFilter.Linear);
             Helper.ParallelLoadCubemapImages(SkyBox, new string[]
             {
                 "res/Textures/EnvironmentMap/posx.png",

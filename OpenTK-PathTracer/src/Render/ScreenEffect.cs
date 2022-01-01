@@ -16,6 +16,7 @@ namespace OpenTK_PathTracer.Render
             framebuffer = new Framebuffer();
 
             Result = new Texture(TextureTarget2d.Texture2D);
+            Result.SetFilter(TextureMinFilter.Nearest, TextureMagFilter.Nearest);
             Result.MutableAllocate(width, height, 1, PixelInternalFormat.Rgba8);
 
             framebuffer.AddRenderTarget(FramebufferAttachment.ColorAttachment0, Result);

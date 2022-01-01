@@ -64,6 +64,7 @@ namespace OpenTK_PathTracer.Render
             Timer = new TimerQuery(600);
 
             Result = new Texture(TextureTarget2d.TextureCubeMap);
+            Result.SetFilter(TextureMinFilter.Nearest, TextureMagFilter.Linear);
             Result.MutableAllocate(size, size, 1, PixelInternalFormat.Rgba32f);
 
             shaderProgram = new ShaderProgram(new Shader(ShaderType.ComputeShader, "res/shaders/AtmosphericScattering/compute.glsl".GetPathContent()));

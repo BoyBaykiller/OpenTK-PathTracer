@@ -110,6 +110,7 @@ namespace OpenTK_PathTracer.GUI
             io.Fonts.GetTexDataAsRGBA32(out IntPtr pixels, out int width, out int height, out _);
 
             fontTexture = new Texture(TextureTarget2d.Texture2D);
+            fontTexture.SetFilter(TextureMinFilter.Nearest, TextureMagFilter.Nearest);
             fontTexture.ImmutableAllocate(width, height, 1, SizedInternalFormat.Rgba8);
             fontTexture.SubTexture2D(width, height, PixelFormat.Bgra, PixelType.UnsignedByte, pixels);
 

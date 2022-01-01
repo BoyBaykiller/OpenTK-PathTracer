@@ -39,7 +39,6 @@ namespace OpenTK_PathTracer.Render.Objects
             Dimension = TextureDimension.Three;
 
             GL.CreateTextures(Target, 1, out ID);
-            SetFilter(TextureMinFilter.Linear, TextureMagFilter.Linear);
         }
 
         public Texture(TextureTarget2d textureTarget2D)
@@ -48,7 +47,6 @@ namespace OpenTK_PathTracer.Render.Objects
             Dimension = TextureDimension.Two;
 
             GL.CreateTextures(Target, 1, out ID);
-            SetFilter(TextureMinFilter.Linear, TextureMagFilter.Linear);
         }
 
         public Texture(TextureTarget1d textureTarget1D)
@@ -57,7 +55,6 @@ namespace OpenTK_PathTracer.Render.Objects
             Dimension = TextureDimension.One;
 
             GL.CreateTextures(Target, 1, out ID);
-            SetFilter(TextureMinFilter.Linear, TextureMagFilter.Linear);
         }
 
         public Texture(TextureBufferTarget textureBufferTarget, BufferObject bufferObject, SizedInternalFormat sizedInternalFormat = SizedInternalFormat.Rgba32f)
