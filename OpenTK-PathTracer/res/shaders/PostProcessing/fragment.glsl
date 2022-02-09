@@ -1,4 +1,4 @@
-#version 430 core
+#version 450 core
 layout(location = 0) out vec4 FragColor;
 
 layout(binding = 0) uniform sampler2D Sampler0;
@@ -9,7 +9,7 @@ vec3 LinearToInverseGamma(vec3 rgb, float gamma);
 vec3 ACESFilm(vec3 x);
 
 
-layout(location = 3) in struct
+in InOutVars
 {
     vec2 TexCoord;
 } inData;

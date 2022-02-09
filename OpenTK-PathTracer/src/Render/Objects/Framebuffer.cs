@@ -67,12 +67,12 @@ namespace OpenTK_PathTracer.Render.Objects
         public static unsafe Image<Rgba32> GetBitmapFramebufferAttachment(int id, FramebufferAttachment framebufferAttachment, int width, int height, int x = 0, int y = 0)
         {
             Image<Rgba32> image = new Image<Rgba32>(width, height);
-            GL.NamedFramebufferReadBuffer(id, (ReadBufferMode)framebufferAttachment);
+            GL.NamedFramebufferReadBuffer(id, id == 0 ? ReadBufferMode.Front : (ReadBufferMode)framebufferAttachment);
 
             Bind(id, FramebufferTarget.ReadFramebuffer);
             fixed (void* ptr = image.GetPixelRowSpan(0))
             {
-                GL.ReadPixels(x, y, width, height, OpenTK.Graphics.OpenGL4.PixelFormat.Rgba, PixelType.UnsignedByte, (IntPtr)ptr);
+                GL.ReadPixels(x, y, width, height, PixelFormat.Rgba, PixelType.UnsignedByte, IntPtr.Zero);
             }
             GL.Finish();
 

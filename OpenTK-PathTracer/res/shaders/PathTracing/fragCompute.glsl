@@ -1,4 +1,4 @@
-#version 430 core
+#version 450 core
 #define FLOAT_MAX 3.4028235e+38
 #define FLOAT_MIN -3.4028235e+38
 #define EPSILON 0.001
@@ -7,10 +7,10 @@
 
 layout(location = 0) out vec4 FragColor;
 
-layout(binding = 0, rgba32f) readonly restrict uniform image2D ImgLastFrame;
+layout(binding = 0) uniform sampler2D SamplerLastFrame;
 layout(binding = 1) uniform samplerCube SamplerEnvironment;
 
-struct Material 
+struct Material
 {
     vec3 Albedo; // Base color
     float SpecularChance; // How reflective
@@ -69,6 +69,11 @@ layout(std140, binding = 1) uniform GameObjectsUBO
 	Cuboid Cuboids[64];
 } gameObjectsUBO;
 
+in InOutVars
+{
+    vec2 TexCoord;
+} inData;
+
 vec3 Radiance(Ray ray);
 float BSDF(inout Ray ray, HitInfo hitInfo, out bool isRefractive);
 bool RayTrace(Ray ray, out HitInfo hitInfo);
@@ -96,17 +101,18 @@ uniform float apertureDiameter;
 layout(location = 0) uniform int thisRendererFrame;
 
 uint rndSeed;
-in vec2 TexCoord;
 void main()
 {
-    ivec2 imgResultSize = imageSize(ImgLastFrame);
+    vec2 txtResultSize = vec2(textureSize(SamplerLastFrame, 0));
 
-    rndSeed = uint(gl_FragCoord.x * 1973 + gl_FragCoord.y * 9277 + thisRendererFrame * 2699) | 1;
-    vec3 irradiance = vec3(0);
+    rndSeed = uint(gl_FragCoord.x) * 1973 + uint(gl_FragCoord.y) * 9277 + thisRendererFrame * 2699 | 1;
+    //rndSeed = thisRendererFrame;
+
+    vec3 irradiance = vec3(0.0);
     for (int i = 0; i < SPP; i++)
     {   
-        vec2 subPixelOffset = vec2(GetRandomFloat01(), GetRandomFloat01()) - 0.5; // integrating over whole pixel eliminates aliasing
-        vec2 ndc = (gl_FragCoord.xy + subPixelOffset) / imgResultSize * 2.0 - 1.0;
+        vec2 subPixelOffset = (vec2(GetRandomFloat01(), GetRandomFloat01()) - 0.5) / txtResultSize; // integrating over whole pixel eliminates aliasing
+        vec2 ndc = (inData.TexCoord + subPixelOffset) * 2.0 - 1.0;
         Ray rayEyeToWorld = GetWorldSpaceRay(basicDataUBO.InvProjection, basicDataUBO.InvView, basicDataUBO.ViewPos, ndc);
 
         vec3 focalPoint = rayEyeToWorld.Origin + rayEyeToWorld.Direction * focalLength;
@@ -118,7 +124,7 @@ void main()
         irradiance += Radiance(rayEyeToWorld);
     }
     irradiance /= SPP;
-    vec3 lastFrameColor = imageLoad(ImgLastFrame, ivec2(gl_FragCoord.xy)).rgb;
+    vec3 lastFrameColor = texture(SamplerLastFrame, inData.TexCoord).rgb;
 
     irradiance = mix(lastFrameColor, irradiance, 1.0 / (thisRendererFrame + 1));
     FragColor = vec4(irradiance, 1.0);
@@ -157,7 +163,7 @@ vec3 Radiance(Ray ray)
                 throughput *= hitInfo.Material.Albedo;
             }
             throughput /= rayProbability;
-            
+
             // Russian Roulette, unbiased method to terminate rays and therefore lower render times (also reduces fireflies)
             {
                 float p = max(throughput.x, max(throughput.y, throughput.z));
@@ -270,7 +276,7 @@ bool RaySphereIntersect(Ray ray, vec3 position, float radius, out float t1, out 
     t1 = -b - squareRoot;
     t2 = -b + squareRoot;
 
-    return true;
+    return t1 <= t2;
 }
 
 bool RayCuboidIntersect(Ray ray, vec3 aabbMin, vec3 aabbMax, out float t1, out float t2)
@@ -279,8 +285,11 @@ bool RayCuboidIntersect(Ray ray, vec3 aabbMin, vec3 aabbMax, out float t1, out f
     t1 = FLOAT_MIN;
     t2 = FLOAT_MAX;
 
-    vec3 t0s = (aabbMin - ray.Origin) * (1.0 / ray.Direction);
-    vec3 t1s = (aabbMax - ray.Origin) * (1.0 / ray.Direction);
+    // According to the spec https://www.khronos.org/registry/OpenGL/specs/gl/GLSLangSpec.4.30.pdf
+    // " Dividing by 0 results in the appropriately signed IEEE Inf"
+    // So no need for the " * invDir " thing.
+    vec3 t0s = (aabbMin - ray.Origin) / ray.Direction;
+    vec3 t1s = (aabbMax - ray.Origin) / ray.Direction;
 
     vec3 tsmaller = min(t0s, t1s);
     vec3 tbigger = max(t0s, t1s);
@@ -346,12 +355,12 @@ float GetRandomFloat01()
 // Assumes t2 > t1 && t2 > 0.0
 float GetSmallestPositive(float t1, float t2)
 {
-    return t1 < 0.0 ? t2 : t1;
+    return t1 < 0 ? t2 : t1;
 }
 
 Ray GetWorldSpaceRay(mat4 inverseProj, mat4 inverseView, vec3 viewPos, vec2 normalizedDeviceCoords)
 {
-    vec4 rayEye = inverseProj * vec4(normalizedDeviceCoords.xy, -1.0, 0.0);
+    vec4 rayEye = inverseProj * vec4(normalizedDeviceCoords, -1.0, 0.0);
     rayEye.zw = vec2(-1.0, 0.0);
     return Ray(viewPos, normalize((inverseView * rayEye).xyz));
 }

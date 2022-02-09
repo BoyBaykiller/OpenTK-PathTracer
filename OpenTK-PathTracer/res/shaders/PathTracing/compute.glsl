@@ -1,4 +1,4 @@
-#version 430 core
+#version 450 core
 #define FLOAT_MAX 3.4028235e+38
 #define FLOAT_MIN -3.4028235e+38
 #define EPSILON 0.001
@@ -96,13 +96,17 @@ uniform float apertureDiameter;
 layout(location = 0) uniform int thisRendererFrame;
 
 uint rndSeed;
+
+
 void main()
 {
     ivec2 imgResultSize = imageSize(ImgResult);
     ivec2 imgCoord = ivec2(gl_GlobalInvocationID.xy);
 
     rndSeed = gl_GlobalInvocationID.x * 1973 + gl_GlobalInvocationID.y * 9277 + thisRendererFrame * 2699 | 1;
-    vec3 irradiance = vec3(0);
+    //rndSeed = thisRendererFrame;
+
+    vec3 irradiance = vec3(0.0);
     for (int i = 0; i < SPP; i++)
     {   
         vec2 subPixelOffset = vec2(GetRandomFloat01(), GetRandomFloat01()) - 0.5; // integrating over whole pixel eliminates aliasing
@@ -270,7 +274,7 @@ bool RaySphereIntersect(Ray ray, vec3 position, float radius, out float t1, out 
     t1 = -b - squareRoot;
     t2 = -b + squareRoot;
 
-    return true;
+    return t1 <= t2;
 }
 
 bool RayCuboidIntersect(Ray ray, vec3 aabbMin, vec3 aabbMax, out float t1, out float t2)
@@ -354,7 +358,7 @@ float GetSmallestPositive(float t1, float t2)
 
 Ray GetWorldSpaceRay(mat4 inverseProj, mat4 inverseView, vec3 viewPos, vec2 normalizedDeviceCoords)
 {
-    vec4 rayEye = inverseProj * vec4(normalizedDeviceCoords.xy, -1.0, 0.0);
+    vec4 rayEye = inverseProj * vec4(normalizedDeviceCoords, -1.0, 0.0);
     rayEye.zw = vec2(-1.0, 0.0);
     return Ray(viewPos, normalize((inverseView * rayEye).xyz));
 }

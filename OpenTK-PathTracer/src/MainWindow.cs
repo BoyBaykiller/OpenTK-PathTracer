@@ -17,13 +17,15 @@ namespace OpenTK_PathTracer
         public const int MAX_GAMEOBJECTS_SPHERES = 256, MAX_GAMEOBJECTS_CUBOIDS = 64;
         public const float EPSILON = 0.005f, FOV = 103;
 
-        public MainWindow() : base(832, 832,
-            new GraphicsMode(0, 0, 0, 0),
-            string.Empty,
-            GameWindowFlags.Default,
-            DisplayDevice.Default,
-            4, 5,
-            GraphicsContextFlags.Default) {  /*WindowState = WindowState.Maximized;*/  }
+        public MainWindow()
+#if DEBUG
+            : base(832, 832, new GraphicsMode(0, 0, 0, 0), string.Empty, GameWindowFlags.Default, DisplayDevice.Default, 4, 5, GraphicsContextFlags.Debug)
+#else
+            : base(832, 832, new GraphicsMode(0, 0, 0, 0))
+#endif
+        {
+
+        }
 
 
         public Matrix4 inverseProjection;
@@ -126,7 +128,6 @@ namespace OpenTK_PathTracer
                     if (frameChanged)
                         PathTracer.ResetRenderer();
                 }
-
                 BasicDataUBO.SubData(Vector4.SizeInBytes * 4, Vector4.SizeInBytes * 4, Camera.View.Inverted());
                 BasicDataUBO.SubData(Vector4.SizeInBytes * 8, Vector4.SizeInBytes, Camera.Position);
             }

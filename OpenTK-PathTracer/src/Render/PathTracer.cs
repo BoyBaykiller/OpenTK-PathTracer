@@ -1,4 +1,4 @@
-﻿#define USE_COMPUTE
+﻿#define _USE_COMPUTE
 using System.IO;
 using OpenTK;
 using OpenTK.Graphics.OpenGL4;
@@ -97,7 +97,6 @@ namespace OpenTK_PathTracer
             Result = new Texture(TextureTarget2d.Texture2D);
             Result.SetFilter(TextureMinFilter.Nearest, TextureMagFilter.Nearest);
             Result.MutableAllocate(width, height, 1, PixelInternalFormat.Rgba32f);
-
 #if !USE_COMPUTE
             framebuffer = new Framebuffer();
             framebuffer.AddRenderTarget(FramebufferAttachment.ColorAttachment0, Result);
@@ -119,12 +118,13 @@ namespace OpenTK_PathTracer
             EnvironmentMap.AttachSampler(1);
 #if USE_COMPUTE
             Result.AttachImage(0, 0, false, 0, TextureAccess.ReadWrite, SizedInternalFormat.Rgba32f);
-            GL.DispatchCompute((Result.Width + 8 - 1) / 8, (Result.Height + 4 - 1) / 4, 1);
+            GL.DispatchCompute((Result.Width + 8 - 1) / 8, (Result.Height + 8 - 1) / 4, 1);
 
             GL.MemoryBarrier(MemoryBarrierFlags.TextureFetchBarrierBit);
 #else
             framebuffer.Bind();
-            Result.AttachImage(0, 0, false, 0, TextureAccess.ReadOnly, SizedInternalFormat.Rgba32f);
+            Result.AttachSampler(0);
+            GL.TextureBarrier();
             GL.DrawArrays(PrimitiveType.Triangles, 0, 6);
 #endif
         }

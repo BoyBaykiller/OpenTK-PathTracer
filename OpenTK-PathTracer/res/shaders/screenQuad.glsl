@@ -1,4 +1,4 @@
-#version 430 core
+#version 450 core
 
 const vec4 data[6] = vec4[]
 (
@@ -10,7 +10,7 @@ const vec4 data[6] = vec4[]
     vec4(  1.0,  1.0,  1.0, 1.0 )
 );
 
-layout(location = 3) out struct
+out InOutVars
 {
     vec2 TexCoord;
 } outData;
