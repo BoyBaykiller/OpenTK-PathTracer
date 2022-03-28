@@ -109,7 +109,8 @@ void main()
     vec3 irradiance = vec3(0.0);
     for (int i = 0; i < SPP; i++)
     {   
-        vec2 subPixelOffset = vec2(GetRandomFloat01(), GetRandomFloat01()) - 0.5; // integrating over whole pixel eliminates aliasing
+        // add random offset to lower left corner of pixel to effectively integrate over whole pixel and eliminate aliasing
+        vec2 subPixelOffset = vec2(GetRandomFloat01(), GetRandomFloat01());
         vec2 ndc = (imgCoord + subPixelOffset) / imgResultSize * 2.0 - 1.0;
         Ray rayEyeToWorld = GetWorldSpaceRay(basicDataUBO.InvProjection, basicDataUBO.InvView, basicDataUBO.ViewPos, ndc);
 
