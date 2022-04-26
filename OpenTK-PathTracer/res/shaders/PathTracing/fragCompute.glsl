@@ -77,12 +77,12 @@ in InOutVars
 vec3 Radiance(Ray ray);
 float BSDF(inout Ray ray, HitInfo hitInfo, out bool isRefractive);
 bool RayTrace(Ray ray, out HitInfo hitInfo);
-bool RaySphereIntersect(Ray ray, vec3 position, float radius, out float t1, out float t2);
-bool RayCuboidIntersect(Ray ray, vec3 aabbMin, vec3 aabbMax, out float t1, out float t2);
+bool RaySphereIntersect(Ray ray, Sphere sphere, out float t1, out float t2);
+bool RayCuboidIntersect(Ray ray, Cuboid cuboid, out float t1, out float t2);
 vec3 CosineSampleHemisphere(vec3 normal);
 vec2 UniformSampleUnitCircle();
-vec3 GetNormal(vec3 spherePos, float radius, vec3 surfacePosition);
-vec3 GetNormal(vec3 aabbMin, vec3 aabbMax, vec3 surfacePosition);
+vec3 GetNormal(Sphere sphere, vec3 surfacePosition);
+vec3 GetNormal(Cuboid cuboid, vec3 surfacePosition);
 uint GetPCGHash(inout uint seed);
 float GetRandomFloat01();
 float GetSmallestPositive(float t1, float t2);
@@ -232,43 +232,41 @@ bool RayTrace(Ray ray, out HitInfo hitInfo)
 
     for (int i = 0; i < uboGameObjectsSize.x; i++)
     {
-        vec3 pos = gameObjectsUBO.Spheres[i].Position;
-        float radius = gameObjectsUBO.Spheres[i].Radius;
-        if (RaySphereIntersect(ray, pos, radius, t1, t2) && t2 > 0.0 && t1 < hitInfo.T)
+        Sphere sphere = gameObjectsUBO.Spheres[i];
+        if (RaySphereIntersect(ray, sphere, t1, t2) && t2 > 0.0 && t1 < hitInfo.T)
         {
             hitInfo.T = GetSmallestPositive(t1, t2);
             hitInfo.FromInside = hitInfo.T == t2;
             hitInfo.Material = gameObjectsUBO.Spheres[i].Material;
             hitInfo.NearHitPos = ray.Origin + ray.Direction * hitInfo.T;
-            hitInfo.Normal = GetNormal(pos, radius, hitInfo.NearHitPos);
+            hitInfo.Normal = GetNormal(sphere, hitInfo.NearHitPos);
         }
     }
     
     for (int i = 0; i < uboGameObjectsSize.y; i++)
     {
-        vec3 aabbMin = gameObjectsUBO.Cuboids[i].Min;
-        vec3 aabbMax = gameObjectsUBO.Cuboids[i].Max;
-        if (RayCuboidIntersect(ray, aabbMin, aabbMax, t1, t2) && t2 > 0.0 && t1 < hitInfo.T)
+        Cuboid cuboid = gameObjectsUBO.Cuboids[i];
+        if (RayCuboidIntersect(ray, cuboid, t1, t2) && t2 > 0.0 && t1 < hitInfo.T)
         {
             hitInfo.T = GetSmallestPositive(t1, t2);
             hitInfo.FromInside = hitInfo.T == t2;
             hitInfo.Material = gameObjectsUBO.Cuboids[i].Material;
             hitInfo.NearHitPos = ray.Origin + ray.Direction * hitInfo.T;
-            hitInfo.Normal = GetNormal(aabbMin, aabbMax, hitInfo.NearHitPos);
+            hitInfo.Normal = GetNormal(cuboid, hitInfo.NearHitPos);
         }
     }
 
     return hitInfo.T != FLOAT_MAX;
 }
 
-bool RaySphereIntersect(Ray ray, vec3 position, float radius, out float t1, out float t2)
+bool RaySphereIntersect(Ray ray, Sphere sphere, out float t1, out float t2)
 {
     // Source: https://antongerdelan.net/opengl/raycasting.html
     t1 = t2 = FLOAT_MAX;
 
-    vec3 sphereToRay = ray.Origin - position;
+    vec3 sphereToRay = ray.Origin - sphere.Position;
     float b = dot(ray.Direction, sphereToRay);
-    float c = dot(sphereToRay, sphereToRay) - radius * radius;
+    float c = dot(sphereToRay, sphereToRay) - sphere.Radius * sphere.Radius;
     float discriminant = b * b - c;
     if (discriminant < 0.0)
         return false;
@@ -280,7 +278,7 @@ bool RaySphereIntersect(Ray ray, vec3 position, float radius, out float t1, out 
     return t1 <= t2;
 }
 
-bool RayCuboidIntersect(Ray ray, vec3 aabbMin, vec3 aabbMax, out float t1, out float t2)
+bool RayCuboidIntersect(Ray ray, Cuboid cuboid, out float t1, out float t2)
 {
     // Source: https://medium.com/@bromanz/another-view-on-the-classic-ray-aabb-intersection-algorithm-for-bvh-traversal-41125138b525
     t1 = FLOAT_MIN;
@@ -289,8 +287,8 @@ bool RayCuboidIntersect(Ray ray, vec3 aabbMin, vec3 aabbMax, out float t1, out f
     // According to the spec https://www.khronos.org/registry/OpenGL/specs/gl/GLSLangSpec.4.30.pdf
     // " Dividing by 0 results in the appropriately signed IEEE Inf"
     // So no need for the " * invDir " thing.
-    vec3 t0s = (aabbMin - ray.Origin) / ray.Direction;
-    vec3 t1s = (aabbMax - ray.Origin) / ray.Direction;
+    vec3 t0s = (cuboid.Min - ray.Origin) / ray.Direction;
+    vec3 t1s = (cuboid.Max - ray.Origin) / ray.Direction;
 
     vec3 tsmaller = min(t0s, t1s);
     vec3 tbigger = max(t0s, t1s);
@@ -321,18 +319,18 @@ vec2 UniformSampleUnitCircle()
     return vec2(cos(angle), sin(angle)) * r;
 }
 
-vec3 GetNormal(vec3 spherePos, float radius, vec3 surfacePosition)
+vec3 GetNormal(Sphere sphere, vec3 surfacePosition)
 {
-    return (surfacePosition - spherePos) / radius;
+    return (surfacePosition - sphere.Position) / sphere.Radius;
 }
 
-vec3 GetNormal(vec3 aabbMin, vec3 aabbMax, vec3 surfacePosition)
+vec3 GetNormal(Cuboid cuboid, vec3 surfacePosition)
 {
     // Source: https://gist.github.com/Shtille/1f98c649abeeb7a18c5a56696546d3cf
     // step(edge,x) : x < edge ? 0 : 1
 
-    vec3 halfSize = (aabbMax - aabbMin) * 0.5;
-    vec3 centerSurface = surfacePosition - (aabbMax + aabbMin) * 0.5;
+    vec3 halfSize = (cuboid.Max - cuboid.Min) * 0.5;
+    vec3 centerSurface = surfacePosition - (cuboid.Max + cuboid.Min) * 0.5;
     
     vec3 normal = vec3(0.0);
     normal += vec3(sign(centerSurface.x), 0.0, 0.0) * step(abs(abs(centerSurface.x) - halfSize.x), EPSILON);

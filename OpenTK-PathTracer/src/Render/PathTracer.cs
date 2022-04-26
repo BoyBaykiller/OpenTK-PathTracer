@@ -95,7 +95,7 @@ namespace OpenTK_PathTracer
         public PathTracer(Texture environmentMap, int width, int height, int rayDepth, int spp, float focalLength, float apertureDiamater)
         {
             Result = new Texture(TextureTarget2d.Texture2D);
-            Result.SetFilter(TextureMinFilter.Nearest, TextureMagFilter.Nearest);
+            Result.SetFilter(TextureMinFilter.Linear, TextureMagFilter.Linear);
             Result.MutableAllocate(width, height, 1, PixelInternalFormat.Rgba32f);
 #if !USE_COMPUTE
             framebuffer = new Framebuffer();
