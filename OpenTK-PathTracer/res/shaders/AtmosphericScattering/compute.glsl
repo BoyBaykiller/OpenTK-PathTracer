@@ -1,6 +1,6 @@
-// Source: https://github.com/wwwtyro/glsl-atmosphere
 // I only adapted his code to a compute shader.
 // The actual atmospheric scattering code is copied from the given source
+// Source: https://github.com/wwwtyro/glsl-atmosphere
 
 #version 450 core
 #define PI 3.14159265

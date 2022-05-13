@@ -34,9 +34,9 @@ namespace OpenTK_PathTracer.GameObjects
             return gpuData;
         }
 
+        // Source: https://medium.com/@bromanz/another-view-on-the-classic-ray-aabb-intersection-algorithm-for-bvh-traversal-41125138b525
         public override bool IntersectsRay(Ray ray, out float t1, out float t2)
         {
-            // Source: https://medium.com/@bromanz/another-view-on-the-classic-ray-aabb-intersection-algorithm-for-bvh-traversal-41125138b525
             t1 = float.MinValue;
             t2 = float.MaxValue;
 

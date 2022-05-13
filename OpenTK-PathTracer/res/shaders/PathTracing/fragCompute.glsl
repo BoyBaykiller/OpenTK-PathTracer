@@ -259,9 +259,9 @@ bool RayTrace(Ray ray, out HitInfo hitInfo)
     return hitInfo.T != FLOAT_MAX;
 }
 
+// Source: https://antongerdelan.net/opengl/raycasting.html
 bool RaySphereIntersect(Ray ray, Sphere sphere, out float t1, out float t2)
 {
-    // Source: https://antongerdelan.net/opengl/raycasting.html
     t1 = t2 = FLOAT_MAX;
 
     vec3 sphereToRay = ray.Origin - sphere.Position;
@@ -278,15 +278,12 @@ bool RaySphereIntersect(Ray ray, Sphere sphere, out float t1, out float t2)
     return t1 <= t2;
 }
 
+// Source: https://medium.com/@bromanz/another-view-on-the-classic-ray-aabb-intersection-algorithm-for-bvh-traversal-41125138b525
 bool RayCuboidIntersect(Ray ray, Cuboid cuboid, out float t1, out float t2)
 {
-    // Source: https://medium.com/@bromanz/another-view-on-the-classic-ray-aabb-intersection-algorithm-for-bvh-traversal-41125138b525
     t1 = FLOAT_MIN;
     t2 = FLOAT_MAX;
 
-    // According to the spec https://www.khronos.org/registry/OpenGL/specs/gl/GLSLangSpec.4.30.pdf
-    // " Dividing by 0 results in the appropriately signed IEEE Inf"
-    // So no need for the " * invDir " thing.
     vec3 t0s = (cuboid.Min - ray.Origin) / ray.Direction;
     vec3 t1s = (cuboid.Max - ray.Origin) / ray.Direction;
 
@@ -298,9 +295,9 @@ bool RayCuboidIntersect(Ray ray, Cuboid cuboid, out float t1, out float t2)
     return t1 <= t2;
 }
 
+// Source: https://blog.demofox.org/2020/05/25/casual-shadertoy-path-tracing-1-basic-camera-diffuse-emissive/
 vec3 CosineSampleHemisphere(vec3 normal)
 {
-    // Source: https://blog.demofox.org/2020/05/25/casual-shadertoy-path-tracing-1-basic-camera-diffuse-emissive/
 
     float z = GetRandomFloat01() * 2.0 - 1.0;
     float a = GetRandomFloat01() * 2.0 * PI;
@@ -324,11 +321,9 @@ vec3 GetNormal(Sphere sphere, vec3 surfacePosition)
     return (surfacePosition - sphere.Position) / sphere.Radius;
 }
 
+// Source: https://gist.github.com/Shtille/1f98c649abeeb7a18c5a56696546d3cf
 vec3 GetNormal(Cuboid cuboid, vec3 surfacePosition)
 {
-    // Source: https://gist.github.com/Shtille/1f98c649abeeb7a18c5a56696546d3cf
-    // step(edge,x) : x < edge ? 0 : 1
-
     vec3 halfSize = (cuboid.Max - cuboid.Min) * 0.5;
     vec3 centerSurface = surfacePosition - (cuboid.Max + cuboid.Min) * 0.5;
     

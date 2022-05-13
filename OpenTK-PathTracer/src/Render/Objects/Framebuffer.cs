@@ -72,7 +72,7 @@ namespace OpenTK_PathTracer.Render.Objects
             Bind(id, FramebufferTarget.ReadFramebuffer);
             fixed (void* ptr = image.GetPixelRowSpan(0))
             {
-                GL.ReadPixels(x, y, width, height, PixelFormat.Rgba, PixelType.UnsignedByte, IntPtr.Zero);
+                GL.ReadPixels(x, y, width, height, PixelFormat.Rgba, PixelType.UnsignedByte, (IntPtr)ptr);
             }
             GL.Finish();
 

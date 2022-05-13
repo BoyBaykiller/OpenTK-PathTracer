@@ -121,9 +121,9 @@ float DensityAtPoint(vec3 point)
     return exp(-height01 * DensityFallOff) * (1 - height01); // 1 at Planetshell, 0 at outer atmosphere
 }
 
+// Source: https://antongerdelan.net/opengl/raycasting.html
 bool RaySphereIntersect(Ray ray, vec3 position, float radius, out float t1, out float t2)
 {
-    // Source: https://antongerdelan.net/opengl/raycasting.html
     t1 = t2 = FLOAT_MAX;
 
     vec3 sphereToRay = ray.Origin - position;

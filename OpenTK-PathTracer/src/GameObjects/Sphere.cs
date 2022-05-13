@@ -30,9 +30,9 @@ namespace OpenTK_PathTracer.GameObjects
             return gpuData;
         }
 
+        // Source: https://antongerdelan.net/opengl/raycasting.html
         public override bool IntersectsRay(Ray ray, out float t1, out float t2)
         {
-            // Source: https://antongerdelan.net/opengl/raycasting.html
             t1 = t2 = 0;
 
             Vector3 sphereToRay = ray.Origin - this.Position;
