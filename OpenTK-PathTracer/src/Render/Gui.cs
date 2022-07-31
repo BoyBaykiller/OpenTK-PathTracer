@@ -11,7 +11,7 @@ namespace OpenTK_PathTracer.Render
 {
     static class Gui
     {
-        public static ImGuiController ImGuiController = new ImGuiController(0, 0, "res/imgui.ini");
+        public static ImGuiController ImGuiController = new ImGuiController(0, 0);
         private static BaseGameObject pickedObject;
 
         public static bool IsEnvironmentAtmosphere;

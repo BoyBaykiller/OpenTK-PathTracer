@@ -5,7 +5,7 @@
 #define PI 3.14159265
 // Example shader include: #include PathTracing/fragCompute
 
-layout(local_size_x = 8, local_size_y = 4, local_size_z = 1) in;
+layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 
 layout(binding = 0, rgba32f) restrict uniform image2D ImgResult;
 layout(binding = 1) uniform samplerCube SamplerEnvironment;
@@ -207,7 +207,7 @@ float BSDF(inout Ray ray, HitInfo hitInfo, out bool isRefractive)
     }
     else if (specularChance + refractionChance > raySelectRoll)
     {
-        vec3 refractionRayDir = refract(ray.Direction, hitInfo.Normal, hitInfo.FromInside ? hitInfo.Material.IOR / 1.0 : 1.0 / hitInfo.Material.IOR);
+        vec3 refractionRayDir = refract(ray.Direction, hitInfo.Normal, hitInfo.FromInside ? (hitInfo.Material.IOR / 1.0) : (1.0 / hitInfo.Material.IOR));
         refractionRayDir = normalize(mix(refractionRayDir, CosineSampleHemisphere(-hitInfo.Normal), hitInfo.Material.RefractionRoughness * hitInfo.Material.RefractionRoughness));
         ray.Direction = refractionRayDir;
         rayProbability = refractionChance;

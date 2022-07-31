@@ -27,14 +27,13 @@ namespace OpenTK_PathTracer.GUI
         private int Height;
 
         private System.Numerics.Vector2 scaleFactor = System.Numerics.Vector2.One;
-        public ImGuiController(int width, int height, string iniFilePath = null)
+        public ImGuiController(int width, int height)
         {
             Width = width;
             Height = height;
 
             IntPtr context = ImGui.CreateContext();
             ImGui.SetCurrentContext(context);
-            ImGui.LoadIniSettingsFromDisk(iniFilePath);
 
             ImGuiIOPtr io = ImGui.GetIO();
             io.Fonts.AddFontDefault();

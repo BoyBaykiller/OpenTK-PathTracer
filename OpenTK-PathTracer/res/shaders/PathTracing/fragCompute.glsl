@@ -209,7 +209,7 @@ float BSDF(inout Ray ray, HitInfo hitInfo, out bool isRefractive)
     }
     else if (specularChance + refractionChance > raySelectRoll)
     {
-        vec3 refractionRayDir = refract(ray.Direction, hitInfo.Normal, hitInfo.FromInside ? hitInfo.Material.IOR / 1.0 : 1.0 / hitInfo.Material.IOR);
+        vec3 refractionRayDir = refract(ray.Direction, hitInfo.Normal, hitInfo.FromInside ? (hitInfo.Material.IOR / 1.0) : (1.0 / hitInfo.Material.IOR));
         refractionRayDir = normalize(mix(refractionRayDir, CosineSampleHemisphere(-hitInfo.Normal), hitInfo.Material.RefractionRoughness * hitInfo.Material.RefractionRoughness));
         ray.Direction = refractionRayDir;
         rayProbability = refractionChance;

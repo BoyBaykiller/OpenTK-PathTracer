@@ -32,7 +32,7 @@ namespace OpenTK_PathTracer
 
         public override int BufferOffset => throw new NotSupportedException("Material is not meant to be directly uploaded to the GPU");
 
-        private readonly Vector4[] gpuData = new Vector4[4];
+        private readonly Vector4[] gpuData = new Vector4[GPU_INSTANCE_SIZE / Vector4.SizeInBytes];
         public override Vector4[] GetGPUFriendlyData()
         {
             gpuData[0].Xyz = Albedo;
@@ -46,6 +46,7 @@ namespace OpenTK_PathTracer
 
             gpuData[3].X = RefractionRoughnes;
             gpuData[3].Y = IOR;
+
             return gpuData;
         }
 
